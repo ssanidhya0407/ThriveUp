@@ -37,7 +37,7 @@ class OrganizerTabBar: UITabBarController {
             let eventsVC = UINavigationController(rootViewController: OrganizerEventListViewController())
             eventsVC.tabBarItem = UITabBarItem(title: "Feed", image: UIImage(systemName: "house"), tag: 0)
             
-            let chatVC = UINavigationController(rootViewController: OrganiserChatViewController())
+            let chatVC = UINavigationController(rootViewController: EventGroupsListViewController())
             chatVC.tabBarItem = UITabBarItem(title: "Chat", image: UIImage(systemName: "bubble.right"), tag: 1)
             
             let PostVC = UINavigationController(rootViewController: EventPostViewController())
