@@ -43,6 +43,8 @@ class ChatViewController: UIViewController {
     var currentUser: User? // Current logged-in user
     var lastMessages: [String: ChatMessage] = [:] // Last messages for each
     var messageListeners: [String: ListenerRegistration] = [:] // Listeners for each chat thread
+    // Add this property with your other properties
+    var eventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
     private var db = Firestore.firestore()
 
 //    override func viewDidLoad() {
@@ -69,12 +71,10 @@ class ChatViewController: UIViewController {
         fetchCurrentUser()
         setupCreateGroupButton()
         fetchGroups() // Fetch groups when the screen loads
+        fetchEventGroups()
 
 
 
-        // Set custom back button to return to FriendsViewController
-        let backButton = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(goBack))
-        navigationItem.leftBarButtonItem = backButton
 
         NotificationCenter.default.addObserver(self, selector: #selector(refreshFriendRequestBadge), name: NSNotification.Name("FriendRequestUpdated"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList), name: NSNotification.Name("ChatListUpdated"), object: nil)
@@ -363,6 +363,123 @@ class ChatViewController: UIViewController {
             self?.tableView.reloadData()
         }
     }
+    
+    
+    // Add this method to fetch event groups where the user is a member
+    private func fetchEventGroups() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        // We need to find all event groups where the current user is a member
+        db.collection("eventGroups").getDocuments { [weak self] (snapshot, error) in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching event groups: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                return
+            }
+            
+            var pendingGroups = documents.count
+            var newEventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
+            
+            for document in documents {
+                let eventId = document.documentID
+                
+                // Check if the user is a member of this event group
+                self.db.collection("eventGroups")
+                    .document(eventId)
+                    .collection("members")
+                    .document(currentUserID)
+                    .getDocument { [weak self] (userDoc, error) in
+                        guard let self = self else { return }
+                        pendingGroups -= 1
+                        
+                        // If the document exists, the user is a member of this event group
+                        if let userDoc = userDoc, userDoc.exists {
+                            // Get event details from events collection
+                            self.db.collection("events").document(eventId).getDocument { (eventDoc, error) in
+                                if let eventData = eventDoc?.data(),
+                                   let eventName = eventData["title"] as? String {
+                                    
+                                    // Get the image URL
+                                    let imageURL = eventData["imageName"] as? String
+                                    
+                                    // Fetch the most recent message if any
+                                    self.db.collection("eventGroups").document(eventId)
+                                        .collection("messages")
+                                        .order(by: "timestamp", descending: true)
+                                        .limit(to: 1)
+                                        .getDocuments { (msgSnapshot, msgError) in
+                                            
+                                            var lastMessage: String? = nil
+                                            var timestamp: Date? = nil
+                                            
+                                            if let msgDoc = msgSnapshot?.documents.first {
+                                                lastMessage = msgDoc.data()["text"] as? String
+                                                timestamp = (msgDoc.data()["timestamp"] as? Timestamp)?.dateValue()
+                                            }
+                                            
+                                            let group = (
+                                                eventId: eventId,
+                                                name: eventName,
+                                                lastMessage: lastMessage,
+                                                timestamp: timestamp,
+                                                imageURL: imageURL
+                                            )
+                                            
+                                            newEventGroups.append(group)
+                                            
+                                            // When all groups are processed, update the UI
+                                            if pendingGroups == 0 {
+                                                self.eventGroups = newEventGroups.sorted(by: {
+                                                    ($0.timestamp ?? Date.distantPast) > ($1.timestamp ?? Date.distantPast)
+                                                })
+                                                
+                                                DispatchQueue.main.async {
+                                                    self.tableView.reloadData()
+                                                }
+                                            }
+                                        }
+                                } else if pendingGroups == 0 && newEventGroups.isEmpty {
+                                    DispatchQueue.main.async {
+                                        self.tableView.reloadData()
+                                    }
+                                }
+                            }
+                        } else if pendingGroups == 0 && newEventGroups.isEmpty {
+                            DispatchQueue.main.async {
+                                self.tableView.reloadData()
+                            }
+                        }
+                    }
+            }
+        }
+    }
+
+    
+    // Add this method to navigate to an event group
+    private func openEventGroupChat(eventId: String) {
+        // Check user role in this event group
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("eventGroups").document(eventId)
+            .collection("members").document(currentUserID)
+            .getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
+                
+                let isOrganizer = document?.data()?["role"] as? String == "organizer"
+                
+                DispatchQueue.main.async {
+                    let eventGroupVC = EventGroupViewController(eventId: eventId, isOrganizer: isOrganizer)
+                    self.navigationController?.pushViewController(eventGroupVC, animated: true)
+                }
+            }
+    }
+    
+    
 
     private func addMessageListeners() {
         guard let currentUser = currentUser else { return }
@@ -442,44 +559,64 @@ class ChatViewController: UIViewController {
 
 extension ChatViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredFriends.count + groups.count
+        return filteredFriends.count + groups.count + eventGroups.count
     }
-
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//        guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatCell.identifier, for: indexPath) as? ChatCell else {
-//            return UITableViewCell()
-//        }
-//
-//        let friend = filteredFriends[indexPath.row]
-//        let lastMessage = lastMessages[friend.id]
-//        let messageText = lastMessage?.messageContent ?? "Tap to start a chat"
-//        let messageTime = lastMessage?.formattedTime() ?? ""
-//
-//        cell.configure(
-//            with: friend.name,
-//            message: messageText,
-//            time: messageTime,
-//            profileImageURL: friend.profileImageURL
-//        )
-//        return cell
-//    }
+    
+    //    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    //        guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatCell.identifier, for: indexPath) as? ChatCell else {
+    //            return UITableViewCell()
+    //        }
+    //
+    //        let friend = filteredFriends[indexPath.row]
+    //        let lastMessage = lastMessages[friend.id]
+    //        let messageText = lastMessage?.messageContent ?? "Tap to start a chat"
+    //        let messageTime = lastMessage?.formattedTime() ?? ""
+    //
+    //        cell.configure(
+    //            with: friend.name,
+    //            message: messageText,
+    //            time: messageTime,
+    //            profileImageURL: friend.profileImageURL
+    //        )
+    //        return cell
+    //    }
+    // Update tableView cellForRowAt
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatCell.identifier, for: indexPath) as? ChatCell else {
             return UITableViewCell()
         }
 
         if indexPath.row < groups.count {
-            //Display Group Chat
+            // Display Group Chat
             let group = groups[indexPath.row]
             cell.configure(
-                with: group.name, // Group Name
-                message: "Group Chat", // Placeholder for group chat
-                time: "", // No last message yet for now
-                profileImageURL: nil // Groups might not have a profile image
+                with: group.name,
+                message: "Group Chat",
+                time: "",
+                profileImageURL: nil
+            )
+        } else if indexPath.row < groups.count + eventGroups.count {
+            // Display Event Group Chat
+            let eventGroupIndex = indexPath.row - groups.count
+            let eventGroup = eventGroups[eventGroupIndex]
+            
+            let messageText = eventGroup.lastMessage ?? "Event Group Chat"
+            var timeString = ""
+            if let timestamp = eventGroup.timestamp {
+                let formatter = DateFormatter()
+                formatter.timeStyle = .short
+                timeString = formatter.string(from: timestamp)
+            }
+            
+            cell.configure(
+                with: "🎯 \(eventGroup.name)",
+                message: messageText,
+                time: timeString,
+                profileImageURL: eventGroup.imageURL // Pass the image URL
             )
         } else {
             // Display Individual Chat
-            let friendIndex = indexPath.row - groups.count
+            let friendIndex = indexPath.row - groups.count - eventGroups.count
             let friend = filteredFriends[friendIndex]
             let lastMessage = lastMessages[friend.id]
             let messageText = lastMessage?.messageContent ?? "Tap to start a chat"
@@ -495,16 +632,24 @@ extension ChatViewController: UITableViewDataSource, UITableViewDelegate {
 
         return cell
     }
-
-
+    
+    
+    // Update tableView didSelectRowAt
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
         if indexPath.row < groups.count {
-            // ✅ Open Group Chat
+            // Open Group Chat
             let selectedGroup = groups[indexPath.row]
             openGroupChat(group: selectedGroup)
+        } else if indexPath.row < groups.count + eventGroups.count {
+            // Open Event Group Chat
+            let eventGroupIndex = indexPath.row - groups.count
+            let selectedEventGroup = eventGroups[eventGroupIndex]
+            openEventGroupChat(eventId: selectedEventGroup.eventId)
         } else {
-            // ✅ Open Individual Chat
-            let friendIndex = indexPath.row - groups.count
+            // Open Individual Chat
+            let friendIndex = indexPath.row - groups.count - eventGroups.count
             let selectedFriend = filteredFriends[friendIndex]
             startChat(with: selectedFriend)
         }

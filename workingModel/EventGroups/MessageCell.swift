@@ -1,11 +1,3 @@
-//
-//  MessageCell.swift
-//  ThriveUp
-//
-//  Created by Sanidhya's MacBook Pro on 16/03/25.
-//
-
-
 import UIKit
 
 class MessageCell: UITableViewCell {
@@ -14,6 +6,7 @@ class MessageCell: UITableViewCell {
     private let messageLabel = UILabel()
     private let timeLabel = UILabel()
     private let profileImageView = UIImageView()
+    private let messageImageView = UIImageView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -26,7 +19,7 @@ class MessageCell: UITableViewCell {
     
     private func setupUI() {
         // Configure profile image view
-        profileImageView.contentMode = .scaleAspectFit
+        profileImageView.contentMode = .scaleAspectFill
         profileImageView.layer.cornerRadius = 20
         profileImageView.clipsToBounds = true
         profileImageView.image = UIImage(systemName: "person.circle.fill")
@@ -43,6 +36,14 @@ class MessageCell: UITableViewCell {
         messageLabel.numberOfLines = 0
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(messageLabel)
+        
+        // Configure message image view
+        messageImageView.contentMode = .scaleAspectFit
+        messageImageView.clipsToBounds = true
+        messageImageView.layer.cornerRadius = 8
+        messageImageView.isHidden = true
+        messageImageView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(messageImageView)
         
         // Configure time label
         timeLabel.font = UIFont.systemFont(ofSize: 12)
@@ -67,9 +68,15 @@ class MessageCell: UITableViewCell {
             messageLabel.topAnchor.constraint(equalTo: userNameLabel.bottomAnchor, constant: 4),
             messageLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
+            // Message image view constraints
+            messageImageView.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
+            messageImageView.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 8),
+            messageImageView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.7),
+            messageImageView.heightAnchor.constraint(lessThanOrEqualToConstant: 200),
+            
             // Time label constraints
             timeLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            timeLabel.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 4),
+            timeLabel.topAnchor.constraint(equalTo: messageImageView.bottomAnchor, constant: 8),
             timeLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
     }
@@ -77,6 +84,13 @@ class MessageCell: UITableViewCell {
     func configure(with message: EventGroupMessage) {
         userNameLabel.text = message.userName
         messageLabel.text = message.text
+        
+        // Configure message label visibility
+        if let messageText = message.text, !messageText.isEmpty {
+            messageLabel.isHidden = false
+        } else {
+            messageLabel.isHidden = true
+        }
         
         // Format the timestamp
         let dateFormatter = DateFormatter()
@@ -94,6 +108,22 @@ class MessageCell: UITableViewCell {
             }.resume()
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
+        }
+        
+        // Configure message image if available
+        if let imageURL = message.imageURL, let url = URL(string: imageURL) {
+            messageImageView.isHidden = false
+            
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                if let data = data, let image = UIImage(data: data) {
+                    DispatchQueue.main.async {
+                        self?.messageImageView.image = image
+                    }
+                }
+            }.resume()
+        } else {
+            messageImageView.isHidden = true
+            messageImageView.image = nil
         }
     }
 }

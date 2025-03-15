@@ -336,7 +336,7 @@ class EventGroupViewController: UIViewController {
             }
         }
     }
-    
+
     @objc private func showSettings() {
         // Create action sheet with group management options
         let actionSheet = UIAlertController(
@@ -350,7 +350,15 @@ class EventGroupViewController: UIViewController {
             self?.showMemberManagement()
         })
         
-        actionSheet.addAction(UIAlertAction(title: chatEnabled ? "Disable Chat" : "Enable Chat", style: .default) { [weak self] _ in
+        // Check if any non-organizer member has chat enabled
+        let anyNonOrganizerCanChat = members.contains { member in
+            member.role != "organizer" && member.canChat
+        }
+        
+        // Set button text based on whether any non-organizer can chat
+        let chatActionTitle = anyNonOrganizerCanChat ? "Disable Chat" : "Enable Chat"
+        
+        actionSheet.addAction(UIAlertAction(title: chatActionTitle, style: .default) { [weak self] _ in
             self?.toggleGroupChat()
         })
         
@@ -367,33 +375,76 @@ class EventGroupViewController: UIViewController {
     }
     
     private func toggleGroupChat() {
-        let newChatStatus = !chatEnabled
-        
-        eventGroupManager.updateGroupChatSettings(eventId: eventId, chatEnabled: newChatStatus) { [weak self] success in
-            if success {
-                self?.chatEnabled = newChatStatus
-                self?.updateChatUI()
-                
-                // Show confirmation
-                let message = newChatStatus ? "Chat enabled for all members" : "Chat disabled for all members"
-                let alert = UIAlertController(
-                    title: "Settings Updated",
-                    message: message,
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self?.present(alert, animated: true)
-            } else {
-                // Show error
-                let alert = UIAlertController(
-                    title: "Error",
-                    message: "Failed to update chat settings. Please try again.",
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
-                self?.present(alert, animated: true)
-            }
+        // Check if any non-organizer can currently chat
+        let anyNonOrganizerCanChat = members.contains { member in
+            member.role != "organizer" && member.canChat
         }
+        
+        // Get the current user (organizer) ID
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        // Show loading indicator
+        let loadingAlert = UIAlertController(title: "Updating Permissions", message: "Please wait...", preferredStyle: .alert)
+        present(loadingAlert, animated: true)
+        
+        // Get all members from database
+        db.collection("eventGroups").document(eventId)
+            .collection("members")
+            .getDocuments { [weak self] (snapshot, error) in
+                guard let self = self, let documents = snapshot?.documents else {
+                    loadingAlert.dismiss(animated: true)
+                    return
+                }
+                
+                let dispatchGroup = DispatchGroup()
+                var updateCount = 0
+                
+                // For each member, update their chat permission
+                for doc in documents {
+                    let userId = doc.documentID
+                    
+                    // Skip the organizer - always keep their chat enabled
+                    if userId == currentUserId {
+                        continue
+                    }
+                    
+                    dispatchGroup.enter()
+                    
+                    // Set everyone else's permission based on our toggle state
+                    // If some can chat now, disable all. If none can chat, enable all.
+                    self.eventGroupManager.updateMemberChatPermission(
+                        eventId: self.eventId,
+                        userId: userId,
+                        canChat: !anyNonOrganizerCanChat
+                    ) { success in
+                        if success {
+                            updateCount += 1
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+                
+                // When all updates are complete
+                dispatchGroup.notify(queue: .main) {
+                    loadingAlert.dismiss(animated: true) {
+                        // Refresh the member list to show updated permissions
+                        self.loadMembers()
+                        
+                        // Show confirmation
+                        let message = anyNonOrganizerCanChat ?
+                            "Chat disabled for all members except You" :
+                            "Chat enabled for all members"
+                        
+                        let alert = UIAlertController(
+                            title: "Settings Updated",
+                            message: message,
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                }
+            }
     }
     
     private func showMemberOptions(for member: EventGroupMember) {
