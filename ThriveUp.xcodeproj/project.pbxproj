@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -205,6 +205,10 @@
 		9E800843DDED1A2BA6196E1E /* Pods-ThriveUp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ThriveUp.release.xcconfig"; path = "Target Support Files/Pods-ThriveUp/Pods-ThriveUp.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		78B2C5362D8615360046B030 /* EventGroups */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EventGroups; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		577DA1B72CE3999000760BFA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -262,6 +266,7 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				78B2C5362D8615360046B030 /* EventGroups */,
 				78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */,
 				78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */,
 				5756E11F2D81E476005EF598 /* Feeds */,
@@ -403,6 +408,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				78B2C5362D8615360046B030 /* EventGroups */,
 			);
 			name = ThriveUp;
 			packageProductDependencies = (

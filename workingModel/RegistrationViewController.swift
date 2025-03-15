@@ -180,6 +180,21 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
                 self?.showAlert(title: "Error", message: "Failed to save registration. Please try again.")
             } else {
                 print("Registration successfully saved for event \(self?.eventId ?? "")")
+                
+                // Check if the event is already approved and add user to the group
+                if let eventId = self?.eventId {
+                    self?.db.collection("events").document(eventId).getDocument { (document, error) in
+                        if let document = document, let data = document.data(),
+                           let status = data["status"] as? String, status == "accepted" {
+                            // Event is already approved, add user to group immediately
+                            let eventGroupManager = EventGroupManager()
+                            eventGroupManager.addUserToEventGroup(eventId: eventId, userId: currentUser.uid) { success in
+                                print("User added to group: \(success)")
+                            }
+                        }
+                    }
+                }
+                
                 self?.showAlert(title: "Success", message: "Registration successful! QR Code generated.", completion: {
                     self?.navigationController?.popViewController(animated: true)
                 })

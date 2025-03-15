@@ -7,11 +7,14 @@ import FirebaseAuth
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
+    private var eventStatusListener: EventStatusListener?
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
         clearBookmarkedEvents()
+        eventStatusListener = EventStatusListener()
+        eventStatusListener?.startListening()
         
         // Set up message notification service
         setupMessageNotifications(application)
@@ -111,6 +114,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("Failed to register for remote notifications: \(error.localizedDescription)")
     }
+    
+    
+    func applicationWillTerminate(_ application: UIApplication) {
+        // Stop event status listener
+        eventStatusListener?.stopListening()
+    }
+    
 }
 
 // MARK: - UNUserNotificationCenterDelegate
@@ -122,6 +132,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         // Show notification banner even when app is in foreground
         completionHandler([.alert, .sound, .badge])
     }
+    
+    
     
     // Handle user tapping on notification
     func userNotificationCenter(_ center: UNUserNotificationCenter,

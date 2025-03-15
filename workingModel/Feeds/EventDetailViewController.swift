@@ -486,6 +486,8 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         }
         return cell
     }
+    
+    
 }
 
 class SpeakerCell: UICollectionViewCell {
