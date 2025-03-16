@@ -706,6 +706,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
               let longitude = selectedLongitude,
               let image = selectedImage,
               let userId = Auth.auth().currentUser?.uid else {
+            activityIndicator.stopAnimating()
+            submitButton.isEnabled = true
             showAlert(title: "Error", message: "Please fill in all required fields.")
             return
         }
@@ -716,62 +718,143 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         let locationDetails = locationDetailsTextField.text ?? ""
         let description = descriptionTextView.text.isEmpty ? nil : descriptionTextView.text
 
+        // Array to store speaker data for final upload
+        var finalSpeakerData: [[String: String]] = []
+        
+        // Upload event and speaker images
+        let dispatchGroup = DispatchGroup()
+        
+        // First upload event image
+        dispatchGroup.enter()
+        
         // Upload event image to Firestore Storage
-        let storageRef = storage.reference().child("event_images/\(eventId).jpg")
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+        let eventStorageRef = storage.reference().child("event_images/\(eventId).jpg")
+        guard let eventImageData = image.jpegData(compressionQuality: 0.8) else {
+            activityIndicator.stopAnimating()
+            submitButton.isEnabled = true
+            showAlert(title: "Error", message: "Failed to process event image")
+            return
+        }
 
-        storageRef.putData(imageData, metadata: nil) { [weak self] (metadata, error) in
-            guard let self = self else { return }
+        eventStorageRef.putData(eventImageData, metadata: nil) { [weak self] (metadata, error) in
+            guard let self = self else {
+                dispatchGroup.leave()
+                return
+            }
+            
             if let error = error {
+                self.activityIndicator.stopAnimating()
+                self.submitButton.isEnabled = true
                 self.showAlert(title: "Error", message: error.localizedDescription)
+                dispatchGroup.leave()
                 return
             }
 
-            storageRef.downloadURL { (url, error) in
+            eventStorageRef.downloadURL { (url, error) in
+                defer { dispatchGroup.leave() }
+                
                 if let error = error {
+                    self.activityIndicator.stopAnimating()
+                    self.submitButton.isEnabled = true
                     self.showAlert(title: "Error", message: error.localizedDescription)
                     return
                 }
 
-                guard let imageUrl = url?.absoluteString else { return }
-
-                let speakerData = self.speakers.enumerated().compactMap { (index, speaker) -> [String: String]? in
-                    if let image = self.speakerImages[index + 1] {
-                        return [
-                            "name": speaker.name,
-                            "imageURL": imageUrl
-                        ]
-                    }
-                    return nil
+                guard let eventImageUrl = url?.absoluteString else {
+                    self.activityIndicator.stopAnimating()
+                    self.submitButton.isEnabled = true
+                    self.showAlert(title: "Error", message: "Failed to get event image URL")
+                    return
                 }
 
-                // Save event data to Firestore
-                let eventData: [String: Any] = [
-                    "eventId": eventId,
-                    "title": title,
-                    "category": selectedCategory,
-                    "attendanceCount": attendanceCount,
-                    "date": eventDate,
-                    "time": time,
-                    "location": location,
-                    "speakers": speakerData,
-                    "organizerName": organizerName,
-                    "locationDetails": locationDetails,
-                    "description": description ?? "",
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "imageName": imageUrl,
-                    "tags": self.selectedTags,
-                    "userId": userId,
-                    "status": "pending" // Add status field
-                ]
-
-                self.db.collection("events").document(eventId).setData(eventData) { error in
-                    if let error = error {
-                        self.showAlert(title: "Error", message: error.localizedDescription)
+                // Now upload each speaker image
+                for (index, speaker) in self.speakers.enumerated() {
+                    dispatchGroup.enter()
+                    
+                    // Check if we have both a name and an image for this speaker
+                    if let speakerImage = self.speakerImages[index + 1], !speaker.name.isEmpty {
+                        // Create a unique filename for each speaker image
+                        let speakerId = UUID().uuidString
+                        let speakerStorageRef = self.storage.reference().child("speaker_images/\(eventId)/\(speakerId).jpg")
+                        
+                        guard let speakerImageData = speakerImage.jpegData(compressionQuality: 0.8) else {
+                            dispatchGroup.leave()
+                            continue
+                        }
+                        
+                        speakerStorageRef.putData(speakerImageData, metadata: nil) { (metadata, error) in
+                            if let error = error {
+                                print("Error uploading speaker image: \(error.localizedDescription)")
+                                dispatchGroup.leave()
+                                return
+                            }
+                            
+                            speakerStorageRef.downloadURL { (url, error) in
+                                defer { dispatchGroup.leave() }
+                                
+                                if let error = error {
+                                    print("Error getting speaker image URL: \(error.localizedDescription)")
+                                    return
+                                }
+                                
+                                if let speakerImageUrl = url?.absoluteString {
+                                    // Create speaker data with the correct image URL and name
+                                    let speakerData: [String: String] = [
+                                        "name": speaker.name,
+                                        "imageURL": speakerImageUrl
+                                    ]
+                                    
+                                    // Add to our final array of speaker data
+                                    finalSpeakerData.append(speakerData)
+                                }
+                            }
+                        }
+                    } else if !speaker.name.isEmpty {
+                        // If we have a name but no image, still include the speaker
+                        finalSpeakerData.append([
+                            "name": speaker.name,
+                            "imageURL": ""
+                        ])
+                        dispatchGroup.leave()
                     } else {
-                        self.showAlert(title: "Success", message: "Event sent for review!") {
-                            self.tabBarController?.selectedIndex = 0
+                        // Skip this speaker entry
+                        dispatchGroup.leave()
+                    }
+                }
+                
+                // Wait for all speaker image uploads to complete
+                dispatchGroup.notify(queue: .main) {
+                    // Now save event data to Firestore with all speaker data
+                    let eventData: [String: Any] = [
+                        "eventId": eventId,
+                        "title": title,
+                        "category": selectedCategory,
+                        "attendanceCount": attendanceCount,
+                        "date": eventDate,
+                        "time": time,
+                        "location": location,
+                        "speakers": finalSpeakerData,
+                        "organizerName": organizerName,
+                        "locationDetails": locationDetails,
+                        "description": description ?? "",
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "imageName": eventImageUrl,
+                        "tags": self.selectedTags,
+                        "userId": userId,
+                        "status": "pending"
+                    ]
+                    
+                    self.db.collection("events").document(eventId).setData(eventData) { error in
+                        self.activityIndicator.stopAnimating()
+                        self.submitButton.isEnabled = true
+                        
+                        if let error = error {
+                            self.showAlert(title: "Error", message: error.localizedDescription)
+                        } else {
+                            self.showAlert(title: "Success", message: "Event sent for review!") {
+                                self.tabBarController?.selectedIndex = 0
+                            }
                         }
                     }
                 }
@@ -785,57 +868,77 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 }
 
     private func createSpeakerInputView() -> UIView {
-            let containerView = UIView()
-            containerView.translatesAutoresizingMaskIntoConstraints = false
+        let containerView = UIView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
 
-            // Speaker Image
-            let imageView = UIImageView()
-            imageView.image = UIImage(systemName: "person.circle") // Placeholder image
-            imageView.contentMode = .scaleAspectFit
-            imageView.translatesAutoresizingMaskIntoConstraints = false
-            containerView.addSubview(imageView)
+        // Speaker Image
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "person.circle") // Placeholder image
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(imageView)
 
-            // Speaker Name TextField
-            let textField = UITextField()
-            textField.placeholder = "Enter speaker name"
-            textField.borderStyle = .roundedRect
-            textField.translatesAutoresizingMaskIntoConstraints = false
-            containerView.addSubview(textField)
+        // Speaker Name TextField
+        let textField = UITextField()
+        textField.placeholder = "Enter speaker name"
+        textField.borderStyle = .roundedRect
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(textField)
+        
+        // Set a tag to identify which speaker this text field belongs to
+        let speakerIndex = speakersStackView.arrangedSubviews.count
+        textField.tag = 1000 + speakerIndex  // Using 1000+ to avoid conflicts with other tags
+        
+        // Add target to capture text changes
+        textField.addTarget(self, action: #selector(speakerNameChanged(_:)), for: .editingChanged)
 
-            // Delete Button
-            let deleteButton = UIButton(type: .system)
-            deleteButton.setTitle("Delete", for: .normal)
-            deleteButton.setTitleColor(.red, for: .normal)
-            deleteButton.addTarget(self, action: #selector(deleteSpeakerButtonTapped(_:)), for: .touchUpInside)
-            deleteButton.translatesAutoresizingMaskIntoConstraints = false
-            containerView.addSubview(deleteButton)
+        // Delete Button
+        let deleteButton = UIButton(type: .system)
+        deleteButton.setTitle("Delete", for: .normal)
+        deleteButton.setTitleColor(.red, for: .normal)
+        deleteButton.addTarget(self, action: #selector(deleteSpeakerButtonTapped(_:)), for: .touchUpInside)
+        deleteButton.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(deleteButton)
 
-            // Set tag for imageView
-            imageView.tag = speakersStackView.arrangedSubviews.count + 1
+        // Set tag for imageView
+        imageView.tag = speakersStackView.arrangedSubviews.count + 1
 
-            // Layout Constraints
-            NSLayoutConstraint.activate([
-                imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-                imageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-                imageView.widthAnchor.constraint(equalToConstant: 50),
-                imageView.heightAnchor.constraint(equalToConstant: 50),
+        // Layout Constraints
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            imageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 50),
+            imageView.heightAnchor.constraint(equalToConstant: 50),
 
-                textField.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 16),
-                textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-                textField.heightAnchor.constraint(equalToConstant: 44),
+            textField.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 16),
+            textField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            textField.heightAnchor.constraint(equalToConstant: 44),
+            textField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150),
 
-                deleteButton.leadingAnchor.constraint(equalTo: textField.trailingAnchor, constant: 16),
-                deleteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                deleteButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            deleteButton.leadingAnchor.constraint(equalTo: textField.trailingAnchor, constant: 16),
+            deleteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            deleteButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
 
-                containerView.heightAnchor.constraint(equalToConstant: 70) // Adjust as needed
-            ])
+            containerView.heightAnchor.constraint(equalToConstant: 70) // Adjust as needed
+        ])
 
-            imageView.isUserInteractionEnabled = true
-            imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(selectSpeakerImage(_:))))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(selectSpeakerImage(_:))))
 
-            return containerView
-        }
+        return containerView
+    }
+    
+    // Add a method to handle speaker name changes
+    @objc private func speakerNameChanged(_ textField: UITextField) {
+        // Calculate the speaker index from the tag
+        let speakerIndex = textField.tag - 1000
+        
+        // Make sure we have a valid index
+        guard speakerIndex >= 0 && speakerIndex < speakers.count else { return }
+        
+        // Update the speaker's name
+        speakers[speakerIndex].name = textField.text ?? ""
+    }
 
                 @objc private func deleteSpeakerButtonTapped(_ sender: UIButton) {
                     guard let speakerView = sender.superview else { return }

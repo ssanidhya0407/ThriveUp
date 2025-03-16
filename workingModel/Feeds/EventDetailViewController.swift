@@ -157,6 +157,8 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         layout.minimumInteritemSpacing = 16
         layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         speakersCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        speakersCollectionView.backgroundColor = .clear
+        speakersCollectionView.showsHorizontalScrollIndicator = false
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -197,6 +199,10 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
             contentView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
+        
+        speakersCollectionView.register(SpeakerCell.self, forCellWithReuseIdentifier: SpeakerCell.identifier)
+        speakersCollectionView.dataSource = self
+        speakersCollectionView.delegate = self
 
         setupConstraints()
     }
@@ -536,7 +542,7 @@ class SpeakerCell: UICollectionViewCell {
     
     func configure(with speaker: Speaker) {
         nameLabel.text = speaker.name
-        if let url = URL(string: speaker.imageURL) {
+        if let url = URL(string: speaker.imageURL), !speaker.imageURL.isEmpty {
             DispatchQueue.global().async {
                 if let data = try? Data(contentsOf: url) {
                     DispatchQueue.main.async {
@@ -544,6 +550,10 @@ class SpeakerCell: UICollectionViewCell {
                     }
                 }
             }
+        } else {
+            // Set placeholder image if URL is empty
+            self.imageView.image = UIImage(systemName: "person.circle")
+            self.imageView.tintColor = .gray
         }
     }
 }

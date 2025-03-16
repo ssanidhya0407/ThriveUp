@@ -8,7 +8,12 @@
 import UIKit
 
 class TermsAndConditionsViewController: UIViewController {
-
+    
+    private let userDefaultsKey = "TermsAccepted"
+    private func hasAcceptedTerms() -> Bool {
+        return UserDefaults.standard.bool(forKey: userDefaultsKey)
+    }
+    
     // MARK: - UI Components
     private let containerView: UIView = {
         let view = UIView()
@@ -96,6 +101,15 @@ class TermsAndConditionsViewController: UIViewController {
         view.backgroundColor = .white
         title = "Terms and Conditions"
         
+        // Check if terms have been accepted before
+        if hasAcceptedTerms() {
+            // Terms already accepted, navigate to main screen
+            DispatchQueue.main.async {
+                self.transitionToGeneralTabBarController()
+            }
+            return
+        }
+        
         setupViews()
         setupConstraints()
         loadTermsAndConditions()
@@ -106,7 +120,7 @@ class TermsAndConditionsViewController: UIViewController {
     private func setupViews() {
         
         buttonContainerView.addSubview(scrollToTopButton)
-
+        
         view.addSubview(containerView)
         containerView.addSubview(headerLabel)
         containerView.addSubview(lastUpdatedLabel)
@@ -156,40 +170,43 @@ class TermsAndConditionsViewController: UIViewController {
             textView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             textView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
             
+            // In setupConstraints(), modify the button constraints:
+
             // Button Container
-            buttonContainerView.heightAnchor.constraint(equalToConstant: 80),
+            buttonContainerView.heightAnchor.constraint(equalToConstant: 120), // Make this taller to fit both buttons
             buttonContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             buttonContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             buttonContainerView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            
-            // Scroll To Bottom Button
+
+            // Scroll To Bottom Button - position it in the center initially
             scrollToBottomButton.centerXAnchor.constraint(equalTo: buttonContainerView.centerXAnchor),
             scrollToBottomButton.centerYAnchor.constraint(equalTo: buttonContainerView.centerYAnchor),
             scrollToBottomButton.widthAnchor.constraint(equalToConstant: 150),
             scrollToBottomButton.heightAnchor.constraint(equalToConstant: 40),
-            // ScrolltoTopButton
+
+            // Scroll to Top Button - position it at the top of the button container
             scrollToTopButton.centerXAnchor.constraint(equalTo: buttonContainerView.centerXAnchor),
-               scrollToTopButton.centerYAnchor.constraint(equalTo: buttonContainerView.centerYAnchor, constant: -50), // Above scrollToBottomButton
-               scrollToTopButton.widthAnchor.constraint(equalToConstant: 150),
-               scrollToTopButton.heightAnchor.constraint(equalToConstant: 40),
-            
-            // Accept Button
+            scrollToTopButton.topAnchor.constraint(equalTo: buttonContainerView.topAnchor, constant: 5),
+            scrollToTopButton.widthAnchor.constraint(equalToConstant: 150),
+            scrollToTopButton.heightAnchor.constraint(equalToConstant: 40),
+
+            // Accept Button - position it at the bottom of the button container
             acceptButton.centerXAnchor.constraint(equalTo: buttonContainerView.centerXAnchor),
-            acceptButton.centerYAnchor.constraint(equalTo: buttonContainerView.centerYAnchor),
+            acceptButton.bottomAnchor.constraint(equalTo: buttonContainerView.bottomAnchor, constant: -10),
             acceptButton.widthAnchor.constraint(equalToConstant: 200),
             acceptButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
-
+    
     private func loadTermsAndConditions() {
         // Load the terms and conditions content
         let termsAndConditions = """
         1.Introduction
         Welcome to our application. These terms and conditions outline the rules and regulations for the use of our application.
-
+        
         2.Intellectual Property Rights
         Other than the content you own, under these terms, we own all the intellectual property rights and materials contained in this application.
-
+        
         3.Restrictions
         You are specifically restricted from all of the following:
         - Publishing any material in any other media without our consent.
@@ -197,28 +214,28 @@ class TermsAndConditionsViewController: UIViewController {
         
         4.Your Content
         In these terms and conditions, "Your Content" shall mean any audio, video text, images or other material you choose to display in this application. By displaying Your Content, you grant us a non-exclusive, worldwide irrevocable, sub-licensable license to use, reproduce, adapt, publish, translate and distribute it in any and all media.
-
+        
         5.No Warranties
         This application is provided "as is," with all faults, and we express no representations or warranties, of any kind related to this application or the materials contained on this application.
-
+        
         6.Limitation of Liability
         In no event shall we, nor any of our officers, directors and employees, be held liable for anything arising out of or in any way connected with your use of this application.
-
+        
         7.Indemnification
         You hereby indemnify to the fullest extent us from and against any and all liabilities, costs, demands, causes of action, damages and expenses arising in any way related to your breach of any of the provisions of these terms.
-
+        
         8.Severability
         If any provision of these terms is found to be invalid under any applicable law, such provisions shall be deleted without affecting the remaining provisions herein.
-
+        
         9.Variation of Terms
         We are permitted to revise these terms at any time as we see fit, and by using this application you are expected to review these terms on a regular basis.
-
+        
         10.Assignment
         We are allowed to assign, transfer, and subcontract its rights and/or obligations under these terms without any notification. However, you are not allowed to assign, transfer, or subcontract any of your rights and/or obligations under these terms.
-
+        
         11.Entire Agreement
         These terms constitute the entire agreement between us and you in relation to your use of this application and supersede all prior agreements and understandings.
-
+        
         12.Governing Law & Jurisdiction
         These terms will be governed by and interpreted in accordance with the laws of the State, and you submit to the non-exclusive jurisdiction of the state and federal courts located in the State for the resolution of any disputes.
         """
@@ -231,7 +248,7 @@ class TermsAndConditionsViewController: UIViewController {
         acceptButton.addTarget(self, action: #selector(handleAcceptTerms), for: .touchUpInside)
         textView.delegate = self
         
-
+        
     }
     
     // MARK: - Navigation
@@ -243,42 +260,53 @@ class TermsAndConditionsViewController: UIViewController {
     
     // MARK: - Actions
     @objc private func handleScrollToBottom() {
-        let bottomOffset = CGPoint(x: 0, y: textView.contentSize.height - textView.bounds.height)
-        textView.setContentOffset(bottomOffset, animated: true)
-        
-        // Show accept button and hide scroll to bottom
-        scrollToBottomButton.isHidden = true
-        acceptButton.isHidden = false
+        // Calculate the bottom offset more precisely
+        DispatchQueue.main.async {
+            let bottomOffset = CGPoint(x: 0, y: max(0, self.textView.contentSize.height - self.textView.bounds.height + self.textView.contentInset.bottom))
+            self.textView.setContentOffset(bottomOffset, animated: true)
+            
+            // Set a delay to ensure we've reached the bottom before showing buttons
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // Show both accept button and scroll to top button, hide scroll to bottom
+                self.scrollToBottomButton.isHidden = true
+                self.acceptButton.isHidden = false
+                self.scrollToTopButton.isHidden = false
+            }
+        }
     }
     
-//    @objc private func handleScrollToTop() {
-//        textView.setContentOffset(.zero, animated: true)
-//
-//        // Hide scroll to top and show scroll to bottom
-//        scrollToTopButton.isHidden = true
-//        scrollToBottomButton.isHidden = false
-//    }
-//    @objc private func handleScrollToTop() {
-//        textView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
-//
-//        // Hide scroll to top and show scroll to bottom
-//        scrollToTopButton.isHidden = true
-//        scrollToBottomButton.isHidden = false
-//    }
+    //    @objc private func handleScrollToTop() {
+    //        textView.setContentOffset(.zero, animated: true)
+    //
+    //        // Hide scroll to top and show scroll to bottom
+    //        scrollToTopButton.isHidden = true
+    //        scrollToBottomButton.isHidden = false
+    //    }
+    //    @objc private func handleScrollToTop() {
+    //        textView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+    //
+    //        // Hide scroll to top and show scroll to bottom
+    //        scrollToTopButton.isHidden = true
+    //        scrollToBottomButton.isHidden = false
+    //    }
     @objc private func handleScrollToTop() {
         DispatchQueue.main.async {
             let topOffset = CGPoint(x: 0, y: -self.textView.contentInset.top)
             self.textView.setContentOffset(topOffset, animated: true)
-
-            // Ensure button visibility updates correctly
-            self.scrollToTopButton.isHidden = true
+            
+            // After scrolling to top, revert to initial state
             self.scrollToBottomButton.isHidden = false
+            self.acceptButton.isHidden = true
+            self.scrollToTopButton.isHidden = true
         }
     }
-
-
     
+    
+    // Modify the handleAcceptTerms method
     @objc private func handleAcceptTerms() {
+        // Save that terms have been accepted
+        UserDefaults.standard.set(true, forKey: userDefaultsKey)
+        
         // Navigate to the GeneralTabBarController
         transitionToGeneralTabBarController()
     }
@@ -301,22 +329,24 @@ extension TermsAndConditionsViewController: UITextViewDelegate {
 //            scrollToBottomButton.isHidden = false
 //            acceptButton.isHidden = true
 //        }
-//    }
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let bottomOffset = scrollView.contentSize.height - scrollView.bounds.height
         let currentOffset = scrollView.contentOffset.y
-
+        
+        // If user has scrolled to the bottom
         if currentOffset >= bottomOffset - 20 {
-            scrollToBottomButton.isHidden = true
-            acceptButton.isHidden = false
-            scrollToTopButton.isHidden = false // Show scroll to top button
-        } else if currentOffset <= 10 {
-            scrollToTopButton.isHidden = true // Hide if already at top
-            scrollToBottomButton.isHidden = false
-        } else {
+            // If we're at the bottom and the scroll to bottom button is visible, hide it and show the others
+            if !scrollToBottomButton.isHidden {
+                scrollToBottomButton.isHidden = true
+                acceptButton.isHidden = false
+                scrollToTopButton.isHidden = false
+            }
+        }
+        // If user has manually scrolled away from the bottom, show scroll to bottom and hide others
+        else if currentOffset < bottomOffset - 50 && scrollToBottomButton.isHidden {
             scrollToBottomButton.isHidden = false
             acceptButton.isHidden = true
-            scrollToTopButton.isHidden = false // Keep scroll to top visible
+            scrollToTopButton.isHidden = true
         }
     }
     

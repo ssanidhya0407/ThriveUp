@@ -578,7 +578,7 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
     
     // MARK: - Fetch Events
     private func fetchEventsFromFirestore() {
-        Firestore.firestore().collection("events").getDocuments { [weak self] snapshot, error in
+        Firestore.firestore().collection("events").whereField("status", isEqualTo: "accepted").getDocuments { [weak self] snapshot, error in
             if let error = error {
                 print("Error fetching events: \(error.localizedDescription)")
                 return

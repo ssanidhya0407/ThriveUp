@@ -16,7 +16,13 @@ class LoginViewController: UIViewController {
         return control
     }()
     
-    
+    private let backButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        button.tintColor = .systemOrange
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
     
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
@@ -121,6 +127,7 @@ class LoginViewController: UIViewController {
         view.addSubview(loginSubtitleLabel)
         view.addSubview(userIDTextField)
         view.addSubview(passwordTextField)
+        view.addSubview(backButton)
         view.addSubview(loginButton)
         view.addSubview(cardView) // Add the card view behind the spinner
         cardView.addSubview(activityIndicator) // Add activity indicator inside the card view
@@ -128,6 +135,11 @@ class LoginViewController: UIViewController {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            backButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            backButton.widthAnchor.constraint(equalToConstant: 44),
+            backButton.heightAnchor.constraint(equalToConstant: 44),
+            
             segmentedControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
             segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             segmentedControl.widthAnchor.constraint(equalToConstant: 250),
@@ -171,12 +183,25 @@ class LoginViewController: UIViewController {
     private func setupActions() {
         segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
         loginButton.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
+        backButton.addTarget(self, action: #selector(handleBackButton), for: .touchUpInside)
     }
     
     // MARK: - Actions
     @objc private func segmentChanged() {
         isUserSelected = segmentedControl.selectedSegmentIndex == 0
         updateLoginPrompt()
+    }
+    
+    @objc private func handleBackButton() {
+        // Navigate back to EventViewController
+        let eventViewController = EventViewController()
+        if let sceneDelegate = view.window?.windowScene?.delegate as? SceneDelegate {
+            sceneDelegate.window?.rootViewController = eventViewController
+            sceneDelegate.window?.makeKeyAndVisible()
+        } else {
+            // If we can't access the SceneDelegate, fall back to normal navigation
+            dismiss(animated: true, completion: nil)
+        }
     }
     
     private func updateLoginPrompt() {

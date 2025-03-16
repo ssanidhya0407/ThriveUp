@@ -337,7 +337,7 @@
                 print("Parsed Speakers: \(speakers)")
 
                 // Fetch organizer details (UID from event document)
-                let uid = data["uid"] as? String ?? ""
+                let uid = data["userId"] as? String ?? ""
                 self.fetchOrganizerDetails(uid: uid)
 
                 // Initialize the EventModel

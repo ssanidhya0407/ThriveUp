@@ -303,7 +303,7 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
     private func fetchCreatedEvents() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        db.collection("events").whereField("userId", isEqualTo: userId).getDocuments { [weak self] snapshot, error in
+        db.collection("events").whereField("userId", isEqualTo: userId).whereField("status", isEqualTo: "accepted").getDocuments { [weak self] snapshot, error in
             guard let self = self, let documents = snapshot?.documents, error == nil else { return }
                 
             self.createdEvents = documents.map { doc in
