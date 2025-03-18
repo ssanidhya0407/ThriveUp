@@ -2,248 +2,76 @@ import UIKit
 import FirebaseFirestore
 import FirebaseAuth
 
-// Add this at the top of NotificationViewController.swift
-extension Notification.Name {
-    static let newMessageReceived = Notification.Name("newMessageReceived")
-}
-
 class NotificationViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-
+    
+    // MARK: - Properties
+    private let tableView = UITableView()
     private var notifications: [NotificationModel] = []
     private let db = Firestore.firestore()
-    private var notificationListener: ListenerRegistration?
+    private let refreshControl = UIRefreshControl()
+    private let emptyStateLabel = UILabel()
     
-    private let tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.register(NotificationTableViewCell.self, forCellReuseIdentifier: NotificationTableViewCell.identifier)
-        tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 80
-        tableView.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
-        return tableView
-    }()
-    
-    private let emptyStateView: UIView = {
-        let view = UIView()
-        view.isHidden = true
-        return view
-    }()
-    
-    private let emptyStateImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(systemName: "bell.slash"))
-        imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .systemGray3
-        return imageView
-    }()
-    
-    private let emptyStateLabel: UILabel = {
-        let label = UILabel()
-        label.text = "No notifications yet"
-        label.textColor = .secondaryLabel
-        label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 16)
-        return label
-    }()
-    
+    // MARK: - Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupNotifications()
-        loadNotifications()
+        fetchNotifications()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        updateBadgeCount()
+        fetchNotifications() // Refresh notifications when view appears
     }
     
+    // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
         title = "Notifications"
         
-        // Setup navigation bar
-        if #available(iOS 13.0, *) {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(
-                image: UIImage(systemName: "trash"),
-                style: .plain,
-                target: self,
-                action: #selector(clearAllNotifications)
-            )
-        } else {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(
-                title: "Clear All",
-                style: .plain,
-                target: self,
-                action: #selector(clearAllNotifications)
-            )
-        }
-        
-        // Setup tableView
-        view.addSubview(tableView)
+        // Setup TableView
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.frame = view.bounds
+        tableView.register(NotificationCell.self, forCellReuseIdentifier: "NotificationCell")
+        tableView.separatorStyle = .none
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 80
         
-        // Setup empty state view
-        view.addSubview(emptyStateView)
-        emptyStateView.addSubview(emptyStateImageView)
-        emptyStateView.addSubview(emptyStateLabel)
+        // Add refresh control
+        refreshControl.addTarget(self, action: #selector(refreshNotifications), for: .valueChanged)
+        tableView.refreshControl = refreshControl
         
-        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
-        emptyStateImageView.translatesAutoresizingMaskIntoConstraints = false
+        // Setup empty state label
+        emptyStateLabel.text = "You have no notifications"
+        emptyStateLabel.font = UIFont.systemFont(ofSize: 16)
+        emptyStateLabel.textColor = .gray
+        emptyStateLabel.textAlignment = .center
+        emptyStateLabel.isHidden = true
+        
+        view.addSubview(tableView)
+        view.addSubview(emptyStateLabel)
+        
+        tableView.translatesAutoresizingMaskIntoConstraints = false
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateView.widthAnchor.constraint(equalToConstant: 200),
-            emptyStateView.heightAnchor.constraint(equalToConstant: 200),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             
-            emptyStateImageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
-            emptyStateImageView.topAnchor.constraint(equalTo: emptyStateView.topAnchor),
-            emptyStateImageView.widthAnchor.constraint(equalToConstant: 60),
-            emptyStateImageView.heightAnchor.constraint(equalToConstant: 60),
-            
-            emptyStateLabel.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
-            emptyStateLabel.topAnchor.constraint(equalTo: emptyStateImageView.bottomAnchor, constant: 16),
-            emptyStateLabel.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor)
+            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-        
-        // Setup refresh control
-        setupRefreshControl()
     }
     
-    private func setupNotifications() {
-        // Start real-time notification updates
-        startRealTimeNotificationUpdates()
-        
-        // Listen for new message notifications
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(refreshNotifications),
-            name: .newMessageReceived,
-            object: nil
-        )
-    }
-    
-    private func setupRefreshControl() {
-        let refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: #selector(refreshNotifications), for: .valueChanged)
-        tableView.refreshControl = refreshControl
-    }
-    
+    // MARK: - Data Operations
     @objc private func refreshNotifications() {
-        loadNotifications()
+        fetchNotifications()
     }
     
-    @objc private func clearAllNotifications() {
-        // Ask for confirmation
-        let alertController = UIAlertController(
-            title: "Clear All Notifications",
-            message: "Are you sure you want to clear all notifications? This action cannot be undone.",
-            preferredStyle: .alert
-        )
-        
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alertController.addAction(UIAlertAction(title: "Clear All", style: .destructive) { [weak self] _ in
-            self?.deleteAllNotifications()
-        })
-        
-        present(alertController, animated: true)
-    }
-    
-    
-    private func deleteNotification(_ notificationId: String) {
-        db.collection("notifications").document(notificationId).delete { [weak self] error in
-            if let error = error {
-                print("Error deleting notification: \(error.localizedDescription)")
-            } else {
-                print("Notification successfully deleted")
-                
-                // Also remove from local array and update UI
-                if let index = self?.notifications.firstIndex(where: { $0.id == notificationId }) {
-                    DispatchQueue.main.async {
-                        self?.notifications.remove(at: index)
-                        self?.tableView.reloadData()
-                        self?.updateEmptyState()
-                        self?.updateBadgeCount()
-                    }
-                }
-            }
-        }
-    }
-    
-    private func deleteAllNotifications() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let batch = db.batch()
-        
-        db.collection("notifications")
-            .whereField("userId", isEqualTo: userId)
-            .getDocuments { [weak self] snapshot, error in
-                guard let documents = snapshot?.documents else {
-                    print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
-                    return
-                }
-                
-                for document in documents {
-                    batch.deleteDocument(document.reference)
-                }
-                
-                batch.commit { error in
-                    if let error = error {
-                        print("Error deleting notifications: \(error.localizedDescription)")
-                    } else {
-                        DispatchQueue.main.async {
-                            self?.notifications.removeAll()
-                            self?.tableView.reloadData()
-                            self?.updateEmptyState()
-                            self?.updateBadgeCount()
-                        }
-                    }
-                }
-            }
-    }
-    
-    private func startRealTimeNotificationUpdates() {
+    func fetchNotifications() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            print("User not authenticated.")
-            return
-        }
-        
-        // Stop previous listener if exists
-        notificationListener?.remove()
-        
-        // Listen for real-time updates
-        notificationListener = db.collection("notifications")
-            .whereField("userId", isEqualTo: userId)
-            .order(by: "timestamp", descending: true)
-            .addSnapshotListener { [weak self] querySnapshot, error in
-                if let error = error {
-                    print("Error listening for notification updates: \(error.localizedDescription)")
-                    return
-                }
-                
-                self?.loadNotificationsFromSnapshot(querySnapshot)
-            }
-    }
-    
-    private func loadNotificationsFromSnapshot(_ querySnapshot: QuerySnapshot?) {
-        self.notifications = querySnapshot?.documents.compactMap { document in
-            return NotificationModel(document: document)
-        } ?? []
-        
-        DispatchQueue.main.async {
-            self.tableView.refreshControl?.endRefreshing()
-            self.tableView.reloadData()
-            self.updateEmptyState()
-            self.updateBadgeCount()
-        }
-    }
-    
-    private func loadNotifications() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("User not authenticated.")
+            refreshControl.endRefreshing()
             return
         }
         
@@ -251,180 +79,427 @@ class NotificationViewController: UIViewController, UITableViewDelegate, UITable
             .whereField("userId", isEqualTo: userId)
             .order(by: "timestamp", descending: true)
             .getDocuments { [weak self] querySnapshot, error in
+                guard let self = self else { return }
+                
+                self.refreshControl.endRefreshing()
+                
                 if let error = error {
-                    print("Error fetching notifications: \(error.localizedDescription)")
+                    print("Error fetching notifications: \(error)")
                     return
                 }
                 
-                self?.loadNotificationsFromSnapshot(querySnapshot)
+                var newNotifications: [NotificationModel] = []
+                
+                for document in querySnapshot?.documents ?? [] {
+                    if let notification = NotificationModel(document: document) {
+                        newNotifications.append(notification)
+                    }
+                }
+                
+                self.notifications = newNotifications
+                
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.emptyStateLabel.isHidden = !self.notifications.isEmpty
+                }
+                
+                // Mark all as seen (not necessarily read)
+                self.markNotificationsAsSeen()
             }
     }
     
-    private func updateEmptyState() {
-        emptyStateView.isHidden = !notifications.isEmpty
+    private func markNotificationsAsSeen() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("users").document(userId).updateData([
+            "lastNotificationCheck": FieldValue.serverTimestamp()
+        ])
     }
     
-    private func updateBadgeCount() {
-        let unreadCount = notifications.filter { !$0.isRead }.count
-        if unreadCount > 0 {
-            self.tabBarItem.badgeValue = "\(unreadCount)"
-        } else {
-            self.tabBarItem.badgeValue = nil
+    private func markNotificationAsRead(_ notification: NotificationModel) {
+        db.collection("notifications").document(notification.id).updateData([
+            "isRead": true
+        ]) { [weak self] error in
+            if let error = error {
+                print("Error marking notification as read: \(error)")
+                return
+            }
+            
+            // Update local copy
+            if let index = self?.notifications.firstIndex(where: { $0.id == notification.id }) {
+                self?.notifications[index] = notification.withUpdatedReadStatus(true)
+                
+                DispatchQueue.main.async {
+                    self?.tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .none)
+                }
+            }
         }
     }
     
-    // MARK: - UITableViewDataSource
+    // MARK: - TableView DataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notifications.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: NotificationTableViewCell.identifier, for: indexPath) as! NotificationTableViewCell
-        cell.configure(with: notifications[indexPath.row])
+        let cell = tableView.dequeueReusableCell(withIdentifier: "NotificationCell", for: indexPath) as! NotificationCell
+        let notification = notifications[indexPath.row]
+        cell.configure(with: notification)
         return cell
     }
     
-    // MARK: - UITableViewDelegate
+    // MARK: - TableView Delegate
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        
         let notification = notifications[indexPath.row]
-        deleteNotification(notification.id)
         
-        // Handle different types of notifications
-        if let chatId = notification.chatId {
-            // This is a chat message notification
-            navigateToChat(chatId: chatId, senderId: notification.senderId)
-        }
+        // Mark notification as read
+        markNotificationAsRead(notification)
+        
+        // Handle notification based on type
+        handleNotificationTap(notification)
     }
     
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (action, view, completion) in
-            guard let self = self else { return }
-            
-            // Delete notification from Firestore
-            let notification = self.notifications[indexPath.row]
-            self.db.collection("notifications").document(notification.id).delete { error in
-                if let error = error {
-                    print("Error deleting notification: \(error.localizedDescription)")
-                } else {
-                    // Remove from local array
-                    self.notifications.remove(at: indexPath.row)
-                    self.tableView.deleteRows(at: [indexPath], with: .automatic)
-                    self.updateEmptyState()
-                    self.updateBadgeCount()
-                }
-            }
-            
-            completion(true)
-        }
-        
-        // Create a mark as read/unread action
-        let isRead = self.notifications[indexPath.row].isRead
-        let readTitle = isRead ? "Mark as Unread" : "Mark as Read"
-        let readAction = UIContextualAction(style: .normal, title: readTitle) { [weak self] (action, view, completion) in
-            guard let self = self else { return }
-            
-            let notification = self.notifications[indexPath.row]
-            
-            // Toggle read status
-            let newReadStatus = !notification.isRead
-            self.db.collection("notifications").document(notification.id).updateData([
-                "isRead": newReadStatus
-            ]) { error in
-                if let error = error {
-                    print("Error updating notification read status: \(error.localizedDescription)")
-                } else {
-                    // Update local model
-                    self.notifications[indexPath.row].isRead = newReadStatus
-                    self.tableView.reloadRows(at: [indexPath], with: .automatic)
-                    self.updateBadgeCount()
-                }
-            }
-            
-            completion(true)
-        }
-        
-        // Set background color for read/unread action
-        readAction.backgroundColor = .systemBlue
-        
-        return UISwipeActionsConfiguration(actions: [deleteAction, readAction])
-    }
-    
-    private func markNotificationAsRead(_ notification: NotificationModel) {
-        // Skip if already read
-        if notification.isRead {
+    // MARK: - Notification Handling
+    private func handleNotificationTap(_ notification: NotificationModel) {
+        // Get notification type from data
+        guard let notificationType = getNotificationType(for: notification) else {
+            // If no type is found, treat as a regular notification
+            showNotificationDetail(notification)
             return
         }
         
-        db.collection("notifications").document(notification.id).updateData(["isRead": true]) { [weak self] error in
-            if let error = error {
-                print("Error marking notification as read: \(error.localizedDescription)")
-            } else {
-                if let index = self?.notifications.firstIndex(where: { $0.id == notification.id }) {
-                    self?.notifications[index].isRead = true
-                    DispatchQueue.main.async {
-                        self?.tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
-                        self?.updateBadgeCount()
-                    }
-                }
-            }
+        switch notificationType {
+        case "team_invitation":
+            handleTeamInvitation(notification)
+        case "team_join_request":
+            handleTeamJoinRequest(notification)
+        case "team_join_accepted", "team_join_rejected":
+            // Show notification with acknowledgment
+            showTeamResponseNotification(notification)
+        default:
+            // Default behavior for other notifications
+            showNotificationDetail(notification)
         }
     }
     
-    private func navigateToChat(chatId: String, senderId: String?) {
-        // First mark all messages in this chat as read
-        MessageNotificationService.shared.markAllMessagesAsRead(chatId: chatId)
+    private func getNotificationType(for notification: NotificationModel) -> String? {
+        // First try to get the document with additional data
+        let docRef = db.collection("notifications").document(notification.id)
+        var notificationType: String?
         
-        // Fetch the sender user details
-        if let senderId = senderId {
-            // Fetch user details for the sender
-            FriendsService.shared.fetchUserDetails(uid: senderId) { [weak self] user, error in
-                guard let self = self, let friendUser = user else {
-                    if let error = error {
-                        print("Error fetching sender details: \(error)")
-                    }
-                    return
-                }
-                
-                // Get the current user ID
-                guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-                
-                // Create a new ChatViewController
-                let chatViewController = ChatViewController()
-                
-                // First get the current user and then start chat with friend
-                FriendsService.shared.fetchUserDetails(uid: currentUserId) { currentUser, error in
-                    guard let currentUser = currentUser else { return }
-                    
-                    // Set the current user on the ChatViewController
-                    chatViewController.currentUser = currentUser
-                    
-                    // Wait a moment for the ChatViewController to be ready
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        // Start chat with this friend
-                        chatViewController.startChat(with: friendUser)
-                    }
-                }
-                
-                // Navigate to the ChatViewController first
-                self.navigationController?.pushViewController(chatViewController, animated: true)
+        // We'll use a semaphore for synchronous behavior in this method
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        docRef.getDocument { documentSnapshot, error in
+            if let document = documentSnapshot, document.exists,
+               let data = document.data(),
+               let type = data["notificationType"] as? String {
+                notificationType = type
             }
-        } else {
-            // If we don't have the sender ID, just navigate to the main chat list
-            let chatViewController = ChatViewController()
-            self.navigationController?.pushViewController(chatViewController, animated: true)
+            semaphore.signal()
+        }
+        
+        // Wait for the Firestore call to complete
+        _ = semaphore.wait(timeout: .now() + 2.0)
+        return notificationType
+    }
+    
+    // MARK: - Team Notification Handlers
+    private func handleTeamInvitation(_ notification: NotificationModel) {
+        // First get additional data about the team
+        let docRef = db.collection("notifications").document(notification.id)
+        
+        docRef.getDocument { [weak self] documentSnapshot, error in
+            guard let self = self,
+                  let document = documentSnapshot,
+                  let data = document.data(),
+                  let teamId = data["teamId"] as? String,
+                  let teamName = data["teamName"] as? String,
+                  let eventName = data["eventName"] as? String else {
+                // Fallback to standard notification if we can't get team data
+                self?.showNotificationDetail(notification)
+                return
+            }
+            
+            // Show team invitation alert
+            let alert = UIAlertController(
+                title: "Team Invitation",
+                message: "You've been invited to join team '\(teamName)' for the event '\(eventName)'. Would you like to accept?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Decline", style: .destructive) { [weak self] _ in
+                NotificationHandler.shared.respondToTeamInvitation(
+                    notificationId: notification.id,
+                    teamId: teamId,
+                    accept: false
+                ) { success, message in
+                    DispatchQueue.main.async {
+                        if success {
+                            self?.showToast(message: message)
+                            self?.fetchNotifications() // Refresh notifications
+                        } else {
+                            self?.showAlert(title: "Error", message: message)
+                        }
+                    }
+                }
+            })
+            
+            alert.addAction(UIAlertAction(title: "Accept", style: .default) { [weak self] _ in
+                NotificationHandler.shared.respondToTeamInvitation(
+                    notificationId: notification.id,
+                    teamId: teamId,
+                    accept: true
+                ) { success, message in
+                    DispatchQueue.main.async {
+                        if success {
+                            self?.showToast(message: message)
+                            self?.fetchNotifications() // Refresh notifications
+                        } else {
+                            self?.showAlert(title: "Error", message: message)
+                        }
+                    }
+                }
+            })
+            
+            self.present(alert, animated: true)
         }
     }
     
+    private func handleTeamJoinRequest(_ notification: NotificationModel) {
+        // First get additional data about the join request
+        let docRef = db.collection("notifications").document(notification.id)
+        
+        docRef.getDocument { [weak self] documentSnapshot, error in
+            guard let self = self,
+                  let document = documentSnapshot,
+                  let data = document.data(),
+                  let teamId = data["teamId"] as? String,
+                  let senderId = data["senderId"] as? String,
+                  let senderName = data["senderName"] as? String,
+                  let teamName = data["teamName"] as? String else {
+                // Fallback to standard notification if we can't get team data
+                self?.showNotificationDetail(notification)
+                return
+            }
+            
+            // Show team join request alert
+            let alert = UIAlertController(
+                title: "Team Join Request",
+                message: "\(senderName) has requested to join your team '\(teamName)'. Would you like to accept?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "Decline", style: .destructive) { [weak self] _ in
+                NotificationHandler.shared.respondToTeamJoinRequest(
+                    notificationId: notification.id,
+                    teamId: teamId,
+                    userId: senderId,
+                    accept: false
+                ) { success, message in
+                    DispatchQueue.main.async {
+                        if success {
+                            self?.showToast(message: message)
+                            self?.fetchNotifications() // Refresh notifications
+                        } else {
+                            self?.showAlert(title: "Error", message: message)
+                        }
+                    }
+                }
+            })
+            
+            alert.addAction(UIAlertAction(title: "Accept", style: .default) { [weak self] _ in
+                NotificationHandler.shared.respondToTeamJoinRequest(
+                    notificationId: notification.id,
+                    teamId: teamId,
+                    userId: senderId,
+                    accept: true
+                ) { success, message in
+                    DispatchQueue.main.async {
+                        if success {
+                            self?.showToast(message: message)
+                            self?.fetchNotifications() // Refresh notifications
+                        } else {
+                            self?.showAlert(title: "Error", message: message)
+                        }
+                    }
+                }
+            })
+            
+            self.present(alert, animated: true)
+        }
+    }
     
+    private func showTeamResponseNotification(_ notification: NotificationModel) {
+        // Simply show an acknowledgment for team responses
+        let alert = UIAlertController(
+            title: notification.title,
+            message: notification.message,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
     
-    deinit {
-        // Clean up listeners
-        notificationListener?.remove()
-        NotificationCenter.default.removeObserver(self)
+    private func showNotificationDetail(_ notification: NotificationModel) {
+        // Standard notification detail view
+        let alert = UIAlertController(
+            title: notification.title,
+            message: notification.message,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Helper Methods
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showToast(message: String) {
+        let toastLabel = UILabel()
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        toastLabel.textColor = .white
+        toastLabel.textAlignment = .center
+        toastLabel.font = UIFont.systemFont(ofSize: 14)
+        toastLabel.text = message
+        toastLabel.alpha = 1.0
+        toastLabel.layer.cornerRadius = 10
+        toastLabel.clipsToBounds = true
+        toastLabel.numberOfLines = 0
+        
+        view.addSubview(toastLabel)
+        toastLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            toastLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toastLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            toastLabel.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
+            toastLabel.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            toastLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 40)
+        ])
+        
+        UIView.animate(withDuration: 0.5, delay: 2.0, options: .curveEaseOut, animations: {
+            toastLabel.alpha = 0.0
+        }, completion: { _ in
+            toastLabel.removeFromSuperview()
+        })
     }
 }
 
-// MARK: - Supporting Types
-// You may need to create this class if it doesn't exist or modify it to accept a chatId
+// MARK: - NotificationCell
+class NotificationCell: UITableViewCell {
+    
+    private let containerView = UIView()
+    private let titleLabel = UILabel()
+    private let messageLabel = UILabel()
+    private let timeLabel = UILabel()
+    private let readIndicator = UIView()
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupCell()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupCell() {
+        selectionStyle = .none
+        
+        // Container View
+        containerView.backgroundColor = .white
+        containerView.layer.cornerRadius = 10
+        containerView.layer.shadowColor = UIColor.black.cgColor
+        containerView.layer.shadowOpacity = 0.1
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
+        containerView.layer.shadowRadius = 3
+        
+        // Title Label
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        titleLabel.numberOfLines = 0
+        
+        // Message Label
+        messageLabel.font = UIFont.systemFont(ofSize: 14)
+        messageLabel.textColor = .darkGray
+        messageLabel.numberOfLines = 2
+        
+        // Time Label
+        timeLabel.font = UIFont.systemFont(ofSize: 12)
+        timeLabel.textColor = .lightGray
+        timeLabel.textAlignment = .right
+        
+        // Read Indicator
+        readIndicator.backgroundColor = .orange
+        readIndicator.layer.cornerRadius = 5
+        
+        // Add subviews
+        contentView.addSubview(containerView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(messageLabel)
+        containerView.addSubview(timeLabel)
+        containerView.addSubview(readIndicator)
+        
+        // Set constraints
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        timeLabel.translatesAutoresizingMaskIntoConstraints = false
+        readIndicator.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            readIndicator.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            readIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            readIndicator.widthAnchor.constraint(equalToConstant: 10),
+            readIndicator.heightAnchor.constraint(equalToConstant: 10),
+            
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
+            titleLabel.leadingAnchor.constraint(equalTo: readIndicator.trailingAnchor, constant: 12),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            messageLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            messageLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            
+            timeLabel.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 8),
+            timeLabel.leadingAnchor.constraint(equalTo: messageLabel.leadingAnchor),
+            timeLabel.trailingAnchor.constraint(equalTo: messageLabel.trailingAnchor),
+            timeLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+        ])
+    }
+    
+    func configure(with notification: NotificationModel) {
+        titleLabel.text = notification.title
+        messageLabel.text = notification.message
+        
+        // Format the date
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        timeLabel.text = formatter.string(from: notification.date)
+        
+        // Update read indicator visibility
+        readIndicator.isHidden = notification.isRead
+        
+        // Apply read/unread styling
+        if notification.isRead {
+            containerView.backgroundColor = .white
+            titleLabel.textColor = .black
+        } else {
+            containerView.backgroundColor = UIColor(white: 0.97, alpha: 1.0)
+            titleLabel.textColor = .black
+        }
+    }
+}

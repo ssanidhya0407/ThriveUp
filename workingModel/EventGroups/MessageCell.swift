@@ -1,12 +1,22 @@
 import UIKit
 
 class MessageCell: UITableViewCell {
+    static let identifier = "MessageCell"
     
     private let userNameLabel = UILabel()
     private let messageLabel = UILabel()
     private let timeLabel = UILabel()
     private let profileImageView = UIImageView()
     private let messageImageView = UIImageView()
+    
+    private let organizerBadge: UIView = {
+        let badge = UIView()
+        badge.backgroundColor = UIColor.systemOrange
+        badge.layer.cornerRadius = 8
+        badge.isHidden = true
+        return badge
+    }()
+    
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -81,49 +91,39 @@ class MessageCell: UITableViewCell {
         ])
     }
     
-    func configure(with message: EventGroupMessage) {
+    
+    func configure(with message: EventGroupMessage, organizers: [String] = []) {
         userNameLabel.text = message.userName
         messageLabel.text = message.text
         
-        // Configure message label visibility
-        if let messageText = message.text, !messageText.isEmpty {
-            messageLabel.isHidden = false
-        } else {
-            messageLabel.isHidden = true
-        }
+        // Format time
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        timeLabel.text = formatter.string(from: message.timestamp)
         
-        // Format the timestamp
-        let dateFormatter = DateFormatter()
-        dateFormatter.timeStyle = .short
-        timeLabel.text = dateFormatter.string(from: message.timestamp)
+        // Check if the message sender is an organizer
+        let isOrganizer = organizers.contains(message.userId)
+        organizerBadge.isHidden = !isOrganizer
+        
+        // Change bubble color for organizer messages
+        if isOrganizer {
+            userNameLabel.textColor = UIColor.systemOrange
+        } else {
+            userNameLabel.textColor = .darkGray
+        }
         
         // Load profile image if available
         if let profileImageURL = message.profileImageURL, let url = URL(string: profileImageURL) {
             URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.profileImageView.image = image
-                    }
+                guard let data = data, let image = UIImage(data: data) else { return }
+                
+                DispatchQueue.main.async {
+                    self?.profileImageView.image = image
                 }
             }.resume()
         } else {
+            // Set default image
             profileImageView.image = UIImage(systemName: "person.circle.fill")
-        }
-        
-        // Configure message image if available
-        if let imageURL = message.imageURL, let url = URL(string: imageURL) {
-            messageImageView.isHidden = false
-            
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.messageImageView.image = image
-                    }
-                }
-            }.resume()
-        } else {
-            messageImageView.isHidden = true
-            messageImageView.image = nil
         }
     }
 }

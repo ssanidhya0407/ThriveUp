@@ -91,6 +91,9 @@
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
 		78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */; };
+		78B2C61D2D89BDCD0046B030 /* HackathonRegistrationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C61C2D89BDCD0046B030 /* HackathonRegistrationViewController.swift */; };
+		78B2C61F2D89BDD80046B030 /* HackathonTeamViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C61E2D89BDD80046B030 /* HackathonTeamViewController.swift */; };
+		78B2C6212D89BE1B0046B030 /* NotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6202D89BE1B0046B030 /* NotificationHandler.swift */; };
 		78B8D2D92D38E7510004AD09 /* Instructions in Frameworks */ = {isa = PBXBuildFile; productRef = 78B8D2D82D38E7510004AD09 /* Instructions */; };
 		78B9A1EF2D7BE9A9004B7B78 /* TechStackViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */; };
 		78BE28962D385318002BF1EB /* TagViewControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */; };
@@ -193,6 +196,9 @@
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
 		78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
+		78B2C61C2D89BDCD0046B030 /* HackathonRegistrationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackathonRegistrationViewController.swift; sourceTree = "<group>"; };
+		78B2C61E2D89BDD80046B030 /* HackathonTeamViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackathonTeamViewController.swift; sourceTree = "<group>"; };
+		78B2C6202D89BE1B0046B030 /* NotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHandler.swift; sourceTree = "<group>"; };
 		78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TechStackViewController.swift; sourceTree = "<group>"; };
 		78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagViewControllerDelegate.swift; sourceTree = "<group>"; };
 		78E2BF1B2D7D710C0071778A /* AcceptRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptRequestViewController.swift; sourceTree = "<group>"; };
@@ -266,6 +272,9 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				78B2C6202D89BE1B0046B030 /* NotificationHandler.swift */,
+				78B2C61E2D89BDD80046B030 /* HackathonTeamViewController.swift */,
+				78B2C61C2D89BDCD0046B030 /* HackathonRegistrationViewController.swift */,
 				78B2C5362D8615360046B030 /* EventGroups */,
 				78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */,
 				78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */,
@@ -516,6 +525,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78B2C61D2D89BDCD0046B030 /* HackathonRegistrationViewController.swift in Sources */,
+				78B2C6212D89BE1B0046B030 /* NotificationHandler.swift in Sources */,
 				577DA1D82CE3C6F600760BFA /* CategoryHeader.swift in Sources */,
 				57F22AED2D804992006DA3B4 /* CollegeFeedViewController.swift in Sources */,
 				78ED42FA2D42B24B00FF3017 /* OrganizerEventListViewController.swift in Sources */,
@@ -585,6 +596,7 @@
 				781DC1CC2D5B76A100322EF3 /* NotificationTableViewCell.swift in Sources */,
 				572D8A4D2D0DA2FD00DAB286 /* EventListViewController.swift in Sources */,
 				5756E1152D81C90D005EF598 /* FriendCell.swift in Sources */,
+				78B2C61F2D89BDD80046B030 /* HackathonTeamViewController.swift in Sources */,
 				57D977BF2CECA165004B1314 /* OrganizerProfileViewController.swift in Sources */,
 				572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */,
 				5756E1192D81C90D005EF598 /* ChatMessageCell.swift in Sources */,

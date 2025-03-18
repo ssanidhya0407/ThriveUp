@@ -9,7 +9,7 @@ class EventViewController: UIViewController, UICollectionViewDelegate, UICollect
     private var filteredEventsByCategory: [String: [EventModel]] = [:]
     private let predefinedCategories = [
         "Trending", "Fun and Entertainment", "Tech and Innovation",
-        "Club and Societies", "Cultural", "Networking", "Sports", "Career Connect", "Wellness", "Other"
+        "Club and Societies", "Cultural", "Networking", "Sports","Hackathons", "Career Connect", "Wellness", "Other"
     ]
     private var categories: [String] = []
     private var filteredCategories: [String] = []

@@ -75,17 +75,23 @@ class MemberCell: UITableViewCell {
         ])
     }
     
-    func configure(with member: EventGroupMember) {
+    func configure(with member: EventGroupMember, viewedByOrganizer: Bool = false) {
         nameLabel.text = member.name
         roleLabel.text = member.role.capitalized
         
-        // Show chat status
-        if member.canChat {
-            statusLabel.text = "Can chat"
-            statusLabel.textColor = .systemGreen
+        // Show chat status only if viewed by an organizer
+        if viewedByOrganizer {
+            statusLabel.isHidden = false
+            if member.canChat {
+                statusLabel.text = "Can chat"
+                statusLabel.textColor = .systemGreen
+            } else {
+                statusLabel.text = "Chat disabled"
+                statusLabel.textColor = .systemRed
+            }
         } else {
-            statusLabel.text = "Chat disabled"
-            statusLabel.textColor = .systemRed
+            // Hide the chat status label when viewed by regular users
+            statusLabel.isHidden = true
         }
         
         // Load profile image if available

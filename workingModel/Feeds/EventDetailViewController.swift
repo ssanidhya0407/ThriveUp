@@ -459,7 +459,7 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
     @objc private func registerButtonTapped() {
         guard let event = event else { return }
         
-        if openedFromEventVC{
+        if openedFromEventVC {
             // Navigate to LoginViewController
             let loginVC = LoginViewController()
             navigationController?.pushViewController(loginVC, animated: true)
@@ -474,9 +474,16 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
                 FormField(placeholder: "Specialization", value: "")
             ]
             
-            // Initialize and push the registration view controller
-            let registrationVC = RegistrationViewController(formFields: formFields, event: event)
-            navigationController?.pushViewController(registrationVC, animated: true)
+            // Check if the event is a hackathon
+            if event.category == "Hackathons" {
+                // Initialize and push the hackathon registration view controller
+                let hackathonRegistrationVC = HackathonRegistrationViewController(formFields: formFields, event: event)
+                navigationController?.pushViewController(hackathonRegistrationVC, animated: true)
+            } else {
+                // Initialize and push the regular registration view controller
+                let registrationVC = RegistrationViewController(formFields: formFields, event: event)
+                navigationController?.pushViewController(registrationVC, animated: true)
+            }
         }
     }
 
