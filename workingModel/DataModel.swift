@@ -482,3 +482,137 @@ struct EventDataSource {
         Event(id: "5", title: "Musication The Band", description: "Experience live music with Musication.", imageName: "Musication", category: "Favourites")
     ]
 }
+
+//
+//  HackathonTeam.swift
+//  workingModel
+//
+//  Created by ThriveUp on 2025-03-18.
+//
+
+import Foundation
+import FirebaseFirestore
+
+struct HackathonTeam: Codable {
+    let id: String
+    let name: String
+    let eventId: String
+    let teamLeadId: String
+    let teamLeadName: String
+    let memberIds: [String]
+    let memberNames: [String]
+    let maxMembers: Int
+    let createdAt: Date
+    
+    // Computed property to check if team is full
+    var isFull: Bool {
+        return memberIds.count >= maxMembers
+    }
+    
+    // Convert Firestore document to HackathonTeam
+    static func fromFirestore(_ document: DocumentSnapshot) -> HackathonTeam? {
+        guard let data = document.data() else { return nil }
+        
+        return HackathonTeam(
+            id: document.documentID,
+            name: data["name"] as? String ?? "Unnamed Team",
+            eventId: data["eventId"] as? String ?? "",
+            teamLeadId: data["teamLeadId"] as? String ?? "",
+            teamLeadName: data["teamLeadName"] as? String ?? "Unknown Leader",
+            memberIds: data["memberIds"] as? [String] ?? [],
+            memberNames: data["memberNames"] as? [String] ?? [],
+            maxMembers: data["maxMembers"] as? Int ?? 4,
+            createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+        )
+    }
+    
+    // Convert to dictionary for Firestore
+    func toFirestore() -> [String: Any] {
+        return [
+            "name": name,
+            "eventId": eventId,
+            "teamLeadId": teamLeadId,
+            "teamLeadName": teamLeadName,
+            "memberIds": memberIds,
+            "memberNames": memberNames,
+            "maxMembers": maxMembers,
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+    }
+}
+
+struct TeamJoinRequest: Codable {
+    let id: String
+    let teamId: String
+    let senderId: String
+    let senderName: String
+    let receiverId: String
+    let receiverName: String
+    let eventId: String
+    let status: String // "pending", "accepted", "rejected"
+    let createdAt: Date
+    
+    // Convert Firestore document to TeamJoinRequest
+    static func fromFirestore(_ document: DocumentSnapshot) -> TeamJoinRequest? {
+        guard let data = document.data() else { return nil }
+        
+        return TeamJoinRequest(
+            id: document.documentID,
+            teamId: data["teamId"] as? String ?? "",
+            senderId: data["senderId"] as? String ?? "",
+            senderName: data["senderName"] as? String ?? "",
+            receiverId: data["receiverId"] as? String ?? "",
+            receiverName: data["receiverName"] as? String ?? "",
+            eventId: data["eventId"] as? String ?? "",
+            status: data["status"] as? String ?? "pending",
+            createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+        )
+    }
+    
+    // Convert to dictionary for Firestore
+    func toFirestore() -> [String: Any] {
+        return [
+            "teamId": teamId,
+            "senderId": senderId,
+            "senderName": senderName,
+            "receiverId": receiverId,
+            "receiverName": receiverName,
+            "eventId": eventId,
+            "status": status,
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+    }
+}
+
+struct RegisteredParticipant: Codable {
+    let id: String
+    let userId: String
+    let name: String
+    let phoneNumber: String
+    let yearOfStudy: String
+    let course: String
+    let department: String
+    let specialization: String
+    let eventId: String
+    let registrationDate: Date
+    let profileImageURL: String?
+    
+    // Convert Firestore document to RegisteredParticipant
+    static func fromFirestore(_ document: DocumentSnapshot) -> RegisteredParticipant? {
+        guard let data = document.data() else { return nil }
+        
+        return RegisteredParticipant(
+            id: document.documentID,
+            userId: data["userId"] as? String ?? "",
+            name: data["name"] as? String ?? "",
+            phoneNumber: data["phoneNumber"] as? String ?? "",
+            yearOfStudy: data["yearOfStudy"] as? String ?? "",
+            course: data["course"] as? String ?? "",
+            department: data["department"] as? String ?? "",
+            specialization: data["specialization"] as? String ?? "",
+            eventId: data["eventId"] as? String ?? "",
+            registrationDate: (data["registrationDate"] as? Timestamp)?.dateValue() ?? Date(),
+            profileImageURL: data["profileImageURL"] as? String
+        )
+    }
+}

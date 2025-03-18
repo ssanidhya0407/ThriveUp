@@ -459,7 +459,7 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
     @objc private func registerButtonTapped() {
         guard let event = event else { return }
         
-        if openedFromEventVC {
+        if openedFromEventVC{
             // Navigate to LoginViewController
             let loginVC = LoginViewController()
             navigationController?.pushViewController(loginVC, animated: true)
@@ -472,21 +472,20 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
                 FormField(placeholder: "Course", value: ""),
                 FormField(placeholder: "Department", value: ""),
                 FormField(placeholder: "Specialization", value: "")
-            ]
+            ]}
             
-            // Check if the event is a hackathon
-            if event.category == "Hackathons" {
-                // Initialize and push the hackathon registration view controller
-                let hackathonRegistrationVC = HackathonRegistrationViewController(formFields: formFields, event: event)
-                navigationController?.pushViewController(hackathonRegistrationVC, animated: true)
-            } else {
-                // Initialize and push the regular registration view controller
-                let registrationVC = RegistrationViewController(formFields: formFields, event: event)
-                navigationController?.pushViewController(registrationVC, animated: true)
-            }
-        }
+            // Initialize and push the registration view controller
+                if event.category == "Hackathons" {
+                    let hackathonVC = HackathonRegistrationViewController(formFields: formFields, event: event)
+                    navigationController?.pushViewController(hackathonVC, animated: true)
+                } else {
+                    let eventDetailVC = RegistrationViewController(formFields: formFields, event: event)
+                    navigationController?.pushViewController(eventDetailVC, animated: true)
+                }
     }
 
+    
+    
     // MARK: - Collection View DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return event?.speakers.count ?? 0
