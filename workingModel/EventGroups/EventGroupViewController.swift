@@ -447,6 +447,46 @@ class EventGroupViewController: UIViewController {
             }
     }
     
+    private func startDirectChat(with member: EventGroupMember) {
+        // Create a User object from the EventGroupMember
+        let user = User(id: member.userId, name: member.name, profileImageURL: member.profileImageURL)
+        
+        // Initialize the chat manager
+        let chatManager = FirestoreChatManager()
+        
+        // Get the current user ID
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            print("Error: No current user found")
+            return
+        }
+        
+        // Show loading indicator
+        let loadingAlert = UIAlertController(title: "Opening Chat", message: "Please wait...", preferredStyle: .alert)
+        present(loadingAlert, animated: true)
+        
+        // Fetch or create a chat thread between current user and selected member
+        chatManager.fetchOrCreateChatThread(for: currentUserId, with: member.userId) { [weak self] thread in
+            // Dismiss loading indicator
+            DispatchQueue.main.async {
+                loadingAlert.dismiss(animated: true) {
+                    guard let self = self, let thread = thread else {
+                        print("Error: Could not create or fetch chat thread")
+                        return
+                    }
+                    
+                    // Create and configure the chat detail view controller
+                    let chatDetailVC = ChatDetailViewController()
+                    chatDetailVC.chatThread = thread
+                    
+                    // Present the chat detail view controller in a navigation controller
+                    let navController = UINavigationController(rootViewController: chatDetailVC)
+                    navController.modalPresentationStyle = .fullScreen
+                    self.present(navController, animated: true)
+                }
+            }
+        }
+    }
+    
     private func showMemberOptions(for member: EventGroupMember) {
         // Don't show options for the organizer (yourself)
         guard member.role != "organizer" else { return }
@@ -456,6 +496,11 @@ class EventGroupViewController: UIViewController {
             message: nil,
             preferredStyle: .actionSheet
         )
+        
+        // Message directly option (new addition)
+        actionSheet.addAction(UIAlertAction(title: "Message Directly", style: .default) { [weak self] _ in
+            self?.startDirectChat(with: member)
+        })
         
         // Toggle chat permission
         let chatActionTitle = member.canChat ? "Disable Chat Permission" : "Enable Chat Permission"
