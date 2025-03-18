@@ -193,14 +193,28 @@ class iOSOnboardingViewController: UIViewController {
     }
 
     @objc func didTapContinue() {
+        // Set the flag to indicate user has seen onboarding
+        UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
+        UserDefaults.standard.synchronize()
+        
         transitionToMainApp()
     }
-    
+
     private func transitionToMainApp() {
-        let window = UIApplication.shared.windows.first { $0.isKeyWindow }
-        window?.rootViewController = TermsAndConditionsViewController()
-        UIView.transition(with: window!, duration: 0.5, options: .transitionCrossDissolve, animations: {}, completion: nil)
+        // Navigate to Terms & Conditions screen
+        let termsVC = TermsAndConditionsViewController()
+        
+        // If we're in a navigation controller, push the terms screen
+        if let navigationController = self.navigationController {
+            navigationController.pushViewController(termsVC, animated: true)
+        } else {
+            // Otherwise, set it as the root view controller
+            let window = UIApplication.shared.windows.first { $0.isKeyWindow }
+            window?.rootViewController = UINavigationController(rootViewController: termsVC)
+            UIView.transition(with: window!, duration: 0.5, options: .transitionCrossDissolve, animations: {}, completion: nil)
+        }
     }
+    
 }
 #Preview{
     iOSOnboardingViewController()

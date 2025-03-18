@@ -306,7 +306,7 @@ class BookmarkCell: UICollectionViewCell {
         let button = UIButton(type: .system)
         let bookmarkImage = UIImage(systemName: "bookmark.fill")
         button.setImage(bookmarkImage, for: .normal)
-        button.tintColor = .red
+        button.tintColor = .systemOrange
         button.backgroundColor = .white
         button.layer.cornerRadius = 15
         button.translatesAutoresizingMaskIntoConstraints = false

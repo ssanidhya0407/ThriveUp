@@ -17,16 +17,11 @@ class EventViewController: UIViewController, UICollectionViewDelegate, UICollect
     private let searchBar = UISearchBar()
     private let feedLabel = UILabel()
     private let filterButton = UIButton(type: .system)
-    private let loginButton = UIButton(type: .system)
-    private let logoImageView = UIImageView()
-    private let brandLabel = UILabel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupGradientBackground() // Add gradient background first
-        setupTopBar() // Set up the logo and brand name
-        setupLoginButton()
         setupFeedLabel()
         setupSearchBar()
         setupFilterButton()
@@ -74,78 +69,16 @@ class EventViewController: UIViewController, UICollectionViewDelegate, UICollect
         view.sendSubviewToBack(bottomGradientView)
         view.sendSubviewToBack(topGradientView)
     }
-    
-    private func setupTopBar() {
-        // Logo image view setup
-        logoImageView.contentMode = .scaleAspectFit
-        logoImageView.layer.cornerRadius = 18
-        logoImageView.clipsToBounds = true
-        logoImageView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(logoImageView)
-        
-        // Fetch logo from Firebase Storage
-        let logoRef = Storage.storage().reference(forURL: "https://firebasestorage.googleapis.com/v0/b/thriveup-6e533.firebasestorage.app/o/logo_images%2FthriveUpLogo.png?alt=media&token=a0d6343d-1ec5-4061-8e2c-f6d4c4c4bd6a")
-        
-        logoRef.getData(maxSize: 1 * 1024 * 1024) { [weak self] data, error in
-            if let error = error {
-                print("Error fetching logo: \(error.localizedDescription)")
-                return
-            }
-            
-            if let data = data, let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self?.logoImageView.image = image
-                }
-            }
-        }
-        
-        // Brand label setup
-        brandLabel.text = "ThriveUp"
-        brandLabel.font = UIFont.systemFont(ofSize: 24, weight: .regular)
-        brandLabel.textColor = .black
-        brandLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(brandLabel)
-        
-        // Create container for logo and brand
-        let containerView = UIView()
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(containerView)
-        containerView.addSubview(logoImageView)
-        containerView.addSubview(brandLabel)
-        
-        // Position the elements with proper constraints
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -16),
-            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            containerView.heightAnchor.constraint(equalToConstant: 50),
-            
-            logoImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            logoImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            logoImageView.widthAnchor.constraint(equalToConstant: 40),
-            logoImageView.heightAnchor.constraint(equalToConstant: 40),
-            
-            brandLabel.leadingAnchor.constraint(equalTo: logoImageView.trailingAnchor, constant: 8),
-            brandLabel.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
-        ])
-        
-        // Setup login button in the same container for proper alignment
-        setupLoginButton()
-        NSLayoutConstraint.activate([
-            loginButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            loginButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-        ])
-    }
 
     // MARK: - Feed Label
     private func setupFeedLabel() {
         feedLabel.text = "Discover"
-        feedLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        feedLabel.font = UIFont.systemFont(ofSize: 32, weight: .bold) // Increased font size from 24 to 32
         feedLabel.textAlignment = .left
         view.addSubview(feedLabel)
         feedLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            feedLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            feedLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16), // Moved up since logo is removed
             feedLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             feedLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             feedLabel.heightAnchor.constraint(equalToConstant: 40)
@@ -188,31 +121,6 @@ class EventViewController: UIViewController, UICollectionViewDelegate, UICollect
         let filterVC = FilterViewController()
         filterVC.delegate = self
         present(filterVC, animated: true, completion: nil)
-    }
-    
-    private func setupLoginButton() {
-        loginButton.setTitle("Login", for: .normal)
-        loginButton.setTitleColor(.white, for: .normal)
-        loginButton.backgroundColor = .systemOrange
-        loginButton.layer.cornerRadius = 15
-        loginButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
-        loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
-        view.addSubview(loginButton)
-        
-        loginButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            loginButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -8),
-            loginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            loginButton.widthAnchor.constraint(equalToConstant: 80),
-            loginButton.heightAnchor.constraint(equalToConstant: 30)
-        ])
-    }
-    
-    @objc private func loginButtonTapped() {
-        // Create an instance of your login view controller
-        let loginVC = UINavigationController(rootViewController: LoginViewController())
-        loginVC.modalPresentationStyle = .fullScreen
-        present(loginVC, animated: true, completion: nil)
     }
 
     // MARK: - Collection View Setup

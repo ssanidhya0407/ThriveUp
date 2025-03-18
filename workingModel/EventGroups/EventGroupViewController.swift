@@ -19,7 +19,7 @@ class EventGroupViewController: UIViewController {
     private var members: [EventGroupMember] = []
     private var messages: [EventGroupMessage] = []
     private var chatEnabled: Bool = true
-    private let db = Firestore.firestore() 
+    private let db = Firestore.firestore()
     
     // UI Components
     private let tableView = UITableView()

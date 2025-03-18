@@ -196,14 +196,6 @@ class UnauthenticatedProfileViewController: UIViewController, UITableViewDelegat
         return imageView
     }()
     
-    // Name Label
-    private let nameLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Guest User"
-        label.font = UIFont.boldSystemFont(ofSize: 24)
-        label.textColor = .gray // Contrast against gradient
-        return label
-    }()
     
     // Email Label
     private let emailLabel: UILabel = {
@@ -264,7 +256,6 @@ class UnauthenticatedProfileViewController: UIViewController, UITableViewDelegat
         view.sendSubviewToBack(gradientView)
         
         view.addSubview(profileImageView)
-        view.addSubview(nameLabel)
         view.addSubview(emailLabel)
         view.addSubview(loginButton)
         view.addSubview(placeholderLabel)
@@ -295,7 +286,6 @@ class UnauthenticatedProfileViewController: UIViewController, UITableViewDelegat
     
     private func setupConstraints() {
         profileImageView.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
         emailLabel.translatesAutoresizingMaskIntoConstraints = false
         loginButton.translatesAutoresizingMaskIntoConstraints = false
         placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -334,10 +324,8 @@ class UnauthenticatedProfileViewController: UIViewController, UITableViewDelegat
             profileImageView.widthAnchor.constraint(equalToConstant: 120),
             profileImageView.heightAnchor.constraint(equalToConstant: 120),
 
-            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 20), // More Space
-            nameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 
-            emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
+            emailLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 10),
             emailLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             emailLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
