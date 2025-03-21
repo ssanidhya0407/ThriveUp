@@ -91,6 +91,16 @@
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
 		78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */; };
+		78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */; };
+		78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */; };
+		78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */; };
+		78B2C6922D8D3FBD0046B030 /* EventStatusListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */; };
+		78B2C6932D8D3FBD0046B030 /* EventGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */; };
+		78B2C6942D8D3FBD0046B030 /* GroupMemberVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */; };
+		78B2C6952D8D3FBD0046B030 /* OrganizerProfileViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */; };
+		78B2C6962D8D3FBD0046B030 /* MemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */; };
+		78B2C6972D8D3FBD0046B030 /* EventGroupsListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */; };
+		78B2C6982D8D3FBD0046B030 /* UserProfileViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */; };
 		78B8D2D92D38E7510004AD09 /* Instructions in Frameworks */ = {isa = PBXBuildFile; productRef = 78B8D2D82D38E7510004AD09 /* Instructions */; };
 		78B9A1EF2D7BE9A9004B7B78 /* TechStackViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */; };
 		78BE28962D385318002BF1EB /* TagViewControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */; };
@@ -193,6 +203,16 @@
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
 		78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
+		78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerProfileViewerController.swift; sourceTree = "<group>"; };
+		78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewerController.swift; sourceTree = "<group>"; };
+		78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMember.swift; sourceTree = "<group>"; };
+		78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupsListViewController.swift; sourceTree = "<group>"; };
+		78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupViewController.swift; sourceTree = "<group>"; };
+		78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatusListener.swift; sourceTree = "<group>"; };
+		78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatusObserver.swift; sourceTree = "<group>"; };
+		78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMemberVC.swift; sourceTree = "<group>"; };
+		78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberCell.swift; sourceTree = "<group>"; };
+		78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
 		78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TechStackViewController.swift; sourceTree = "<group>"; };
 		78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagViewControllerDelegate.swift; sourceTree = "<group>"; };
 		78E2BF1B2D7D710C0071778A /* AcceptRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptRequestViewController.swift; sourceTree = "<group>"; };
@@ -206,7 +226,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		78B2C5362D8615360046B030 /* EventGroups */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = EventGroups; sourceTree = "<group>"; };
 		78B2C65C2D8A14D50046B030 /* Hackathons */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Hackathons; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -268,7 +287,6 @@
 			isa = PBXGroup;
 			children = (
 				78B2C65C2D8A14D50046B030 /* Hackathons */,
-				78B2C5362D8615360046B030 /* EventGroups */,
 				78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */,
 				78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */,
 				5756E11F2D81E476005EF598 /* Feeds */,
@@ -334,6 +352,7 @@
 				572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */,
 				57CDC6772D30451000836984 /* RegistrationsListViewController.swift */,
 				57CDC6792D30475900836984 /* RegistrationTableViewCell.swift */,
+				78B2C68E2D8D3FBD0046B030 /* EventGroup */,
 			);
 			name = ThriveUp;
 			path = workingModel;
@@ -377,6 +396,31 @@
 			path = Community;
 			sourceTree = "<group>";
 		};
+		78B2C6852D8D3FBD0046B030 /* ProfileVC */ = {
+			isa = PBXGroup;
+			children = (
+				78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */,
+				78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */,
+			);
+			path = ProfileVC;
+			sourceTree = "<group>";
+		};
+		78B2C68E2D8D3FBD0046B030 /* EventGroup */ = {
+			isa = PBXGroup;
+			children = (
+				78B2C6852D8D3FBD0046B030 /* ProfileVC */,
+				78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */,
+				78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */,
+				78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */,
+				78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */,
+				78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */,
+				78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */,
+				78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */,
+				78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */,
+			);
+			path = EventGroup;
+			sourceTree = "<group>";
+		};
 		9D4247585D83A2931507488C /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -412,7 +456,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				78B2C5362D8615360046B030 /* EventGroups */,
 				78B2C65C2D8A14D50046B030 /* Hackathons */,
 			);
 			name = ThriveUp;
@@ -590,6 +633,16 @@
 				5756E1152D81C90D005EF598 /* FriendCell.swift in Sources */,
 				57D977BF2CECA165004B1314 /* OrganizerProfileViewController.swift in Sources */,
 				572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */,
+				78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */,
+				78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */,
+				78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */,
+				78B2C6922D8D3FBD0046B030 /* EventStatusListener.swift in Sources */,
+				78B2C6932D8D3FBD0046B030 /* EventGroupViewController.swift in Sources */,
+				78B2C6942D8D3FBD0046B030 /* GroupMemberVC.swift in Sources */,
+				78B2C6952D8D3FBD0046B030 /* OrganizerProfileViewerController.swift in Sources */,
+				78B2C6962D8D3FBD0046B030 /* MemberCell.swift in Sources */,
+				78B2C6972D8D3FBD0046B030 /* EventGroupsListViewController.swift in Sources */,
+				78B2C6982D8D3FBD0046B030 /* UserProfileViewerController.swift in Sources */,
 				5756E1192D81C90D005EF598 /* ChatMessageCell.swift in Sources */,
 				5756E11B2D81C90D005EF598 /* FriendRequestCell.swift in Sources */,
 				57D9779D2CEB085A004B1314 /* File.swift in Sources */,

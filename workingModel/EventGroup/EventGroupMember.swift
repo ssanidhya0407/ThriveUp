@@ -54,7 +54,7 @@ struct EventGroupMessage {
         self.text = data["text"] as? String
         self.timestamp = timestamp.dateValue()
         self.profileImageURL = data["profileImageURL"] as? String
-        self.imageURL = data["imageURL"] as? String
+        self.imageURL = data["profileImageURL"] as? String
     }
     
     func toDictionary() -> [String: Any] {
@@ -170,7 +170,7 @@ class EventGroupManager {
                 "joinedAt": Timestamp(date: Date()),
                 "canChat": true,
                 "name": userData["name"] as? String ?? "User",
-                "profileImageURL": userData["profileImage"] as? String ?? ""
+                "profileImageURL": userData["profileImageURL"] as? String ?? ""
             ]
             
             self.db.collection("eventGroups").document(eventId)
@@ -286,7 +286,7 @@ class EventGroupManager {
                                 "userName": userData?["name"] as? String ?? "User",
                                 "text": text,
                                 "timestamp": Timestamp(date: Date()),
-                                "profileImageURL": userData?["profileImage"] as? String ?? ""
+                                "profileImageURL": userData?["profileImageURL"] as? String ?? ""
                             ]
                             
                             // Finally, send the message

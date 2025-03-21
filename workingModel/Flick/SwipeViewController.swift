@@ -175,30 +175,40 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
     }
 
     private func fetchEventsFromDatabase() {
-        db.collection("events").whereField("status", isEqualTo: "accepted").getDocuments { [weak self] (snapshot, error) in
-            if let error = error {
-                print("Error fetching events: \(error.localizedDescription)")
-                return
-            }
+        db.collection("events")
+            .whereField("status", isEqualTo: "accepted")
+            .getDocuments { [weak self] (snapshot, error) in
+                if let error = error {
+                    print("Error fetching events: \(error.localizedDescription)")
+                    return
+                }
 
-            var fetchedEvents: [EventModel] = []
+                var fetchedEvents: [EventModel] = []
 
-            snapshot?.documents.forEach { document in
-                do {
-                    let jsonData = try JSONSerialization.data(withJSONObject: document.data())
-                    let event = try JSONDecoder().decode(EventModel.self, from: jsonData)
-                    fetchedEvents.append(event)
-                } catch {
-                    print("Error decoding event: \(error.localizedDescription)")
+                snapshot?.documents.forEach { document in
+                    let data = document.data()
+                    if let category = data["category"] as? String, category != "Hackathons" {
+                        var modifiedData = data
+                        if let timestamp = data["timestamp"] as? Timestamp {
+                            modifiedData["timestamp"] = timestamp.dateValue()
+                        }
+                        
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: modifiedData)
+                            let event = try JSONDecoder().decode(EventModel.self, from: jsonData)
+                            fetchedEvents.append(event)
+                        } catch {
+                            print("Error decoding event: \(error.localizedDescription)")
+                        }
+                    }
+                }
+
+                self?.eventStack = fetchedEvents.reversed()
+
+                DispatchQueue.main.async {
+                    self?.displayTopCards(for: .swipe)
                 }
             }
-
-            self?.eventStack = fetchedEvents.reversed()
-
-            DispatchQueue.main.async {
-                self?.displayTopCards(for: .swipe)
-            }
-        }
     }
 
     private func fetchUsersFromDatabase() {

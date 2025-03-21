@@ -17,7 +17,6 @@ class MessageCell: UITableViewCell {
         return badge
     }()
     
-    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -91,7 +90,6 @@ class MessageCell: UITableViewCell {
         ])
     }
     
-    
     func configure(with message: EventGroupMessage, organizers: [String] = []) {
         userNameLabel.text = message.userName
         messageLabel.text = message.text
@@ -103,6 +101,8 @@ class MessageCell: UITableViewCell {
         
         // Check if the message sender is an organizer
         let isOrganizer = organizers.contains(message.userId)
+        
+        // Show the badge if the sender is an organizer
         organizerBadge.isHidden = !isOrganizer
         
         // Change bubble color for organizer messages
@@ -125,5 +125,22 @@ class MessageCell: UITableViewCell {
             // Set default image
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
+        
+        // Ensure the badge is added to the view and positioned properly
+        if isOrganizer {
+            contentView.addSubview(organizerBadge)
+            organizerBadge.isHidden = false
+            
+            NSLayoutConstraint.activate([
+                organizerBadge.leadingAnchor.constraint(equalTo: userNameLabel.leadingAnchor, constant: 4),
+                organizerBadge.centerYAnchor.constraint(equalTo: userNameLabel.centerYAnchor),
+                organizerBadge.widthAnchor.constraint(equalToConstant: 8),
+                organizerBadge.heightAnchor.constraint(equalToConstant: 8)
+            ])
+        } else {
+            organizerBadge.isHidden = true
+        }
     }
+
 }
+

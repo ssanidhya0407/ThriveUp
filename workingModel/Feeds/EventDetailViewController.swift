@@ -1,5 +1,3 @@
-
-
 import UIKit
 import MapKit
 import FirebaseFirestore
@@ -309,6 +307,7 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
             contentView.bottomAnchor.constraint(equalTo: speakersCollectionView.bottomAnchor, constant: 80)
         ])
     }
+    
     @objc private func eventImageTapped() {
         if let image = eventImageView.image {
             presentImagePreview(image: image)
@@ -458,33 +457,123 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
 
     @objc private func registerButtonTapped() {
         guard let event = event else { return }
-        
-        if openedFromEventVC{
+
+        if openedFromEventVC {
             // Navigate to LoginViewController
             let loginVC = LoginViewController()
             navigationController?.pushViewController(loginVC, animated: true)
         } else {
-            // Define form fields with placeholders and empty values
-            let formFields = [
-                FormField(placeholder: "Name", value: ""),
-                FormField(placeholder: "Phone Number", value: ""),
-                FormField(placeholder: "Year of Study", value: ""),
-                FormField(placeholder: "Course", value: ""),
-                FormField(placeholder: "Department", value: ""),
-                FormField(placeholder: "Specialization", value: "")
-            ]}
-            
-            // Initialize and push the registration view controller
-                if event.category == "Hackathons" {
-                    let hackathonVC = HackathonRegistrationViewController(formFields: formFields, event: event)
-                    navigationController?.pushViewController(hackathonVC, animated: true)
+            checkIfUserIsRegistered(eventId: event.eventId) { [weak self] isRegistered in
+                guard let self = self else { return }
+
+                if isRegistered {
+                    self.checkIfUserIsInTeam(eventId: event.eventId) { isInTeam in
+                        if isInTeam {
+                            // If the user is already in a team, navigate to team detail
+                            self.navigateToTeamDetail()
+                        } else {
+                            // If registered but not in a team, navigate to team selection
+                            self.navigateToTeamSelection()
+                        }
+                    }
                 } else {
-                    let eventDetailVC = RegistrationViewController(formFields: formFields, event: event)
-                    navigationController?.pushViewController(eventDetailVC, animated: true)
+                    // Define form fields with placeholders and empty values
+                    let formFields = [
+                        FormField(placeholder: "Name", value: ""),
+                        FormField(placeholder: "Phone Number", value: ""),
+                        FormField(placeholder: "Year of Study", value: ""),
+                        FormField(placeholder: "Course", value: ""),
+                        FormField(placeholder: "Department", value: ""),
+                        FormField(placeholder: "Specialization", value: "")
+                    ]
+                    
+                    // Initialize and push the registration view controller
+                    if event.category == "Hackathons" {
+                        let hackathonVC = HackathonRegistrationViewController(formFields: formFields, event: event)
+                        self.navigationController?.pushViewController(hackathonVC, animated: true)
+                    } else {
+                        let eventDetailVC = RegistrationViewController(formFields: formFields, event: event)
+                        self.navigationController?.pushViewController(eventDetailVC, animated: true)
+                    }
                 }
+            }
+        }
     }
 
-    
+    private func checkIfUserIsRegistered(eventId: String, completion: @escaping (Bool) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        db.collection("registrations")
+            .whereField("eventId", isEqualTo: eventId)
+            .whereField("uid", isEqualTo: userId)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error checking registration: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                completion(snapshot?.documents.count ?? 0 > 0)
+            }
+    }
+
+    private func checkIfUserIsInTeam(eventId: String, completion: @escaping (Bool) -> Void) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(false)
+            return
+        }
+        db.collection("hackathonTeams")
+            .whereField("eventId", isEqualTo: eventId)
+            .whereField("memberIds", arrayContains: userId)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error checking if user is in team: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                completion(snapshot?.documents.count ?? 0 > 0)
+            }
+    }
+
+    private func navigateToTeamSelection() {
+        guard let event = event else { return }
+        let teamSelectionVC = HackathonTeamSelectionViewController(event: event)
+        navigationController?.pushViewController(teamSelectionVC, animated: true)
+    }
+
+    private func navigateToTeamDetail() {
+        guard let event = event, let userId = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("hackathonTeams")
+            .whereField("eventId", isEqualTo: event.eventId)
+            .whereField("memberIds", arrayContains: userId)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error fetching user's team: \(error.localizedDescription)")
+                    return
+                }
+                
+                if let document = snapshot?.documents.first, let data = document.data() as? [String: Any] {
+                    let team = HackathonTeam(
+                        id: document.documentID,
+                        name: data["name"] as? String ?? "Team",
+                        eventId: data["eventId"] as? String ?? "",
+                        teamLeadId: data["teamLeadId"] as? String ?? "",
+                        teamLeadName: data["teamLeadName"] as? String ?? "",
+                        memberIds: data["memberIds"] as? [String] ?? [],
+                        memberNames: data["memberNames"] as? [String] ?? [],
+                        maxMembers: data["maxMembers"] as? Int ?? 4,
+                        createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                    )
+                    
+                    let teamDetailVC = HackathonTeamDetailViewController(team: team, event: event)
+                    self.navigationController?.pushViewController(teamDetailVC, animated: true)
+                }
+            }
+    }
     
     // MARK: - Collection View DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -498,9 +587,10 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         }
         return cell
     }
-    
-    
 }
+
+
+
 
 class SpeakerCell: UICollectionViewCell {
     static let identifier = "SpeakerCell"

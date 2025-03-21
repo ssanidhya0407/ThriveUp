@@ -172,7 +172,7 @@ class EventGroupsListViewController: UIViewController {
                                    let eventName = eventData["title"] as? String {
                                     
                                     // Get the image URL if available
-                                    let imageURL = eventData["imageName"] as? String
+                                    let imageURL = eventData["profileImageURL"] as? String
                                     
                                     // Fetch the most recent message
                                     self.fetchLastMessage(for: eventId) { (message, timestamp) in

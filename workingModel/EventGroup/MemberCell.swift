@@ -78,6 +78,7 @@ class MemberCell: UITableViewCell {
     func configure(with member: EventGroupMember, viewedByOrganizer: Bool = false) {
         nameLabel.text = member.name
         roleLabel.text = member.role.capitalized
+       
         
         // Show chat status only if viewed by an organizer
         if viewedByOrganizer {
@@ -96,6 +97,7 @@ class MemberCell: UITableViewCell {
         
         // Load profile image if available
         if let profileImageURL = member.profileImageURL, let url = URL(string: profileImageURL) {
+            print("Profile Image URL: \(profileImageURL)")  // Debugging line
             URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
                 if let data = data, let image = UIImage(data: data) {
                     DispatchQueue.main.async {
@@ -106,5 +108,6 @@ class MemberCell: UITableViewCell {
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
+
     }
 }
