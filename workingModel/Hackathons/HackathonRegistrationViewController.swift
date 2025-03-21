@@ -16,6 +16,7 @@
 import UIKit
 import FirebaseFirestore
 import FirebaseAuth
+import CoreImage.CIFilterBuiltins
 
 class HackathonRegistrationViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
@@ -171,17 +172,28 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
         
         // Create registration data
         var data: [String: Any] = [
-            "userId": userId,
+            "uid": userId,
             "eventId": event.eventId,
-            "registrationDate": FieldValue.serverTimestamp()
+            "timestamp": Timestamp(date: Date()) // Consistent with RegistrationVC
         ]
         
-        // Add form field data
+        // Add form field data using original placeholder names (like RegistrationVC)
         for field in formFields {
-            data[field.placeholder.lowercased().replacingOccurrences(of: " ", with: "_")] = field.value
+            data[field.placeholder] = field.value
         }
         
-        // Add to "eventRegistrations" collection
+        // Generate QR code like in RegistrationVC
+        let qrData = [
+            "uid": userId,
+            "eventId": event.eventId
+        ]
+        
+        if let qrCodeString = try? JSONSerialization.data(withJSONObject: qrData, options: .prettyPrinted),
+           let qrCode = generateQRCode(from: String(data: qrCodeString, encoding: .utf8) ?? "") {
+            data["qrCode"] = qrCode.pngData()?.base64EncodedString()
+        }
+        
+        // Add to "registrations" collection (consistent with RegistrationVC)
         db.collection("registrations").addDocument(data: data) { [weak self] error in
             guard let self = self else { return }
             
@@ -193,12 +205,42 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
                 return
             }
             
+            // Check if event is already approved and add user to group (like in RegistrationVC)
+            self.db.collection("events").document(self.event.eventId).getDocument { (document, error) in
+                if let document = document, let data = document.data(),
+                   let status = data["status"] as? String, status == "accepted" {
+                    // Event is already approved, add user to group immediately
+                    let eventGroupManager = EventGroupManager()
+                    eventGroupManager.addUserToEventGroup(eventId: self.event.eventId, userId: userId) { success in
+                        print("User added to group: \(success)")
+                    }
+                }
+            }
+            
             // Successfully registered
             print("Successfully registered for event")
             
-            // Now navigate to the team selection screen
-            self.navigateToTeamSelection()
+            // Show success message with QR code info before navigating
+            let alert = UIAlertController(title: "Success", message: "Registration successful! QR Code generated.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                // Now navigate to the team selection screen
+                self.navigateToTeamSelection()
+            })
+            self.present(alert, animated: true)
         }
+    }
+
+    // Add this QR code generation method from RegistrationVC
+    private func generateQRCode(from string: String) -> UIImage? {
+        let filter = CIFilter.qrCodeGenerator()
+        let data = Data(string.utf8)
+        filter.setValue(data, forKey: "inputMessage")
+        
+        guard let outputImage = filter.outputImage else { return nil }
+        let transform = CGAffineTransform(scaleX: 10, y: 10)
+        let scaledImage = outputImage.transformed(by: transform)
+        
+        return UIImage(ciImage: scaledImage)
     }
     
     private func navigateToTeamSelection() {

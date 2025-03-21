@@ -68,6 +68,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
     private let locationLabel = UILabel()
     private let locationTextField = UITextField()
     
+    
     private let mapView: MKMapView = {
         let mapView = MKMapView()
         mapView.layer.cornerRadius = 8
@@ -75,6 +76,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         mapView.layer.borderColor = UIColor.lightGray.cgColor
         return mapView
     }()
+    private let teamSizeLabel = UILabel()
+    private let teamSizeTextField = UITextField()
+    private let lastRegistrationDateLabel = UILabel()
+    private let lastRegistrationDatePicker = UIDatePicker()
+    private let timelineLabel = UILabel()
+    private let timelineTextView = UITextView()
+
+    
     
     private let locationDetailsLabel = UILabel()
     private let locationDetailsTextField = UITextField()
@@ -104,7 +113,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
     private let categories = [
         "Trending", "Fun and Entertainment", "Tech and Innovation",
         "Club and Societies", "Cultural", "Networking", "Sports",
-        "Career Connect", "Wellness", "Other"
+        "Career Connect", "Wellness", "Other", "Hackathons"
     ]
     private var selectedCategory: String?
     
@@ -194,7 +203,6 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         print("Failed to find user's location: \(error.localizedDescription)")
     }
     
-    // MARK: - UI Setup
     private func setupUI() {
         view.backgroundColor = .white
         title = "Post an Event"
@@ -203,15 +211,38 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        
         view.addSubview(activityIndicator)
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-        
         NSLayoutConstraint.activate([
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-
+        
+        // Hackathon-specific components (Initially hidden)
+        teamSizeLabel.text = "Team Size"
+        teamSizeTextField.placeholder = "Enter team size"
+        teamSizeTextField.keyboardType = .numberPad
+        teamSizeLabel.isHidden = true
+        teamSizeTextField.isHidden = true
+        contentView.addSubview(teamSizeLabel)
+        contentView.addSubview(teamSizeTextField)
+        
+        lastRegistrationDateLabel.text = "Last Registration Date"
+        lastRegistrationDatePicker.datePickerMode = .date
+        lastRegistrationDateLabel.isHidden = true
+        lastRegistrationDatePicker.isHidden = true
+        contentView.addSubview(lastRegistrationDateLabel)
+        contentView.addSubview(lastRegistrationDatePicker)
+        
+        timelineLabel.text = "Timeline"
+        timelineLabel.isHidden = true
+        timelineTextView.layer.borderWidth = 1
+        timelineTextView.layer.borderColor = UIColor.lightGray.cgColor
+        timelineTextView.layer.cornerRadius = 8
+        timelineTextView.font = .systemFont(ofSize: 14)
+        timelineTextView.isHidden = true
+        contentView.addSubview(timelineLabel)
+        contentView.addSubview(timelineTextView)
         
         // Image Picker
         contentView.addSubview(imagePickerButton)
@@ -301,7 +332,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         submitButton.addTarget(self, action: #selector(postEvent), for: .touchUpInside)
         contentView.addSubview(submitButton)
     }
-    
+
     private func setupConstraints() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -318,7 +349,11 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             locationDetailsTextField, descriptionLabel,
             descriptionTextView, tagsLabel, tagsStackView,
             addTagsButton, editTagsButton, speakersLabel,
-            addSpeakerButton, speakersStackView, submitButton
+            addSpeakerButton, speakersStackView, submitButton,
+            
+            teamSizeLabel, teamSizeTextField,
+            lastRegistrationDateLabel, lastRegistrationDatePicker,
+            timelineLabel, timelineTextView
         ]
         
         for view in views {
@@ -327,8 +362,6 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         }
         
         NSLayoutConstraint.activate([
-            
-            
             // ScrollView Constraints
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -450,49 +483,74 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             descriptionTextView.heightAnchor.constraint(equalToConstant: 120),
             
             // Tags Label
-                        tagsLabel.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 16),
-                        tagsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        tagsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        
-                        // Tags StackView
-                        tagsStackView.topAnchor.constraint(equalTo: tagsLabel.bottomAnchor, constant: 8),
-                        tagsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        tagsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        
-                        // Add Tags Button
-                        addTagsButton.topAnchor.constraint(equalTo: tagsStackView.bottomAnchor, constant: 8),
-                        addTagsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        addTagsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        addTagsButton.heightAnchor.constraint(equalToConstant: 44),
-                        
-                        // Edit Tags Button
-                        editTagsButton.topAnchor.constraint(equalTo: addTagsButton.bottomAnchor, constant: 8),
-                        editTagsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        editTagsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        editTagsButton.heightAnchor.constraint(equalToConstant: 44),
-                        
-                        // Speakers Label
-                        speakersLabel.topAnchor.constraint(equalTo: editTagsButton.bottomAnchor, constant: 16),
-                        speakersLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        
-                        // Add Speaker Button
-                        addSpeakerButton.centerYAnchor.constraint(equalTo: speakersLabel.centerYAnchor),
-                        addSpeakerButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        addSpeakerButton.heightAnchor.constraint(equalToConstant: 44),
-                        
-                        // Speakers StackView
-                        speakersStackView.topAnchor.constraint(equalTo: addSpeakerButton.bottomAnchor, constant: 16),
-                        speakersStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        speakersStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        
-                        // Submit Button
-                        submitButton.topAnchor.constraint(equalTo: speakersStackView.bottomAnchor, constant: 20),
-                        submitButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                        submitButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                        submitButton.heightAnchor.constraint(equalToConstant: 50),
-                        submitButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
-                    ])
-                }
+            tagsLabel.topAnchor.constraint(equalTo: descriptionTextView.bottomAnchor, constant: 16),
+            tagsLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            tagsLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            // Tags StackView
+            tagsStackView.topAnchor.constraint(equalTo: tagsLabel.bottomAnchor, constant: 8),
+            tagsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            tagsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            // Add Tags Button
+            addTagsButton.topAnchor.constraint(equalTo: tagsStackView.bottomAnchor, constant: 8),
+            addTagsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            addTagsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            addTagsButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            // Edit Tags Button
+            editTagsButton.topAnchor.constraint(equalTo: addTagsButton.bottomAnchor, constant: 8),
+            editTagsButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            editTagsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            editTagsButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            // Speakers Label
+            speakersLabel.topAnchor.constraint(equalTo: editTagsButton.bottomAnchor, constant: 16),
+            speakersLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            // Add Speaker Button
+            addSpeakerButton.centerYAnchor.constraint(equalTo: speakersLabel.centerYAnchor),
+            addSpeakerButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            addSpeakerButton.heightAnchor.constraint(equalToConstant: 44),
+            
+            // Speakers StackView
+            speakersStackView.topAnchor.constraint(equalTo: addSpeakerButton.bottomAnchor, constant: 16),
+            speakersStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            speakersStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            // Submit Button
+            submitButton.topAnchor.constraint(equalTo: timelineTextView.bottomAnchor, constant: 20),
+            submitButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            submitButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            submitButton.heightAnchor.constraint(equalToConstant: 50),
+            submitButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            // Hackathon-specific fields constraints
+            
+            lastRegistrationDateLabel.topAnchor.constraint(equalTo: speakersStackView.bottomAnchor, constant: 16),
+            lastRegistrationDateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            lastRegistrationDatePicker.topAnchor.constraint(equalTo: lastRegistrationDateLabel.bottomAnchor, constant: 8),
+            lastRegistrationDatePicker.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            lastRegistrationDatePicker.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            teamSizeLabel.topAnchor.constraint(equalTo: lastRegistrationDatePicker.bottomAnchor, constant: 16),
+            teamSizeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            teamSizeTextField.topAnchor.constraint(equalTo: teamSizeLabel.bottomAnchor, constant: 8),
+            teamSizeTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            teamSizeTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            teamSizeTextField.heightAnchor.constraint(equalToConstant: 44),
+
+
+            timelineLabel.topAnchor.constraint(equalTo: teamSizeTextField.bottomAnchor, constant: 16),
+            timelineLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            timelineTextView.topAnchor.constraint(equalTo: timelineLabel.bottomAnchor, constant: 8),
+            timelineTextView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            timelineTextView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            timelineTextView.heightAnchor.constraint(equalToConstant: 120)
+
+            
+        ])
+    }
+
 
                 private func setupLabel(_ label: UILabel, text: String) {
                     label.text = text
@@ -662,13 +720,19 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
     @objc private func postEvent() {
         var missingFields = [String]()
 
-        // Validate fields
+        // Validate required fields
         if let title = titleTextField.text, title.isEmpty {
             missingFields.append("Event Title")
         }
 
-        if selectedCategory == nil || selectedCategory?.isEmpty == true {
-            missingFields.append("Category")
+        // Check for Hackathon-specific fields only if category is Hackathons
+        if selectedCategory == "Hackathons" {
+            if teamSizeTextField.text?.isEmpty ?? true {
+                missingFields.append("Team Size")
+            }
+            if timelineTextView.text.isEmpty {
+                missingFields.append("Timeline")
+            }
         }
 
         if let time = timeTextField.text, time.isEmpty {
@@ -718,6 +782,10 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         let locationDetails = locationDetailsTextField.text ?? ""
         let description = descriptionTextView.text.isEmpty ? nil : descriptionTextView.text
 
+        // Optional fields for Hackathon
+        let teamSize = teamSizeTextField.text?.isEmpty ?? true ? nil : teamSizeTextField.text
+        let timeline = timelineTextView.text.isEmpty ? nil : timelineTextView.text
+
         // Array to store speaker data for final upload
         var finalSpeakerData: [[String: String]] = []
         
@@ -741,7 +809,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 dispatchGroup.leave()
                 return
             }
-            
+
             if let error = error {
                 self.activityIndicator.stopAnimating()
                 self.submitButton.isEnabled = true
@@ -825,7 +893,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 // Wait for all speaker image uploads to complete
                 dispatchGroup.notify(queue: .main) {
                     // Now save event data to Firestore with all speaker data
-                    let eventData: [String: Any] = [
+                    var eventData: [String: Any] = [
                         "eventId": eventId,
                         "title": title,
                         "category": selectedCategory,
@@ -845,6 +913,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                         "status": "pending"
                     ]
                     
+                    // Include optional fields for Hackathons if available
+                    if let teamSize = teamSize {
+                        eventData["teamSize"] = teamSize
+                    }
+                    if let timeline = timeline {
+                        eventData["timeline"] = timeline
+                    }
+
                     self.db.collection("events").document(eventId).setData(eventData) { error in
                         self.activityIndicator.stopAnimating()
                         self.submitButton.isEnabled = true
@@ -861,6 +937,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             }
         }
     }
+
                 @objc private func addSpeakerButtonTapped() {
                     let speakerView = createSpeakerInputView()
                     speakersStackView.addArrangedSubview(speakerView)
@@ -978,11 +1055,26 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
                     selectedCategory = categories[row]
                     categoryTextField.text = selectedCategory
+
+                    // Show or hide Hackathon-specific fields
+                    if selectedCategory == "Hackathons" {
+                        teamSizeLabel.isHidden = false
+                        teamSizeTextField.isHidden = false
+                        lastRegistrationDateLabel.isHidden = false
+                        lastRegistrationDatePicker.isHidden = false
+                        timelineLabel.isHidden = false
+                        timelineTextView.isHidden = false
+                    } else {
+                        teamSizeLabel.isHidden = true
+                        teamSizeTextField.isHidden = true
+                        lastRegistrationDateLabel.isHidden = true
+                        lastRegistrationDatePicker.isHidden = true
+                        timelineLabel.isHidden = true
+                        timelineTextView.isHidden = true
+                    }
                 }
+
             }
-
-
-
 
 #Preview{
     EventPostViewController()
