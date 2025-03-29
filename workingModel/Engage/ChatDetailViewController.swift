@@ -121,6 +121,8 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
         titleView.addArrangedSubview(nameLabel)
         navigationItem.titleView = titleView
     }
+
+    
     private func setupMessageInputComponents() {
         messageInputBar.backgroundColor = .white
         messageInputBar.layer.borderWidth = 0.5
@@ -168,7 +170,8 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
         inputTextField.borderStyle = .roundedRect
         inputTextField.translatesAutoresizingMaskIntoConstraints = false
         stackView.addArrangedSubview(inputTextField)
-        
+
+
         // 🎙️ Voice Message Button
         let voiceButton = UIButton(type: .system)
         voiceButton.setImage(UIImage(systemName: "mic.fill"), for: .normal)
@@ -182,6 +185,12 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
         sendButton.tintColor = .systemBlue
         sendButton.addTarget(self, action: #selector(handleSend), for: .touchUpInside)
         stackView.addArrangedSubview(sendButton)
+
+        // Constraints for inputTextField and sendButton
+        NSLayoutConstraint.activate([
+            inputTextField.heightAnchor.constraint(equalTo: stackView.heightAnchor),
+            sendButton.widthAnchor.constraint(equalToConstant: 44)
+        ])
     }
 
     
@@ -410,68 +419,14 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
         }
     }
 
-//    private func fetchMessages() {
-//        guard let currentUser = Auth.auth().currentUser else { return }
-//
-//        let messagesRef: CollectionReference
-//
-//        if isGroupChat, let group = group {
-//            print("Fetching Group Messages from: /groups/\(group.id)/messages")
-//            messagesRef = db.collection("chats").document(group.id).collection("messages")
-//        } else if let chatThread = chatThread {
-//            print("Fetching Individual Messages from: /chats/\(chatThread.id)/messages")
-//            messagesRef = db.collection("chats").document(chatThread.id).collection("messages")
-//        } else {
-//            print(" Error: No valid chat reference")
-//            return
-//        }
-//
-//        messagesListener?.remove() // Remove previous listener if exists
-//
-//        messagesListener = messagesRef
-//            .order(by: "timestamp", descending: false)
-//            .addSnapshotListener { [weak self] snapshot, error in
-//                guard let self = self else { return }
-//
-//                if let error = error {
-//                    print(" Error fetching messages: \(error.localizedDescription)")
-//                    return
-//                }
-//
-//                guard let documents = snapshot?.documents else {
-//                    print(" No messages found")
-//                    return
-//                }
-//
-//                print(" \(documents.count) messages found")
-//
-//                var newMessages: [ChatMessage] = []
-//
-//                for doc in documents {
-//                    let data = doc.data()
-//                    let id = doc.documentID
-//                    let senderID = data["senderId"] as? String ?? ""
-//                    let messageContent = data["messageContent"] as? String ?? ""
-//                    let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-//
-//                    let sender = self.chatThread?.participants.first(where: { $0.id == senderID }) ?? User(id: senderID, name: "Unknown")
-//
-//                    let message = ChatMessage(id: id, sender: sender, messageContent: messageContent, timestamp: timestamp, isSender: senderID == self.currentUserID)
-//                    newMessages.append(message)
-//                }
-//
-//                self.chatThread?.messages = newMessages
-//                DispatchQueue.main.async {
-//                    self.tableView.reloadData()
-//                    self.scrollToBottom()
-//                }
-//            }
-//    }
-
     private func fetchMessages() {
         guard let currentUser = Auth.auth().currentUser else { return }
+        guard let chatThread = chatThread else {
+            print("Error: chatThread is nil")
+            return
+        }
 
-        let messagesRef = db.collection("chats").document(chatThread!.id).collection("messages")
+        let messagesRef = db.collection("chats").document(chatThread.id).collection("messages")
 
         messagesListener?.remove()
         messagesListener = messagesRef
@@ -540,9 +495,6 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
         }
     }
 
-
-
-    
     private func scrollToBottom() {
         DispatchQueue.main.async {
             let rowCount = self.chatThread?.messages.count ?? 0
@@ -599,3 +551,4 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
 #Preview{
     ChatDetailViewController()
 }
+               

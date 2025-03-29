@@ -12,7 +12,7 @@
 //
 //  Created by palak seth on 12/03/25.
 //
-
+ 
 import Foundation
 import UIKit
 import FirebaseAuth
@@ -48,7 +48,7 @@ class CreateGroupViewController: UIViewController {
 
         createButton.setTitle("Create Group", for: .normal)
         createButton.setTitleColor(.white, for: .normal)
-        createButton.backgroundColor = .systemBlue
+        createButton.backgroundColor = .systemOrange
         createButton.layer.cornerRadius = 8
         createButton.translatesAutoresizingMaskIntoConstraints = false
         createButton.addTarget(self, action: #selector(createGroup), for: .touchUpInside)
@@ -73,7 +73,6 @@ class CreateGroupViewController: UIViewController {
         ])
     }
 
-    
     @objc private func createGroup() {
         guard let groupName = groupNameTextField.text, !groupName.isEmpty else { return }
         guard let currentUser = currentUser else { return }

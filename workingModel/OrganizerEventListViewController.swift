@@ -3,7 +3,6 @@ import FirebaseAuth
 import UIKit
 import AVFoundation
 
-
 class OrganizerEventListViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchBarDelegate {
 
     // MARK: - Properties
@@ -17,11 +16,10 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
     private var filteredCategories: [String] = []
     private var collectionView: UICollectionView!
     private let searchBar = UISearchBar()
-    private let filterButton = UIButton(type: .system)
+    private let filterButton = UIButton(type: .system) // Define filterButton
     private var captureSession: AVCaptureSession?
-//    private let feedLabel = UILabel()
-       private var previewLayer: AVCaptureVideoPreviewLayer?
-       private var scannedResult: String?
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var scannedResult: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,10 +27,9 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
         setupGradientBackground()
         setupNavigationBar()
         setupSearchBar()
-        setupFilterButton()
+        setupFilterButton() // Setup filter button
         setupCollectionView()
         fetchEventsFromFirestore()
-//        setupFeedLabel()
     }
     
     private func setupGradientBackground() {
@@ -76,88 +73,6 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
         view.sendSubviewToBack(topGradientView)
     }
 
-
-
-
-//    // MARK: - Navigation Bar with User Profile and Name
-//    private func setupNavigationBar() {
-//        guard let user = Auth.auth().currentUser else {
-//            print("No user signed in")
-//            return
-//        }
-//
-//        let db = Firestore.firestore()
-//        db.collection("users").document(user.uid).getDocument { [weak self] snapshot, error in
-//            guard let self = self else { return }
-//
-//            if let error = error {
-//                print("Error fetching user data: \(error.localizedDescription)")
-//                return
-//            }
-//
-//            guard let data = snapshot?.data(),
-//                  let profileImageURL = data["profileImageURL"] as? String,
-//                  let userName = data["name"] as? String else {
-//                print("User profile data not found")
-//                return
-//            }
-//
-//            // Profile Image View
-//            let profileImageView = UIImageView()
-//            profileImageView.contentMode = .scaleAspectFill
-//            profileImageView.clipsToBounds = true
-//            profileImageView.layer.cornerRadius = 20  // Circular appearance
-//            profileImageView.layer.borderWidth = 1.5
-//            profileImageView.layer.borderColor = UIColor.white.cgColor
-//            profileImageView.translatesAutoresizingMaskIntoConstraints = false
-//            profileImageView.sd_setImage(with: URL(string: profileImageURL), placeholderImage: UIImage(named: "defaultProfile"))
-//
-//            // User Name Label
-//            let nameLabel = UILabel()
-//            nameLabel.text = userName
-//            nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-//            nameLabel.textColor = .black
-//            nameLabel.translatesAutoresizingMaskIntoConstraints = false
-//
-//            // Container View for Profile + Name
-//            let profileContainerView = UIView()
-//            profileContainerView.addSubview(profileImageView)
-//            profileContainerView.addSubview(nameLabel)
-//            profileContainerView.translatesAutoresizingMaskIntoConstraints = false
-//
-//            // Layout Constraints for Profile Image and Name Label
-//            NSLayoutConstraint.activate([
-//                profileImageView.widthAnchor.constraint(equalToConstant: 40),
-//                profileImageView.heightAnchor.constraint(equalToConstant: 40),
-//                profileImageView.leadingAnchor.constraint(equalTo: profileContainerView.leadingAnchor),
-//                profileImageView.centerYAnchor.constraint(equalTo: profileContainerView.centerYAnchor),
-//
-//                nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 8),
-//                nameLabel.trailingAnchor.constraint(equalTo: profileContainerView.trailingAnchor),
-//                nameLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor)
-//            ])
-//
-//            navigationItem.leftBarButtonItem = UIBarButtonItem(customView: profileContainerView)
-//
-//            // Notification Button
-//            let notificationButton = UIButton(type: .system)
-//            notificationButton.setImage(UIImage(systemName: "bell"), for: .normal)
-//            notificationButton.tintColor = .black
-//            notificationButton.addTarget(self, action: #selector(notificationButtonTapped), for: .touchUpInside)
-//
-//            // Camera Button
-//            let cameraButton = UIButton(type: .system)
-//            cameraButton.setImage(UIImage(systemName: "camera"), for: .normal)
-//            cameraButton.tintColor = .black
-//            cameraButton.addTarget(self, action: #selector(cameraButtonTapped), for: .touchUpInside)
-//
-//            // Set right buttons
-//            navigationItem.rightBarButtonItems = [
-//                UIBarButtonItem(customView: notificationButton),
-//                UIBarButtonItem(customView: cameraButton)
-//            ]
-//        }
-//    }
     private func setupNavigationBar() {
         guard let user = Auth.auth().currentUser else {
             print("No user signed in")
@@ -237,13 +152,10 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
         }
     }
 
-    
-
     @objc private func notificationButtonTapped() {
         let notificationVC = NotificationViewController()
         navigationController?.pushViewController(notificationVC, animated: true)
     }
-    
     
     @objc private func cameraButtonTapped() {
         startQRCodeScanner()
@@ -415,7 +327,6 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
         }
     }
 
-
     private func showAlert(title: String, message: String) {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
@@ -459,63 +370,6 @@ class OrganizerEventListViewController: UIViewController, UICollectionViewDelega
         filterVC.delegate = self
         present(filterVC, animated: true, completion: nil)
     }
-
-//    // MARK: - Collection View
-//    private func setupCollectionView() {
-//        let layout = UICollectionViewCompositionalLayout { sectionIndex, _ in
-//            let sectionName = self.filteredCategories[sectionIndex]
-//
-//            if sectionName == "Trending" {
-//                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(180))
-//                let item = NSCollectionLayoutItem(layoutSize: itemSize)
-//                item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8)
-//
-//                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.7), heightDimension: .absolute(180))
-//                let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-//
-//                let section = NSCollectionLayoutSection(group: group)
-//                section.orthogonalScrollingBehavior = .continuous
-//
-//                let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(44))
-//                let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
-//                section.boundarySupplementaryItems = [header]
-//
-//                return section
-//            } else {
-//                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.5), heightDimension: .absolute(200))
-//                let item = NSCollectionLayoutItem(layoutSize: itemSize)
-//                item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8)
-//
-//                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(200))
-//                let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-//
-//                let section = NSCollectionLayoutSection(group: group)
-//                section.orthogonalScrollingBehavior = .continuous
-//
-//                let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(44))
-//                let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: UICollectionView.elementKindSectionHeader, alignment: .top)
-//                section.boundarySupplementaryItems = [header]
-//
-//                return section
-//            }
-//        }
-//
-//        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-//        collectionView.register(EventCell.self, forCellWithReuseIdentifier: EventCell.identifier)
-//        collectionView.register(CategoryHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: CategoryHeader.identifier)
-//
-//        collectionView.delegate = self
-//        collectionView.dataSource = self
-//        collectionView.backgroundColor = .clear;       view.addSubview(collectionView)
-//
-//        collectionView.translatesAutoresizingMaskIntoConstraints = false
-//        NSLayoutConstraint.activate([
-//            collectionView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
-//            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-//        ])
-//    }
 
     // MARK: - Collection View Setup
     private func setupCollectionView() {
@@ -786,6 +640,7 @@ extension OrganizerEventListViewController: EventFilterViewControllerDelegate {
         collectionView.reloadData()
     }
 }
+
 extension OrganizerEventListViewController: AVCaptureMetadataOutputObjectsDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         if let metadataObject = metadataObjects.first {
@@ -797,7 +652,4 @@ extension OrganizerEventListViewController: AVCaptureMetadataOutputObjectsDelega
             validateQRCode(stringValue)
         }
     }
-}
-#Preview{
-    OrganizerEventListViewController()
 }

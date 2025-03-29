@@ -21,16 +21,6 @@
 		572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A482D0D9E5B00DAB286 /* EventRegistrationViewController.swift */; };
 		572D8A4D2D0DA2FD00DAB286 /* EventListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A4C2D0DA2FD00DAB286 /* EventListViewController.swift */; };
 		572D8A512D0DFBE000DAB286 /* EventPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */; };
-		5756E1092D81C8E0005EF598 /* QuickAddCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1082D81C8E0005EF598 /* QuickAddCell.swift */; };
-		5756E10B2D81C8E6005EF598 /* FriendsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10A2D81C8E6005EF598 /* FriendsViewController.swift */; };
-		5756E10D2D81C8EF005EF598 /* FriendsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10C2D81C8EF005EF598 /* FriendsService.swift */; };
-		5756E1152D81C90D005EF598 /* FriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10E2D81C90D005EF598 /* FriendCell.swift */; };
-		5756E1162D81C90D005EF598 /* ChatCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10F2D81C90D005EF598 /* ChatCell.swift */; };
-		5756E1172D81C90D005EF598 /* FriendRequestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1102D81C90D005EF598 /* FriendRequestsViewController.swift */; };
-		5756E1182D81C90D005EF598 /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1112D81C90D005EF598 /* ChatViewController.swift */; };
-		5756E1192D81C90D005EF598 /* ChatMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1122D81C90D005EF598 /* ChatMessageCell.swift */; };
-		5756E11A2D81C90D005EF598 /* ChatDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1132D81C90D005EF598 /* ChatDetailViewController.swift */; };
-		5756E11B2D81C90D005EF598 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1142D81C90D005EF598 /* FriendRequestCell.swift */; };
 		5756E11D2D81CB3E005EF598 /* iOSOnboardingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E11C2D81CB3E005EF598 /* iOSOnboardingViewController.swift */; };
 		5756E1232D822D62005EF598 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1202D822D62005EF598 /* SceneDelegate.swift */; };
 		5756E1242D822D62005EF598 /* KeyWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1212D822D62005EF598 /* KeyWindow.swift */; };
@@ -75,6 +65,17 @@
 		57F22AE82D7F8C04006DA3B4 /* HackmateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AE72D7F8C04006DA3B4 /* HackmateViewController.swift */; };
 		57F22AEA2D7F95BB006DA3B4 /* HackmateRequestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AE92D7F95BB006DA3B4 /* HackmateRequestsViewController.swift */; };
 		57F22AED2D804992006DA3B4 /* CollegeFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AEC2D804992006DA3B4 /* CollegeFeedViewController.swift */; };
+		780295222D9718930036EDEE /* FriendRequestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951D2D9718930036EDEE /* FriendRequestsViewController.swift */; };
+		780295232D9718930036EDEE /* ChatCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780295162D9718930036EDEE /* ChatCell.swift */; };
+		780295242D9718930036EDEE /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780295192D9718930036EDEE /* ChatViewController.swift */; };
+		780295252D9718930036EDEE /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951A2D9718930036EDEE /* CreateGroupViewController.swift */; };
+		780295262D9718930036EDEE /* ChatMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780295182D9718930036EDEE /* ChatMessageCell.swift */; };
+		780295272D9718930036EDEE /* FriendsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951F2D9718930036EDEE /* FriendsViewController.swift */; };
+		780295282D9718930036EDEE /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951C2D9718930036EDEE /* FriendRequestCell.swift */; };
+		780295292D9718930036EDEE /* QuickAddCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780295202D9718930036EDEE /* QuickAddCell.swift */; };
+		7802952A2D9718930036EDEE /* FriendsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951E2D9718930036EDEE /* FriendsService.swift */; };
+		7802952B2D9718930036EDEE /* ChatDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780295172D9718930036EDEE /* ChatDetailViewController.swift */; };
+		7802952C2D9718930036EDEE /* FriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7802951B2D9718930036EDEE /* FriendCell.swift */; };
 		781DC1CC2D5B76A100322EF3 /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781DC1CB2D5B76A100322EF3 /* NotificationTableViewCell.swift */; };
 		781DC1D02D5B771A00322EF3 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781DC1CF2D5B771A00322EF3 /* NotificationViewController.swift */; };
 		7841AAA22D36902E00438FE0 /* InterestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7841AAA12D36902E00438FE0 /* InterestsViewController.swift */; };
@@ -90,7 +91,6 @@
 		7852F6152D456E500068F229 /* PhotosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6142D456E500068F229 /* PhotosViewController.swift */; };
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
-		78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */; };
 		78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */; };
 		78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */; };
 		78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */; };
@@ -135,16 +135,6 @@
 		572D8A482D0D9E5B00DAB286 /* EventRegistrationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRegistrationViewController.swift; sourceTree = "<group>"; };
 		572D8A4C2D0DA2FD00DAB286 /* EventListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventListViewController.swift; sourceTree = "<group>"; };
 		572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPostViewController.swift; sourceTree = "<group>"; };
-		5756E1082D81C8E0005EF598 /* QuickAddCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuickAddCell.swift; sourceTree = "<group>"; };
-		5756E10A2D81C8E6005EF598 /* FriendsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsViewController.swift; sourceTree = "<group>"; };
-		5756E10C2D81C8EF005EF598 /* FriendsService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsService.swift; sourceTree = "<group>"; };
-		5756E10E2D81C90D005EF598 /* FriendCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendCell.swift; sourceTree = "<group>"; };
-		5756E10F2D81C90D005EF598 /* ChatCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatCell.swift; sourceTree = "<group>"; };
-		5756E1102D81C90D005EF598 /* FriendRequestsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestsViewController.swift; sourceTree = "<group>"; };
-		5756E1112D81C90D005EF598 /* ChatViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
-		5756E1122D81C90D005EF598 /* ChatMessageCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatMessageCell.swift; sourceTree = "<group>"; };
-		5756E1132D81C90D005EF598 /* ChatDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatDetailViewController.swift; sourceTree = "<group>"; };
-		5756E1142D81C90D005EF598 /* FriendRequestCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCell.swift; sourceTree = "<group>"; };
 		5756E11C2D81CB3E005EF598 /* iOSOnboardingViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = iOSOnboardingViewController.swift; sourceTree = "<group>"; };
 		5756E1202D822D62005EF598 /* SceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		5756E1212D822D62005EF598 /* KeyWindow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyWindow.swift; sourceTree = "<group>"; };
@@ -191,6 +181,17 @@
 		57F22AE72D7F8C04006DA3B4 /* HackmateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackmateViewController.swift; sourceTree = "<group>"; };
 		57F22AE92D7F95BB006DA3B4 /* HackmateRequestsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackmateRequestsViewController.swift; sourceTree = "<group>"; };
 		57F22AEC2D804992006DA3B4 /* CollegeFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollegeFeedViewController.swift; sourceTree = "<group>"; };
+		780295162D9718930036EDEE /* ChatCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCell.swift; sourceTree = "<group>"; };
+		780295172D9718930036EDEE /* ChatDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailViewController.swift; sourceTree = "<group>"; };
+		780295182D9718930036EDEE /* ChatMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageCell.swift; sourceTree = "<group>"; };
+		780295192D9718930036EDEE /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
+		7802951A2D9718930036EDEE /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
+		7802951B2D9718930036EDEE /* FriendCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendCell.swift; sourceTree = "<group>"; };
+		7802951C2D9718930036EDEE /* FriendRequestCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequestCell.swift; sourceTree = "<group>"; };
+		7802951D2D9718930036EDEE /* FriendRequestsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequestsViewController.swift; sourceTree = "<group>"; };
+		7802951E2D9718930036EDEE /* FriendsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsService.swift; sourceTree = "<group>"; };
+		7802951F2D9718930036EDEE /* FriendsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsViewController.swift; sourceTree = "<group>"; };
+		780295202D9718930036EDEE /* QuickAddCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddCell.swift; sourceTree = "<group>"; };
 		781DC1CB2D5B76A100322EF3 /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
 		781DC1CF2D5B771A00322EF3 /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		7841AAA12D36902E00438FE0 /* InterestsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestsViewController.swift; sourceTree = "<group>"; };
@@ -202,7 +203,6 @@
 		7852F6142D456E500068F229 /* PhotosViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotosViewController.swift; sourceTree = "<group>"; };
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
-		78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
 		78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerProfileViewerController.swift; sourceTree = "<group>"; };
 		78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewerController.swift; sourceTree = "<group>"; };
 		78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMember.swift; sourceTree = "<group>"; };
@@ -292,7 +292,6 @@
 				5756E11F2D81E476005EF598 /* Feeds */,
 				57F22AEB2D8048EA006DA3B4 /* Community */,
 				57F22AE42D7F7659006DA3B4 /* Flick */,
-				57F22ACD2D7EF7B7006DA3B4 /* Engage */,
 				78E2BF262D7D77B70071778A /* AcceptRequestCardView.swift */,
 				5756E11C2D81CB3E005EF598 /* iOSOnboardingViewController.swift */,
 				78E2BF232D7D71D20071778A /* AcceptRequestCell.swift */,
@@ -353,27 +352,10 @@
 				57CDC6772D30451000836984 /* RegistrationsListViewController.swift */,
 				57CDC6792D30475900836984 /* RegistrationTableViewCell.swift */,
 				78B2C68E2D8D3FBD0046B030 /* EventGroup */,
+				780295212D9718930036EDEE /* Engage */,
 			);
 			name = ThriveUp;
 			path = workingModel;
-			sourceTree = "<group>";
-		};
-		57F22ACD2D7EF7B7006DA3B4 /* Engage */ = {
-			isa = PBXGroup;
-			children = (
-				78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */,
-				5756E1082D81C8E0005EF598 /* QuickAddCell.swift */,
-				5756E10F2D81C90D005EF598 /* ChatCell.swift */,
-				5756E1132D81C90D005EF598 /* ChatDetailViewController.swift */,
-				5756E1122D81C90D005EF598 /* ChatMessageCell.swift */,
-				5756E1112D81C90D005EF598 /* ChatViewController.swift */,
-				5756E10E2D81C90D005EF598 /* FriendCell.swift */,
-				5756E1142D81C90D005EF598 /* FriendRequestCell.swift */,
-				5756E1102D81C90D005EF598 /* FriendRequestsViewController.swift */,
-				5756E10C2D81C8EF005EF598 /* FriendsService.swift */,
-				5756E10A2D81C8E6005EF598 /* FriendsViewController.swift */,
-			);
-			path = Engage;
 			sourceTree = "<group>";
 		};
 		57F22AE42D7F7659006DA3B4 /* Flick */ = {
@@ -394,6 +376,24 @@
 				57F22AEC2D804992006DA3B4 /* CollegeFeedViewController.swift */,
 			);
 			path = Community;
+			sourceTree = "<group>";
+		};
+		780295212D9718930036EDEE /* Engage */ = {
+			isa = PBXGroup;
+			children = (
+				780295162D9718930036EDEE /* ChatCell.swift */,
+				780295172D9718930036EDEE /* ChatDetailViewController.swift */,
+				780295182D9718930036EDEE /* ChatMessageCell.swift */,
+				780295192D9718930036EDEE /* ChatViewController.swift */,
+				7802951A2D9718930036EDEE /* CreateGroupViewController.swift */,
+				7802951B2D9718930036EDEE /* FriendCell.swift */,
+				7802951C2D9718930036EDEE /* FriendRequestCell.swift */,
+				7802951D2D9718930036EDEE /* FriendRequestsViewController.swift */,
+				7802951E2D9718930036EDEE /* FriendsService.swift */,
+				7802951F2D9718930036EDEE /* FriendsViewController.swift */,
+				780295202D9718930036EDEE /* QuickAddCell.swift */,
+			);
+			path = Engage;
 			sourceTree = "<group>";
 		};
 		78B2C6852D8D3FBD0046B030 /* ProfileVC */ = {
@@ -565,15 +565,24 @@
 				577DA1D82CE3C6F600760BFA /* CategoryHeader.swift in Sources */,
 				57F22AED2D804992006DA3B4 /* CollegeFeedViewController.swift in Sources */,
 				78ED42FA2D42B24B00FF3017 /* OrganizerEventListViewController.swift in Sources */,
+				780295222D9718930036EDEE /* FriendRequestsViewController.swift in Sources */,
+				780295232D9718930036EDEE /* ChatCell.swift in Sources */,
+				780295242D9718930036EDEE /* ChatViewController.swift in Sources */,
+				780295252D9718930036EDEE /* CreateGroupViewController.swift in Sources */,
+				780295262D9718930036EDEE /* ChatMessageCell.swift in Sources */,
+				780295272D9718930036EDEE /* FriendsViewController.swift in Sources */,
+				780295282D9718930036EDEE /* FriendRequestCell.swift in Sources */,
+				780295292D9718930036EDEE /* QuickAddCell.swift in Sources */,
+				7802952A2D9718930036EDEE /* FriendsService.swift in Sources */,
+				7802952B2D9718930036EDEE /* ChatDetailViewController.swift in Sources */,
+				7802952C2D9718930036EDEE /* FriendCell.swift in Sources */,
 				577DA2F02CE898F000760BFA /* UserTabBarController.swift in Sources */,
 				78B9A1EF2D7BE9A9004B7B78 /* TechStackViewController.swift in Sources */,
 				577DA1C22CE3999000760BFA /* EventViewController.swift in Sources */,
 				57D9779B2CE9E13D004B1314 /* RegisteredEventCell.swift in Sources */,
 				39DF783C2CE9B011004B8244 /* BookmarkViewController.swift in Sources */,
-				78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */,
 				78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */,
 				57D977AB2CEC89C7004B1314 /* UnauthenViewController.swift in Sources */,
-				5756E1092D81C8E0005EF598 /* QuickAddCell.swift in Sources */,
 				57CDC67A2D30475900836984 /* RegistrationTableViewCell.swift in Sources */,
 				78E2BF272D7D77BF0071778A /* AcceptRequestCardView.swift in Sources */,
 				57CDC6782D30451000836984 /* RegistrationsListViewController.swift in Sources */,
@@ -587,7 +596,6 @@
 				5756E11D2D81CB3E005EF598 /* iOSOnboardingViewController.swift in Sources */,
 				7852F6042D43F7C90068F229 /* OrganiserChatViewController.swift in Sources */,
 				78ED42F62D400E9800FF3017 /* EventsCardsViewController.swift in Sources */,
-				5756E10B2D81C8E6005EF598 /* FriendsViewController.swift in Sources */,
 				577DA2F22CE8A4A000760BFA /* UserEventViewController.swift in Sources */,
 				577DA2002CE5DF6900760BFA /* FormFieldTableViewCell.swift in Sources */,
 				577DA1DC2CE4837700760BFA /* EventDetailViewController.swift in Sources */,
@@ -595,10 +603,8 @@
 				577DA1D42CE3BE2800760BFA /* EventCell.swift in Sources */,
 				57D977B12CEC9524004B1314 /* OrganizerTabBar.swift in Sources */,
 				57F22AE82D7F8C04006DA3B4 /* HackmateViewController.swift in Sources */,
-				5756E10D2D81C8EF005EF598 /* FriendsService.swift in Sources */,
 				57F22AE32D7F7576006DA3B4 /* UserProfileCardView.swift in Sources */,
 				577DA2022CE5DF9C00760BFA /* RegistrationViewController.swift in Sources */,
-				5756E1182D81C90D005EF598 /* ChatViewController.swift in Sources */,
 				577DA1DE2CE483AE00760BFA /* SpeakerCell.swift in Sources */,
 				577DA1BE2CE3999000760BFA /* AppDelegate.swift in Sources */,
 				572D8A512D0DFBE000DAB286 /* EventPostViewController.swift in Sources */,
@@ -614,14 +620,11 @@
 				78E2BF242D7D71D80071778A /* AcceptRequestCell.swift in Sources */,
 				57D977932CE8BD54004B1314 /* ProfileViewController.swift in Sources */,
 				5756E1232D822D62005EF598 /* SceneDelegate.swift in Sources */,
-				5756E1172D81C90D005EF598 /* FriendRequestsViewController.swift in Sources */,
-				5756E11A2D81C90D005EF598 /* ChatDetailViewController.swift in Sources */,
 				5756E1242D822D62005EF598 /* KeyWindow.swift in Sources */,
 				57D9779F2CEB1397004B1314 /* PhotoCell.swift in Sources */,
 				7852F6022D43F72C0068F229 /* OrganiserEventDetailViewController.swift in Sources */,
 				78ED43002D42C14800FF3017 /* FirestoreChatManager.swift in Sources */,
 				577DA2DE2CE88FE700760BFA /* LoginViewController.swift in Sources */,
-				5756E1162D81C90D005EF598 /* ChatCell.swift in Sources */,
 				577DA2EE2CE8922B00760BFA /* NotificationCell.swift in Sources */,
 				39DF783A2CE9AF5E004B8244 /* SwipeViewController.swift in Sources */,
 				577DA2DC2CE88FC500760BFA /* SavedRegistrationCell.swift in Sources */,
@@ -630,7 +633,6 @@
 				7841AAA22D36902E00438FE0 /* InterestsViewController.swift in Sources */,
 				781DC1CC2D5B76A100322EF3 /* NotificationTableViewCell.swift in Sources */,
 				572D8A4D2D0DA2FD00DAB286 /* EventListViewController.swift in Sources */,
-				5756E1152D81C90D005EF598 /* FriendCell.swift in Sources */,
 				57D977BF2CECA165004B1314 /* OrganizerProfileViewController.swift in Sources */,
 				572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */,
 				78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */,
@@ -643,8 +645,6 @@
 				78B2C6962D8D3FBD0046B030 /* MemberCell.swift in Sources */,
 				78B2C6972D8D3FBD0046B030 /* EventGroupsListViewController.swift in Sources */,
 				78B2C6982D8D3FBD0046B030 /* UserProfileViewerController.swift in Sources */,
-				5756E1192D81C90D005EF598 /* ChatMessageCell.swift in Sources */,
-				5756E11B2D81C90D005EF598 /* FriendRequestCell.swift in Sources */,
 				57D9779D2CEB085A004B1314 /* File.swift in Sources */,
 				57D977A12CEB145A004B1314 /* UpdateCell.swift in Sources */,
 				577DA1D62CE3BE4A00760BFA /* CategoryCell.swift in Sources */,

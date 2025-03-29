@@ -140,8 +140,8 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Profile"
-        label.font = UIFont.systemFont(ofSize: 36, weight: .bold)
+        label.text = "Dashboard"
+        label.font = UIFont.systemFont(ofSize: 28, weight: .bold)
         label.textAlignment = .left
         return label
     }()

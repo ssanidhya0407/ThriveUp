@@ -521,7 +521,7 @@ class FilterViewController: UIViewController {
     
     private let availableFilters = [
         "Trending", "Fun & Entertainment", "Tech & Innovation",
-        "Club & Societies", "Cultural", "Networking", "Sports",
+        "Club & Societies", "Cultural", "Networking", "Sports", "Hackathons",
         "Career Connect", "Wellness", "Other"
     ]
     
@@ -713,12 +713,18 @@ extension FilterViewController: UICollectionViewDelegateFlowLayout {
             extension EventListViewController: FilterViewControllerDelegate {
                 func didApplyFilters(_ filters: [String]) {
                     if filters.isEmpty {
+                        // If no filters are selected, show all events
                         filteredCategories = categories
                         filteredEventsByCategory = eventsByCategory
                     } else {
+                        // Filter categories and events based on selected filters
                         filteredCategories = filters
+                        
+                        // Filter events to only include those in the selected categories
                         filteredEventsByCategory = eventsByCategory.filter { filters.contains($0.key) }
                     }
+                    
+                    // Reload the collection view to reflect the changes
                     collectionView.reloadData()
                 }
             }

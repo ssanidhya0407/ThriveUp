@@ -15,7 +15,7 @@ class ChatViewController: UIViewController {
     private func setupCreateGroupButton() {
         let createGroupIcon = UIImage(systemName: "plus.bubble.fill")
         createGroupButton.setImage(createGroupIcon, for: .normal)
-        createGroupButton.tintColor = .systemGreen
+        createGroupButton.tintColor = .systemOrange
         createGroupButton.addTarget(self, action: #selector(openCreateGroupView), for: .touchUpInside)
         titleStackView.addArrangedSubview(createGroupButton)
     }
