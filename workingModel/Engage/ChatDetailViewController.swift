@@ -551,3 +551,4 @@ class ChatDetailViewController: UIViewController, UITableViewDataSource, UITable
 #Preview{
     ChatDetailViewController()
 }
+               
