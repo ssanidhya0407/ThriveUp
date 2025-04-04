@@ -77,7 +77,7 @@ class MessageCell: UITableViewCell {
             messageLabel.topAnchor.constraint(equalTo: userNameLabel.bottomAnchor, constant: 4),
             messageLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
-            // Message image view constraints
+            // Message image view constraints - only active when an image is present
             messageImageView.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
             messageImageView.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 8),
             messageImageView.widthAnchor.constraint(lessThanOrEqualTo: contentView.widthAnchor, multiplier: 0.7),
@@ -92,7 +92,15 @@ class MessageCell: UITableViewCell {
     
     func configure(with message: EventGroupMessage, organizers: [String] = []) {
         userNameLabel.text = message.userName
-        messageLabel.text = message.text
+        
+        // Handle message text
+        if let text = message.text {
+            messageLabel.text = text
+            messageLabel.isHidden = false
+        } else {
+            messageLabel.text = ""
+            messageLabel.isHidden = true
+        }
         
         // Format time
         let formatter = DateFormatter()
@@ -126,13 +134,29 @@ class MessageCell: UITableViewCell {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
         
+        // Handle message image if available
+        if let imageURL = message.imageURL, let url = URL(string: imageURL) {
+            messageImageView.isHidden = false
+            
+            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+                guard let data = data, let image = UIImage(data: data) else { return }
+                
+                DispatchQueue.main.async {
+                    self?.messageImageView.image = image
+                }
+            }.resume()
+        } else {
+            messageImageView.isHidden = true
+        }
+        
         // Ensure the badge is added to the view and positioned properly
         if isOrganizer {
             contentView.addSubview(organizerBadge)
             organizerBadge.isHidden = false
             
+            organizerBadge.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                organizerBadge.leadingAnchor.constraint(equalTo: userNameLabel.leadingAnchor, constant: 4),
+                organizerBadge.leadingAnchor.constraint(equalTo: userNameLabel.trailingAnchor, constant: 4),
                 organizerBadge.centerYAnchor.constraint(equalTo: userNameLabel.centerYAnchor),
                 organizerBadge.widthAnchor.constraint(equalToConstant: 8),
                 organizerBadge.heightAnchor.constraint(equalToConstant: 8)
@@ -141,6 +165,4 @@ class MessageCell: UITableViewCell {
             organizerBadge.isHidden = true
         }
     }
-
 }
-

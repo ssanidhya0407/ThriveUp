@@ -1,19 +1,12 @@
-//
-//  MemberCell.swift
-//  ThriveUp
-//
-//  Created by Sanidhya's MacBook Pro on 16/03/25.
-//
-
-
 import UIKit
+import Kingfisher
 
 class MemberCell: UITableViewCell {
     
     private let nameLabel = UILabel()
     private let roleLabel = UILabel()
     private let statusLabel = UILabel()
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -24,12 +17,23 @@ class MemberCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        // Cancel any ongoing image download
+        profileImageView.kf.cancelDownloadTask()
+        // Reset to default image
+        profileImageView.image = UIImage(systemName: "person.circle.fill")
+        profileImageView.tintColor = .systemGray
+        statusLabel.isHidden = true
+    }
+    
     private func setupUI() {
         // Configure profile image view
-        profileImageView.contentMode = .scaleAspectFit
+        profileImageView.contentMode = .scaleAspectFill
         profileImageView.layer.cornerRadius = 20
         profileImageView.clipsToBounds = true
         profileImageView.image = UIImage(systemName: "person.circle.fill")
+        profileImageView.tintColor = .systemGray
         profileImageView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(profileImageView)
         
@@ -46,6 +50,7 @@ class MemberCell: UITableViewCell {
         
         // Configure status label
         statusLabel.font = UIFont.systemFont(ofSize: 12)
+        statusLabel.isHidden = true
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(statusLabel)
         
@@ -67,9 +72,10 @@ class MemberCell: UITableViewCell {
             // Role label constraints
             roleLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
             roleLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            roleLabel.trailingAnchor.constraint(lessThanOrEqualTo: statusLabel.leadingAnchor, constant: -8),
             
             // Status label constraints
-            statusLabel.leadingAnchor.constraint(equalTo: roleLabel.trailingAnchor, constant: 8),
+            statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -16),
             statusLabel.centerYAnchor.constraint(equalTo: roleLabel.centerYAnchor),
             statusLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
@@ -78,7 +84,6 @@ class MemberCell: UITableViewCell {
     func configure(with member: EventGroupMember, viewedByOrganizer: Bool = false) {
         nameLabel.text = member.name
         roleLabel.text = member.role.capitalized
-       
         
         // Show chat status only if viewed by an organizer
         if viewedByOrganizer {
@@ -91,23 +96,22 @@ class MemberCell: UITableViewCell {
                 statusLabel.textColor = .systemRed
             }
         } else {
-            // Hide the chat status label when viewed by regular users
             statusLabel.isHidden = true
         }
         
-        // Load profile image if available
+        // Load profile image using Kingfisher
         if let profileImageURL = member.profileImageURL, let url = URL(string: profileImageURL) {
-            print("Profile Image URL: \(profileImageURL)")  // Debugging line
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.profileImageView.image = image
-                    }
-                }
-            }.resume()
+            profileImageView.kf.setImage(
+                with: url,
+                placeholder: UIImage(systemName: "person.circle.fill"),
+                options: [
+                    .transition(.fade(0.2)),
+                    .scaleFactor(UIScreen.main.scale),
+                    .cacheOriginalImage
+                ]
+            )
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
-
     }
 }

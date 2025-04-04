@@ -163,7 +163,7 @@ class HackmateRequestsViewController: UIViewController, UITableViewDelegate, UIT
 
 // MARK: - Custom TableView Cell
 class HackmateRequestCell: UITableViewCell {
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {

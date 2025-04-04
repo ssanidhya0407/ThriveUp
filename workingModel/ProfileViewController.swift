@@ -12,7 +12,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     private let db = Firestore.firestore()
     
     // UI Elements
-    private let profileImageView: UIImageView = {
+    public let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "default_profile")
         imageView.contentMode = .scaleAspectFill
@@ -140,8 +140,8 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Profile"
-        label.font = UIFont.systemFont(ofSize: 36, weight: .bold)
+        label.text = "Dashboard"
+        label.font = UIFont.systemFont(ofSize: 28, weight: .bold)
         label.textAlignment = .left
         return label
     }()
@@ -182,9 +182,8 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
                 return
             }
             
-            guard let document = document, document.exists,
-                  let profileImageUrl = document.data()?["profileImageURL"] as? String else {
-                print("No valid profile image URL found.")
+            guard let document = document, document.exists else {
+                print("User document not found")
                 return
             }
             
@@ -192,10 +191,14 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             editVC.name = self.nameLabel.text
             editVC.descriptionText = self.descriptionLabel.text?.replacingOccurrences(of: "Description: ", with: "")
             editVC.contact = self.contactDetailsLabel.text?.replacingOccurrences(of: "Contact: ", with: "")
-            editVC.githubUrl = document.data()?["githubUrl"] as? String
-            editVC.linkedinUrl = document.data()?["linkedinUrl"] as? String
-            editVC.techStack = document.data()?["techStack"] as? String
-            editVC.imageUrl = profileImageUrl
+            
+            // Make image URL optional
+            editVC.imageUrl = document.data()?["profileImageURL"] as? String ?? ""
+            
+            // Other optional fields
+            editVC.githubUrl = document.data()?["githubUrl"] as? String ?? ""
+            editVC.linkedinUrl = document.data()?["linkedinUrl"] as? String ?? ""
+            editVC.techStack = document.data()?["techStack"] as? String ?? ""
             
             editVC.onSave = { [weak self] updatedDetails in
                 self?.updateProfile(with: updatedDetails)
@@ -651,36 +654,89 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     private func unregisterEvent(_ event: EventModel) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         
+        // Create a dispatch group to handle both operations
+        let dispatchGroup = DispatchGroup()
+        var success = true
+        var errorMessage: String?
+        
+        // 1. Remove from registrations
+        dispatchGroup.enter()
         db.collection("registrations")
             .whereField("uid", isEqualTo: userId)
             .whereField("eventId", isEqualTo: event.eventId)
-            .getDocuments { [weak self] snapshot, error in
-                guard let self = self else { return }
+            .getDocuments { snapshot, error in
+                defer { dispatchGroup.leave() }
                 
                 if let error = error {
                     print("Error fetching registration for unregistration: \(error.localizedDescription)")
+                    success = false
+                    errorMessage = error.localizedDescription
                     return
                 }
                 
                 guard let document = snapshot?.documents.first else {
                     print("No registration found for event \(event.eventId)")
+                    success = false
+                    errorMessage = "No registration found"
                     return
                 }
                 
                 document.reference.delete { error in
                     if let error = error {
                         print("Error deleting registration: \(error.localizedDescription)")
+                        success = false
+                        errorMessage = error.localizedDescription
                     } else {
                         print("Successfully unregistered from event \(event.eventId)")
-                        self.registeredEvents.removeAll { $0.eventId == event.eventId }
-                        DispatchQueue.main.async {
-                            self.eventsTableView.reloadData()
-                        }
                     }
                 }
             }
+        
+        // 2. Remove from event group members
+        dispatchGroup.enter()
+        db.collection("eventGroups").document(event.eventId)
+            .collection("members").document(userId)
+            .delete { error in
+                defer { dispatchGroup.leave() }
+                
+                if let error = error {
+                    print("Error removing user from event group: \(error.localizedDescription)")
+                    success = false
+                    errorMessage = error.localizedDescription
+                } else {
+                    print("Successfully removed user from event group")
+                }
+            }
+        
+        // Handle completion of both operations
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            
+            if success {
+                // Only update UI if both operations succeeded
+                self.registeredEvents.removeAll { $0.eventId == event.eventId }
+                self.eventsTableView.reloadData()
+                
+                // Show success message
+                let alert = UIAlertController(
+                    title: "Success",
+                    message: "You have been unregistered from \(event.title) and removed from its group",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            } else {
+                // Show error message if any operation failed
+                let alert = UIAlertController(
+                    title: "Error",
+                    message: errorMessage ?? "Failed to unregister from event",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
+            }
+        }
     }
-    
     // MARK: - UITableView DataSource & Delegate
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return registeredEvents.count

@@ -10,7 +10,7 @@ import UIKit
 class SavedRegistrationCell: UITableViewCell {
     
     private let serialNumberLabel = UILabel()
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let yearLabel = UILabel()
     

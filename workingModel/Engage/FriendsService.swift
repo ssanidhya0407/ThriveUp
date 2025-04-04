@@ -23,6 +23,30 @@ class FriendsService {
             }
         }
     }
+    // In FriendsService.swift
+    func friendsListener(forUserID userID: String, completion: @escaping (Result<[String], Error>) -> Void) -> ListenerRegistration {
+        return db.collection("friendships")
+            .whereField("users", arrayContains: userID)
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                
+                let friendIDs = documents.compactMap { doc -> String? in
+                    let data = doc.data()
+                    let users = data["users"] as? [String] ?? []
+                    return users.first { $0 != userID }
+                }
+                
+                completion(.success(friendIDs))
+            }
+    }
 
     // Send Friend Request
     func sendFriendRequest(fromUserID: String, toUserID: String, completion: @escaping (Bool, Error?) -> Void) {

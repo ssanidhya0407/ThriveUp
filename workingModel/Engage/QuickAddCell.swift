@@ -9,7 +9,7 @@ import UIKit
 
 class QuickAddCell: UICollectionViewCell {
     static let identifier = "QuickAddCell"
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     let addButton = UIButton() // Changed from `private` to `internal`
 

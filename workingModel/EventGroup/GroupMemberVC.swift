@@ -17,7 +17,6 @@ class GroupMemberVC: UIViewController {
     
     // UI Components
     private let tableView = UITableView()
-    
     // MARK: - Initialization
     init(eventId: String) {
         self.eventId = eventId

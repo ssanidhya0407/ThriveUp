@@ -5,6 +5,7 @@
 //  Created by Yash's Mackbook on 17/11/24.
 //
 import UIKit
+import Kingfisher
 
 protocol RegisteredEventCellDelegate: AnyObject {
     func didTapUnregister(event: EventModel)
@@ -104,7 +105,11 @@ class RegisteredEventCell: UITableViewCell {
         dateLabel.text = "\(event.date), \(event.time)"
         
         if let imageUrl = URL(string: event.imageName), event.imageName.hasPrefix("http") {
-            loadImage(from: imageUrl, into: eventImageView)
+            eventImageView.kf.setImage(
+                with: imageUrl,
+                placeholder: UIImage(named: "placeholder"),
+                options: [.transition(.fade(0.2))]
+            )
         } else {
             eventImageView.image = UIImage(named: event.imageName)
         }

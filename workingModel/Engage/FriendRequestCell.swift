@@ -10,7 +10,7 @@ import UIKit
 class FriendRequestCell: UITableViewCell {
     static let identifier = "FriendRequestCell"
 
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let usernameLabel = UILabel()
     private let acceptButton = UIButton()

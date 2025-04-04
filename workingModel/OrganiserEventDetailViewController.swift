@@ -11,6 +11,7 @@
     import UIKit
     import MapKit
     import FirebaseFirestore
+import FirebaseAuth
 
     class OrganiserEventDetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
@@ -333,14 +334,10 @@
                     return Speaker(name: name, imageURL: imageURL)
                 } ?? []
                 
-                // Debugging: Print the parsed speakers
-                print("Parsed Speakers: \(speakers)")
-
-                // Fetch organizer details (UID from event document)
-                let uid = data["userId"] as? String ?? ""
-                self.fetchOrganizerDetails(uid: uid)
-
-                // Initialize the EventModel
+                // Get the event creator's user ID
+                let creatorUserId = data["userId"] as? String ?? ""
+                
+                // Initialize the EventModel with the creator's user ID
                 let event = EventModel(
                     eventId: data["eventId"] as? String ?? "",
                     title: data["title"] as? String ?? "Untitled",
@@ -353,20 +350,34 @@
                     locationDetails: data["locationDetails"] as? String ?? "",
                     imageName: data["imageName"] as? String ?? "",
                     speakers: speakers,
-                    userId : "",
+                    userId: creatorUserId, // Store the creator's user ID
                     description: data["description"] as? String ?? "",
                     latitude: data["latitude"] as? Double,
                     longitude: data["longitude"] as? Double,
-                    
                     tags: []
                 )
                 
                 self.event = event
 
-                // Update the UI
+                // Update the UI and check edit permissions
                 DispatchQueue.main.async {
                     self.updateUI()
+                    self.checkEditPermissions()
                 }
+            }
+        }
+        private func checkEditPermissions() {
+            // Get the current user's ID (you'll need to implement your auth system here)
+            guard let currentUserId = Auth.auth().currentUser?.uid else {
+                EditButton.isHidden = true
+                return
+            }
+            
+            // Compare with the event creator's ID
+            if let creatorId = event?.userId, creatorId == currentUserId {
+                EditButton.isHidden = false
+            } else {
+                EditButton.isHidden = true
             }
         }
 
@@ -452,15 +463,21 @@
             EditButton.addTarget(self, action: #selector(EditButtonTapped), for: .touchUpInside)
         }
         @objc private func EditButtonTapped() {
-            guard let event = event else { return }
-                   
-                   let editEventVC = EditEventViewController()
-                   editEventVC.event = event
-                   editEventVC.onEventUpdated = { [weak self] updatedEvent in
-                       self?.event = updatedEvent
-                       self?.updateUI() // Refresh UI after editing
-                   }
-                   navigationController?.pushViewController(editEventVC, animated: true)
+            // Double-check permissions before allowing edit
+            guard let currentUserId = Auth.auth().currentUser?.uid,
+                  let creatorId = event?.userId,
+                  currentUserId == creatorId,
+                  let event = event else {
+                return
+            }
+            
+            let editEventVC = EditEventViewController()
+            editEventVC.event = event
+            editEventVC.onEventUpdated = { [weak self] updatedEvent in
+                self?.event = updatedEvent
+                self?.updateUI() // Refresh UI after editing
+            }
+            navigationController?.pushViewController(editEventVC, animated: true)
         }
 
 

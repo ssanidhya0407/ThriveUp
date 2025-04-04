@@ -79,35 +79,7 @@ class FriendsViewController: UIViewController {
     }
 
 
-//    private func fetchFriends() {
-//        guard let currentUser = currentUser else { return }
-//        FriendsService.shared.fetchFriends(forUserID: currentUser.id) { [weak self] friends, error in
-//            if let error = error {
-//                print("Error fetching friends: \(error)")
-//                return
-//            }
-//            self?.friends = friends ?? []
-//            self?.filteredFriends = self?.friends ?? []
-//            self?.fetchUserDetailsForFriends()
-//        }
-//    }
-//    private func fetchFriends() {
-//        guard let currentUser = currentUser else { return }
-//        FriendsService.shared.fetchFriends(forUserID: currentUser.id) { [weak self] friends, error in
-//            if let error = error {
-//                print("Error fetching friends: \(error)")
-//                return
-//            }
-//            self?.friends = friends ?? []
-//            self?.filteredFriends = self?.friends ?? []
-//            self?.fetchUserDetailsForFriends()
-//
-//            // Update friends count in ProfileViewController
-//            if let profileVC = self?.navigationController?.viewControllers.first(where: { $0 is ProfileViewController }) as? ProfileViewController {
-//                profileVC.fetchFriendsCount()
-//            }
-//        }
-//    }
+
 
     private func fetchFriends() {
         guard let currentUser = currentUser else { return }
@@ -126,9 +98,6 @@ class FriendsViewController: UIViewController {
             NotificationCenter.default.post(name: NSNotification.Name("FriendCountUpdated"), object: nil)
         }
     }
-
-
-
 
     private func fetchUserDetailsForFriends() {
         let dispatchGroup = DispatchGroup()

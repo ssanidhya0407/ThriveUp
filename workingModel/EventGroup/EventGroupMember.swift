@@ -54,7 +54,7 @@ struct EventGroupMessage {
         self.text = data["text"] as? String
         self.timestamp = timestamp.dateValue()
         self.profileImageURL = data["profileImageURL"] as? String
-        self.imageURL = data["profileImageURL"] as? String
+        self.imageURL = data["imageURL"] as? String
     }
     
     func toDictionary() -> [String: Any] {
@@ -234,9 +234,16 @@ class EventGroupManager {
     // MARK: - Chat Functions
     
     /// Send a message in the event group chat
-    func sendMessage(eventId: String, text: String, completion: @escaping (Bool) -> Void) {
+    func sendMessage(eventId: String, text: String? = nil, imageURL: String? = nil, completion: @escaping (Bool) -> Void) {
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             print("No authenticated user found")
+            completion(false)
+            return
+        }
+        
+        // Ensure either text or imageURL is provided
+        guard text != nil || imageURL != nil else {
+            print("Either text or image URL must be provided")
             completion(false)
             return
         }
@@ -280,14 +287,23 @@ class EventGroupManager {
                         // Now fetch user details to include in the message
                         self.fetchUserDetails(userId: currentUserId) { userData in
                             let messageId = UUID().uuidString
-                            let messageData: [String: Any] = [
+                            var messageData: [String: Any] = [
                                 "id": messageId,
                                 "userId": currentUserId,
                                 "userName": userData?["name"] as? String ?? "User",
-                                "text": text,
                                 "timestamp": Timestamp(date: Date()),
                                 "profileImageURL": userData?["profileImageURL"] as? String ?? ""
                             ]
+                            
+                            // Add text if provided
+                            if let text = text {
+                                messageData["text"] = text
+                            }
+                            
+                            // Add imageURL if provided
+                            if let imageURL = imageURL {
+                                messageData["imageURL"] = imageURL
+                            }
                             
                             // Finally, send the message
                             self.db.collection("eventGroups").document(eventId)
@@ -328,7 +344,6 @@ class EventGroupManager {
                     guard let id = document.data()["id"] as? String,
                           let userId = document.data()["userId"] as? String,
                           let userName = document.data()["userName"] as? String,
-                          let text = document.data()["text"] as? String,
                           let timestamp = document.data()["timestamp"] as? Timestamp else {
                         return nil
                     }
@@ -337,9 +352,10 @@ class EventGroupManager {
                         id: id,
                         userId: userId,
                         userName: userName,
-                        text: text,
+                        text: document.data()["text"] as? String,
                         timestamp: timestamp.dateValue(),
-                        profileImageURL: document.data()["profileImageURL"] as? String
+                        profileImageURL: document.data()["profileImageURL"] as? String,
+                        imageURL: document.data()["imageURL"] as? String
                     )
                 }
                 

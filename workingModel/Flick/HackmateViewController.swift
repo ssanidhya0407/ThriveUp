@@ -137,7 +137,7 @@ extension HackmateViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 class HackmateCell: UITableViewCell {
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {

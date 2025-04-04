@@ -3,7 +3,7 @@ import UIKit
 class FriendCell: UITableViewCell {
     static let identifier = "FriendCell"
 
-    private let profileImageView: UIImageView = {
+    public let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 25

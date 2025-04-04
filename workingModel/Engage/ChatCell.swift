@@ -1,9 +1,10 @@
 import UIKit
+import Kingfisher
 
 class ChatCell: UITableViewCell {
     static let identifier = "ChatCell"
 
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let messageLabel = UILabel()
     private let timeLabel = UILabel()
@@ -86,20 +87,21 @@ class ChatCell: UITableViewCell {
         nameLabel.text = name
         messageLabel.text = message
         timeLabel.text = time
-
+        
+        // Set placeholder first
+        profileImageView.image = UIImage(named: "defaultProfileImage")
+        
         if let urlString = profileImageURL, let url = URL(string: urlString) {
-            DispatchQueue.global().async {
-                if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.profileImageView.image = image
-                    }
-                }
-            }
-        } else {
-            profileImageView.image = UIImage(named: "defaultProfileImage")
+            profileImageView.kf.setImage(
+                with: url,
+                placeholder: UIImage(named: "defaultProfileImage"),
+                options: [
+                    .transition(.fade(0.2)),
+                    .cacheOriginalImage
+                ]
+            )
         }
-    }
-}
+    }}
 
 #Preview{
     ChatCell()

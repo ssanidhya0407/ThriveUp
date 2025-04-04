@@ -16,7 +16,7 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
     private let db = Firestore.firestore()
 
     // MARK: - UI Elements
-    private let profileImageView: UIImageView = {
+    public let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "defaultProfileImage")
         imageView.contentMode = .scaleAspectFill

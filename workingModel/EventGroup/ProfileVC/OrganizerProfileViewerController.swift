@@ -19,7 +19,7 @@ class OrganizerProfileViewerController: UIViewController, UITableViewDelegate, U
     // UI Elements
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let emailLabel = UILabel()
     private let segmentControl = UISegmentedControl(items: ["Details", "Events"])

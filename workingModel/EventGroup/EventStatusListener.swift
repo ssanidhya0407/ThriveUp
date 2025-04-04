@@ -64,6 +64,7 @@ class EventStatusListener {
         // Store the listener to be able to remove it later
         listeners["all_events"] = listener
     }
+
     
     private func handleAcceptedEvent(eventId: String, organizerId: String) {
         // Check if group already exists
