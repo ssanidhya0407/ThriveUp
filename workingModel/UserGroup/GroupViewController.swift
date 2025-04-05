@@ -347,7 +347,7 @@ class GroupViewController: UIViewController {
     
     // MARK: - Actions
     @objc private func groupTitleTapped() {
-        let groupMemberVC = GroupMemberVC(eventId: groupID)
+        let groupMemberVC = UserGroupMemberVC(groupId: groupID)
         navigationController?.pushViewController(groupMemberVC, animated: true)
     }
     
@@ -455,7 +455,7 @@ class GroupViewController: UIViewController {
     }
     
     private func showMemberManagement() {
-        let groupMemberVC = GroupMemberVC(eventId: groupID)
+        let groupMemberVC = UserGroupMemberVC(groupId: groupID)
         navigationController?.pushViewController(groupMemberVC, animated: true)
     }
 }

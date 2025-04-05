@@ -56,6 +56,8 @@ class UserGroupMemberVC: UIViewController {
         addButton.isEnabled = false // Will be enabled when we confirm user is admin
     }
     
+
+
     private func setupHeaderView() {
         headerView.backgroundColor = .systemBackground
         headerView.translatesAutoresizingMaskIntoConstraints = false
@@ -65,9 +67,9 @@ class UserGroupMemberVC: UIViewController {
         groupImageView.contentMode = .scaleAspectFill
         groupImageView.clipsToBounds = true
         groupImageView.layer.cornerRadius = 60
-        groupImageView.backgroundColor = .systemGray5
+        groupImageView.backgroundColor = .systemGray6
         groupImageView.image = UIImage(systemName: "person.3.fill")
-        groupImageView.tintColor = .systemGray
+        groupImageView.tintColor = .systemGray3
         groupImageView.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(groupImageView)
         
@@ -78,15 +80,15 @@ class UserGroupMemberVC: UIViewController {
         groupNameLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(groupNameLabel)
         
-        // Configure members label
-        membersLabel.text = "MEMBERS"
+        // Configure members label - just "Group Details" now
+        membersLabel.text = "Group Details"
         membersLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        membersLabel.textColor = .systemGray
+        membersLabel.textColor = .secondaryLabel
         membersLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(membersLabel)
         
         // Configure divider line
-        dividerLine.backgroundColor = .systemGray4
+        dividerLine.backgroundColor = .systemGray5
         dividerLine.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(dividerLine)
         
@@ -107,7 +109,7 @@ class UserGroupMemberVC: UIViewController {
             groupNameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             groupNameLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
             
-            // Members label below group name
+            // Members label below group name - now "Group Details"
             membersLabel.topAnchor.constraint(equalTo: groupNameLabel.bottomAnchor, constant: 24),
             membersLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
             
@@ -119,6 +121,7 @@ class UserGroupMemberVC: UIViewController {
             dividerLine.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -10)
         ])
     }
+
     
     private func setupTableView() {
         tableView.dataSource = self
@@ -199,12 +202,11 @@ class UserGroupMemberVC: UIViewController {
         }
     }
     
+
     private func updateMembersLabel() {
-        let adminCount = members.filter { $0.role == "admin" }.count
-        let totalCount = members.count
-        membersLabel.text = "MEMBERS (\(totalCount)) • ADMINS (\(adminCount))"
+        // Just keep the header as "Group Details" without counts
+        membersLabel.text = "Group Details"
     }
-    
     // MARK: - Actions
     @objc private func addMemberTapped() {
         // Only admins can add members
@@ -350,6 +352,7 @@ extension UserGroupMemberVC: UITableViewDataSource {
         return members.count
     }
     
+    // Fix the cell background color in cellForRowAt method
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: UserMemberCell.identifier, for: indexPath) as? UserMemberCell else {
             return UITableViewCell()
@@ -360,26 +363,19 @@ extension UserGroupMemberVC: UITableViewDataSource {
         // Configure the cell with member data
         cell.configure(with: member)
         
-        // Add styling for admins
-        if member.role == "admin" {
-            cell.backgroundColor = UIColor.systemGray6
-        } else {
-            cell.backgroundColor = .black
-        }
+        // Fix the cell background color
+        cell.backgroundColor = .systemBackground
         
-        // Highlight current user
+        // Highlight current user with a subtle indicator
         if member.userId == currentUserID {
-            cell.contentView.layer.borderColor = UIColor.systemBlue.cgColor
-            cell.contentView.layer.borderWidth = 1
-            cell.contentView.layer.cornerRadius = 8
+            cell.contentView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
         } else {
-            cell.contentView.layer.borderWidth = 0
+            cell.contentView.backgroundColor = .systemBackground
         }
         
         return cell
     }
 }
-
 // MARK: - UITableViewDelegate
 extension UserGroupMemberVC: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
