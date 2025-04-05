@@ -93,7 +93,6 @@
 		7852F6152D456E500068F229 /* PhotosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6142D456E500068F229 /* PhotosViewController.swift */; };
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
-		78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */; };
 		78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */; };
 		78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */; };
 		78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */; };
@@ -206,7 +205,6 @@
 		7852F6142D456E500068F229 /* PhotosViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotosViewController.swift; sourceTree = "<group>"; };
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
-		78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
 		78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerProfileViewerController.swift; sourceTree = "<group>"; };
 		78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewerController.swift; sourceTree = "<group>"; };
 		78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMember.swift; sourceTree = "<group>"; };
@@ -232,6 +230,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		78B2C65C2D8A14D50046B030 /* Hackathons */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Hackathons; sourceTree = "<group>"; };
+		78BCC3462DA0995C000C9CAB /* UserGroup */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UserGroup; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -294,6 +293,7 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				78BCC3462DA0995C000C9CAB /* UserGroup */,
 				78BCC3322DA002BF000C9CAB /* ImageCache.swift */,
 				78B2C65C2D8A14D50046B030 /* Hackathons */,
 				78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */,
@@ -370,7 +370,6 @@
 		57F22ACD2D7EF7B7006DA3B4 /* Engage */ = {
 			isa = PBXGroup;
 			children = (
-				78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */,
 				5756E1082D81C8E0005EF598 /* QuickAddCell.swift */,
 				5756E10F2D81C90D005EF598 /* ChatCell.swift */,
 				5756E1132D81C90D005EF598 /* ChatDetailViewController.swift */,
@@ -466,6 +465,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				78B2C65C2D8A14D50046B030 /* Hackathons */,
+				78BCC3462DA0995C000C9CAB /* UserGroup */,
 			);
 			name = ThriveUp;
 			packageProductDependencies = (
@@ -584,7 +584,6 @@
 				577DA1C22CE3999000760BFA /* EventViewController.swift in Sources */,
 				57D9779B2CE9E13D004B1314 /* RegisteredEventCell.swift in Sources */,
 				39DF783C2CE9B011004B8244 /* BookmarkViewController.swift in Sources */,
-				78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */,
 				78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */,
 				57D977AB2CEC89C7004B1314 /* UnauthenViewController.swift in Sources */,
 				5756E1092D81C8E0005EF598 /* QuickAddCell.swift in Sources */,

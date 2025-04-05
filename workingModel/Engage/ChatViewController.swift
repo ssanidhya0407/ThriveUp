@@ -240,31 +240,6 @@ class ChatViewController: UIViewController {
             }
     }
     
-    private func fetchGroups() {
-        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("groups").whereField("members", arrayContains: currentUserID).getDocuments { [weak self] (snapshot, error) in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("Error fetching groups: \(error.localizedDescription)")
-                return
-            }
-            
-            self.groups = snapshot?.documents.compactMap { doc in
-                let data = doc.data()
-                return Group(
-                    id: doc.documentID,
-                    name: data["name"] as? String ?? "Unnamed Group",
-                    members: data["members"] as? [String] ?? []
-                )
-            } ?? []
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
 
 
     private func setupSearchBar() {
@@ -629,18 +604,6 @@ class ChatViewController: UIViewController {
         }
     }
     
-    private func openGroupChat(group: Group) {
-        print("Opening Group Chat for group ID: \(group.id)") // Debugging
-
-        let chatDetailVC = ChatDetailViewController()
-        chatDetailVC.group = group // Pass group data
-        chatDetailVC.isGroupChat = true // Indicate it's a group chat
-
-        let navController = UINavigationController(rootViewController: chatDetailVC)
-        navController.modalPresentationStyle = .fullScreen
-        present(navController, animated: true)
-    }
-
 
 }
 
@@ -663,7 +626,7 @@ extension ChatViewController: UITableViewDataSource, UITableViewDelegate {
                 with: group.name,
                 message: "Group Chat",
                 time: "",
-                profileImageURL: nil
+                profileImageURL: group.imageURL
             )
         } else if indexPath.row < groups.count + eventGroups.count {
             // Display Event Group Chat
@@ -745,6 +708,80 @@ extension ChatViewController: UISearchBarDelegate {
 
 // MARK: - ChatDetailViewControllerDelegate
 
+
+// Add this to your ChatViewController.swift file
+extension ChatViewController {
+    private func openGroupChat(group: Group) {
+        print("Opening Group Chat for group ID: \(group.id)")
+        
+        // Find if current user is admin
+        let currentUserID = Auth.auth().currentUser?.uid ?? ""
+        
+        db.collection("groups")
+            .document(group.id)
+            .collection("members")
+            .document(currentUserID)
+            .getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
+                
+                let isAdmin = document?.data()?["role"] as? String == "admin"
+                
+                DispatchQueue.main.async {
+                    let groupVC = GroupViewController(groupID: group.id, isAdmin: isAdmin)
+                    self.navigationController?.pushViewController(groupVC, animated: true)
+                }
+            }
+    }
+    
+    // Method to fetch groups where current user is a member
+    func fetchGroups() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("groups").getDocuments { [weak self] (snapshot, error) in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching groups: \(error.localizedDescription)")
+                return
+            }
+            
+            let dispatchGroup = DispatchGroup()
+            var userGroups: [Group] = []
+            
+            for document in snapshot?.documents ?? [] {
+                let groupID = document.documentID
+                dispatchGroup.enter()
+                
+                self.db.collection("groups")
+                    .document(groupID)
+                    .collection("members")
+                    .document(currentUserID)
+                    .getDocument { (memberDoc, memberError) in
+                        
+                        if let memberDoc = memberDoc, memberDoc.exists {
+                            let data = document.data()
+                            let group = Group(
+                                id: groupID,
+                                name: data["name"] as? String ?? "Unnamed Group",
+                                members: [], // Populate if needed
+                                imageURL: data["imageURL"] as? String  // Retrieve the imageURL
+                            )
+                            userGroups.append(group)
+                        }
+                        
+                        dispatchGroup.leave()
+                    }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                self.groups = userGroups
+                self.tableView.reloadData()
+            }
+        }
+    }
+}
+
+
 extension ChatViewController: ChatDetailViewControllerDelegate {
     func didSendMessage(_ message: ChatMessage, to friend: User) {
         lastMessages[friend.id] = message
@@ -779,8 +816,13 @@ extension ChatViewController {
     }
     
     private func setupGroupsListener(currentUserID: String) {
+        // We can't directly query for all groups where the user is a member
+        // So we'll listen for changes to all groups and filter client-side
+        
+        // This is not very efficient for large numbers of groups,
+        // but works well for smaller apps
+        
         db.collection("groups")
-            .whereField("members", arrayContains: currentUserID)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
@@ -789,18 +831,47 @@ extension ChatViewController {
                     return
                 }
                 
-                guard let documents = snapshot?.documents else { return }
+                // Get all group IDs
+                let groupIDs = snapshot?.documents.map { $0.documentID } ?? []
                 
-                self.groups = documents.compactMap { doc in
-                    let data = doc.data()
-                    return Group(
-                        id: doc.documentID,
-                        name: data["name"] as? String ?? "Unnamed Group",
-                        members: data["members"] as? [String] ?? []
-                    )
+                if groupIDs.isEmpty {
+                    DispatchQueue.main.async {
+                        self.groups = []
+                        self.tableView.reloadData()
+                    }
+                    return
                 }
                 
-                DispatchQueue.main.async {
+                // Check each group if the user is a member
+                let dispatchGroup = DispatchGroup()
+                var userGroups: [Group] = []
+                
+                for doc in snapshot?.documents ?? [] {
+                    let groupID = doc.documentID
+                    dispatchGroup.enter()
+                    
+                    self.db.collection("groups")
+                        .document(groupID)
+                        .collection("members")
+                        .document(currentUserID)
+                        .getDocument { memberDoc, memberError in
+                            // In setupGroupsListener method
+                            if let memberDoc = memberDoc, memberDoc.exists {
+                                let data = doc.data()
+                                let group = Group(
+                                    id: groupID,
+                                    name: data["name"] as? String ?? "Unnamed Group",
+                                    members: [], // Populate if needed
+                                    imageURL: data["imageURL"] as? String // Add this line to provide the imageURL parameter
+                                )
+                                userGroups.append(group)
+                            }
+                            dispatchGroup.leave()
+                        }
+                }
+                
+                dispatchGroup.notify(queue: .main) {
+                    self.groups = userGroups
                     self.tableView.reloadData()
                 }
             }

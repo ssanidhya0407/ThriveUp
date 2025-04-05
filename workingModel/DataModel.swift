@@ -330,6 +330,14 @@ struct Group {
     let id: String
     let name: String
     let members: [String]
+    let imageURL: String?
+    
+    init(id: String, name: String, members: [String], imageURL: String? = nil) {
+        self.id = id
+        self.name = name
+        self.members = members
+        self.imageURL = imageURL
+    }
 }
 
 

@@ -22,7 +22,7 @@ class CreateGroupViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .white // Set background color
         
         // Image Button
         imageButton.setTitle("Select Group Image", for: .normal)
@@ -108,15 +108,15 @@ class CreateGroupViewController: UIViewController {
         if let image = selectedImage {
             uploadImage(image, groupID: groupID) { [weak self] imageURL in
                 self?.createGroupDocument(groupID: groupID,
-                                        groupName: groupName,
-                                        currentUserID: currentUser.id,
-                                        imageURL: imageURL)
+                                          groupName: groupName,
+                                          currentUserID: currentUser.id,
+                                          imageURL: imageURL)
             }
         } else {
             createGroupDocument(groupID: groupID,
-                             groupName: groupName,
-                             currentUserID: currentUser.id,
-                             imageURL: nil)
+                                groupName: groupName,
+                                currentUserID: currentUser.id,
+                                imageURL: nil)
         }
     }
     
@@ -147,79 +147,86 @@ class CreateGroupViewController: UIViewController {
     }
     
     private func createGroupDocument(groupID: String,
-                                  groupName: String,
-                                  currentUserID: String,
-                                  imageURL: String?) {
-        // Create the main group document
+                                     groupName: String,
+                                     currentUserID: String,
+                                     imageURL: String?) {
+        // Create new group data
         let groupData: [String: Any] = [
             "id": groupID,
             "name": groupName,
             "createdBy": currentUserID,
-            "createdAt": Timestamp(),
+            "createdAt": Timestamp(date: Date()),
             "imageURL": imageURL ?? NSNull(),
-            "memberCount": selectedFriends.count + 1 // +1 for creator
+            "settings": [
+                "chatEnabled": true,
+                "membersCanInvite": false
+            ]
         ]
         
-        db.collection("groups").document(groupID).setData(groupData) { [weak self] error in
+        // Add the creator as the first member
+        self.fetchUserDetails(userId: currentUserID) { [weak self] userData in
             guard let self = self else { return }
             
-            if let error = error {
-                print("Error creating group: \(error)")
-                self.showAlert(message: "Failed to create group")
-                return
+            var memberData: [String: Any] = [
+                "role": "admin",
+                "joinedAt": Timestamp(date: Date()),
+                "canChat": true
+            ]
+            
+            if let name = userData?["name"] as? String {
+                memberData["name"] = name
             }
             
-            // Add creator as first member
-            self.addMemberToGroup(groupID: groupID,
-                                userID: currentUserID,
-                                isAdmin: true)
+            if let profileImage = userData?["profileImage"] as? String {
+                memberData["profileImageURL"] = profileImage
+            }
+            
+            // Create group with the first member
+            let batch = self.db.batch()
+            let groupRef = self.db.collection("groups").document(groupID)
+            batch.setData(groupData, forDocument: groupRef)
+            batch.setData(memberData, forDocument: groupRef.collection("members").document(currentUserID))
             
             // Add selected friends as members
             for friend in self.selectedFriends {
-                self.addMemberToGroup(groupID: groupID,
-                                    userID: friend.id,
-                                    isAdmin: false)
+                var friendData: [String: Any] = [
+                    "role": "member",
+                    "joinedAt": Timestamp(date: Date()),
+                    "canChat": true,
+                    "name": friend.name,
+                    "profileImageURL": friend.profileImageURL ?? ""
+                ]
+                batch.setData(friendData, forDocument: groupRef.collection("members").document(friend.id))
             }
             
-            // Update user documents with group reference
-            self.updateUserGroupReferences(groupID: groupID,
-                                        currentUserID: currentUserID)
-            
-            DispatchQueue.main.async {
-                self.dismiss(animated: true)
+            batch.commit { error in
+                if let error = error {
+                    print("Error creating group: \(error.localizedDescription)")
+                    self.showAlert(message: "Failed to create group")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.dismiss(animated: true)
+                }
             }
         }
     }
     
-    private func addMemberToGroup(groupID: String, userID: String, isAdmin: Bool) {
-        let memberData: [String: Any] = [
-            "userId": userID,
-            "joinedAt": Timestamp(),
-            "isAdmin": isAdmin,
-            "status": "active"
-        ]
-        
-        db.collection("groups")
-          .document(groupID)
-          .collection("members")
-          .document(userID)
-          .setData(memberData) { error in
-              if let error = error {
-                  print("Error adding member \(userID) to group: \(error)")
-              }
-          }
-    }
-    
-    private func updateUserGroupReferences(groupID: String, currentUserID: String) {
-        // Update creator's groups
-        db.collection("users").document(currentUserID).updateData([
-            "groups": FieldValue.arrayUnion([groupID])
-        ])
-        // Update each member's groups
-        for friend in selectedFriends {
-            db.collection("users").document(friend.id).updateData([
-                "groups": FieldValue.arrayUnion([groupID])
-            ])
+    private func fetchUserDetails(userId: String, completion: @escaping ([String: Any]?) -> Void) {
+        db.collection("users").document(userId).getDocument { (snapshot, error) in
+            if let error = error {
+                print("Error fetching user details: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                completion(nil)
+                return
+            }
+            
+            completion(data)
         }
     }
     
@@ -244,17 +251,18 @@ extension CreateGroupViewController: UITableViewDataSource, UITableViewDelegate 
 
         return cell
     }
+
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let friend = friends[indexPath.row]
 
         if let index = selectedFriends.firstIndex(where: { $0.id == friend.id }) {
-            selectedFriends.remove(at: index)
+            selectedFriends.remove(at: index) // Deselect if already selected
         } else {
-            selectedFriends.append(friend)
+            selectedFriends.append(friend) // Select if not already in the list
         }
 
-        tableView.reloadRows(at: [indexPath], with: .automatic)
+        tableView.reloadRows(at: [indexPath], with: .automatic) // Refresh row
     }
 }
 
