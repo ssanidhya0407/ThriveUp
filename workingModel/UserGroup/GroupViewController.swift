@@ -1,462 +1,501 @@
 import UIKit
-import FirebaseFirestore
 import FirebaseAuth
+import FirebaseFirestore
 import FirebaseStorage
+import Kingfisher
 
 class GroupViewController: UIViewController {
     
-    // MARK: - Properties
-    private let groupID: String
-    private let isAdmin: Bool
-    private let groupManager = GroupManager()
-    private var members: [GroupMember] = []
-    private var messages: [GroupMessage] = []
-    private var chatEnabled: Bool = true
-    private let db = Firestore.firestore()
-    private var groupDetails: [String: Any]? = nil
-    
-    // Add this property to store admin IDs
-    private var adminIds: [String] = []
-    
-    // UI Components
-    private let tableView = UITableView()
-    private let messageField = UITextField()
-    private let sendButton = UIButton()
-    private let attachImageButton = UIButton()
-    private let noPermissionLabel = UILabel()
-    private let settingsButton = UIBarButtonItem(image: UIImage(systemName: "gear"), style: .plain, target: nil, action: nil)
-    private let groupTitleLabel = UILabel()
-    
-    // For image handling
-    private var selectedImage: UIImage?
-    private let imagePicker = UIImagePickerController()
-    
-    // MARK: - Initialization
-    init(groupID: String, isAdmin: Bool = false) {
-        self.groupID = groupID
-        self.isAdmin = isAdmin
+    // Update the initializer to accept UserGroup.Member array
+    init(groupId: String, groupName: String, members: [UserGroup.Member] = []) {
+        self.groupId = groupId
+        self.groupName = groupName
+        self.members = members
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    
+    // MARK: - Properties
+    private let groupId: String
+    private let groupName: String
+    private let db = Firestore.firestore()
+    private let messageManager = GroupMessageManager()
+    private let userGroupManager = UserGroupManager()
+    
+    // Use a computed property to avoid override issues
+    private var userCurrentId: String {
+        return Auth.auth().currentUser?.uid ?? ""
+    }
+    
+    private var messages: [UserGroup.Message] = []
+    private var members: [UserGroup.Member] = []
+    private var admins: [String] = []
+    private var chatEnabled = true
+    private var userCanChat = true
+    private var groupDetails: [String: Any]?
+    private var messageListener: ListenerRegistration?
+    
+    // MARK: - UI Components
+    private let tableView = UITableView()
+    private let groupMessageInputView = GroupMessageInputView()
+    private var bottomConstraint: NSLayoutConstraint?
+    private let headerView = UIView()
+    private let groupImageView = UIImageView()
+    private let groupNameLabel = UILabel()
+    private let participantsLabel = UILabel()
+    
+    // MARK: - Initialization
+    init(groupId: String, groupName: String) {
+        self.groupId = groupId
+        self.groupName = groupName
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+
     
     // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupImagePicker()
-        loadGroupSettings()
-        loadMembers()
-        loadMessages()
+        setupNotifications()
         loadGroupDetails()
-        addMessageObserver()
+        loadMembers()
+        setupMessageListener()
     }
     
-    // MARK: - Setup UI
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Refresh members on appearance
+        loadMembers()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        messageListener?.remove()
+    }
+    
+    // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .white
-        title = "Group Chat"
+        view.backgroundColor = .systemBackground
         
-        // Setup back button
-        let backButton = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: self,
-            action: #selector(backButtonTapped)
-        )
-        navigationItem.leftBarButtonItem = backButton
+        // Set up navigation title with tap gesture
+        let titleTapGesture = UITapGestureRecognizer(target: self, action: #selector(titleTapped))
+        let titleView = UILabel()
+        titleView.text = groupName
+        titleView.font = UIFont.boldSystemFont(ofSize: 18)
+        titleView.isUserInteractionEnabled = true
+        titleView.addGestureRecognizer(titleTapGesture)
+        navigationItem.titleView = titleView
         
-        // Setup group title label
-        groupTitleLabel.font = UIFont.boldSystemFont(ofSize: 18)
-        groupTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        groupTitleLabel.isUserInteractionEnabled = true
-        navigationItem.titleView = groupTitleLabel
+        // Add member management button
+        let memberButton = UIBarButtonItem(image: UIImage(systemName: "person.3"), style: .plain, target: self, action: #selector(showMemberManagement))
+        navigationItem.rightBarButtonItem = memberButton
         
-        // Add tap gesture to group title label to navigate to GroupMemberVC
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(groupTitleTapped))
-        groupTitleLabel.addGestureRecognizer(tapGesture)
+        // Setup header view
+        setupHeaderView()
         
-        // Setup table view
-        tableView.register(GroupMessageCell.self, forCellReuseIdentifier: GroupMessageCell.identifier)
-        tableView.register(UserMemberCell.self, forCellReuseIdentifier: UserMemberCell.identifier)
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tableView)
+        // Setup table view for messages
+        setupTableView()
         
-        // Setup message input area
-        let inputContainer = UIView()
-        inputContainer.backgroundColor = .systemGray6
-        inputContainer.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(inputContainer)
+        // Setup message input view
+        setupMessageInputView()
         
-        // Add image attachment button
-        attachImageButton.setImage(UIImage(systemName: "photo"), for: .normal)
-        attachImageButton.addTarget(self, action: #selector(attachImage), for: .touchUpInside)
-        attachImageButton.translatesAutoresizingMaskIntoConstraints = false
-        inputContainer.addSubview(attachImageButton)
+        // Setup keyboard handling
+        setupKeyboardHandling()
+    }
+    
+    private func setupHeaderView() {
+        headerView.backgroundColor = .systemBackground
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(headerView)
         
-        messageField.placeholder = "Type a message..."
-        messageField.borderStyle = .roundedRect
-        messageField.translatesAutoresizingMaskIntoConstraints = false
-        inputContainer.addSubview(messageField)
+        // Group image
+        groupImageView.contentMode = .scaleAspectFill
+        groupImageView.clipsToBounds = true
+        groupImageView.layer.cornerRadius = 30
+        groupImageView.backgroundColor = .systemGray6
+        groupImageView.image = UIImage(systemName: "person.3")
+        groupImageView.tintColor = .systemGray3
+        groupImageView.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(groupImageView)
         
-        sendButton.setTitle("Send", for: .normal)
-        sendButton.setTitleColor(.systemBlue, for: .normal)
-        sendButton.addTarget(self, action: #selector(sendMessage), for: .touchUpInside)
-        sendButton.translatesAutoresizingMaskIntoConstraints = false
-        inputContainer.addSubview(sendButton)
+        // Group name label
+        groupNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        groupNameLabel.text = groupName
+        groupNameLabel.textAlignment = .center
+        groupNameLabel.numberOfLines = 2
+        groupNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(groupNameLabel)
         
-        // Setup no permission label
-        noPermissionLabel.text = "Chat is disabled"
-        noPermissionLabel.textAlignment = .center
-        noPermissionLabel.isHidden = true
-        noPermissionLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(noPermissionLabel)
+        // Participants label
+        participantsLabel.font = UIFont.systemFont(ofSize: 14)
+        participantsLabel.textColor = .secondaryLabel
+        participantsLabel.textAlignment = .center
+        participantsLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(participantsLabel)
         
-        // Add settings button for admins
-        if isAdmin {
-            settingsButton.target = self
-            settingsButton.action = #selector(showSettings)
-            navigationItem.rightBarButtonItem = settingsButton
-        }
+        // Add a separator line
+        let separatorLine = UIView()
+        separatorLine.backgroundColor = .systemGray5
+        separatorLine.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(separatorLine)
         
-        // Setup constraints
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: inputContainer.topAnchor, constant: -8),
+            headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            inputContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            inputContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            inputContainer.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
-            inputContainer.heightAnchor.constraint(equalToConstant: 60),
+            groupImageView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 12),
+            groupImageView.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+            groupImageView.widthAnchor.constraint(equalToConstant: 60),
+            groupImageView.heightAnchor.constraint(equalToConstant: 60),
             
-            attachImageButton.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 8),
-            attachImageButton.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
-            attachImageButton.widthAnchor.constraint(equalToConstant: 40),
-            attachImageButton.heightAnchor.constraint(equalToConstant: 40),
+            groupNameLabel.topAnchor.constraint(equalTo: groupImageView.bottomAnchor, constant: 8),
+            groupNameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            groupNameLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
             
-            messageField.leadingAnchor.constraint(equalTo: attachImageButton.trailingAnchor, constant: 8),
-            messageField.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
-            messageField.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -8),
+            participantsLabel.topAnchor.constraint(equalTo: groupNameLabel.bottomAnchor, constant: 4),
+            participantsLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            participantsLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
             
-            sendButton.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -16),
-            sendButton.centerYAnchor.constraint(equalTo: inputContainer.centerYAnchor),
-            sendButton.widthAnchor.constraint(equalToConstant: 60),
-            
-            noPermissionLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            noPermissionLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            separatorLine.topAnchor.constraint(equalTo: participantsLabel.bottomAnchor, constant: 12),
+            separatorLine.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            separatorLine.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            separatorLine.heightAnchor.constraint(equalToConstant: 0.5),
+            separatorLine.bottomAnchor.constraint(equalTo: headerView.bottomAnchor)
         ])
     }
     
-    @objc private func backButtonTapped() {
-        navigationController?.popViewController(animated: true)
+    private func setupTableView() {
+        tableView.register(GroupMessageCell.self, forCellReuseIdentifier: GroupMessageCell.identifier)
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .systemBackground
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.allowsSelection = true
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.keyboardDismissMode = .interactive
+        tableView.transform = CGAffineTransform(scaleX: 1, y: -1)
+        view.addSubview(tableView)
     }
     
-    private func setupImagePicker() {
-        imagePicker.delegate = self
-        imagePicker.allowsEditing = true
-        imagePicker.sourceType = .photoLibrary
+    private func setupMessageInputView() {
+        groupMessageInputView.translatesAutoresizingMaskIntoConstraints = false
+        groupMessageInputView.delegate = self
+        view.addSubview(groupMessageInputView)
+        
+        // Set initial constraints
+        bottomConstraint = groupMessageInputView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        
+        NSLayoutConstraint.activate([
+            // Table view constraints
+            tableView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: groupMessageInputView.topAnchor),
+            
+            // Message input view constraints
+            groupMessageInputView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            groupMessageInputView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomConstraint!
+        ])
     }
     
-    private func loadGroupDetails() {
-        db.collection("groups").document(groupID).getDocument { [weak self] (snapshot, error) in
-            guard let self = self, let data = snapshot?.data() else {
-                return
-            }
-            self.groupDetails = data
-            self.groupTitleLabel.text = data["name"] as? String
-        }
+    private func setupKeyboardHandling() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+        
+        // Listen for image tap notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleImageTap(_:)),
+            name: NSNotification.Name("GroupMessageImageTapped"),
+            object: nil
+        )
+    }
+    
+    private func setupNotifications() {
+        // Set up notification observers for app lifecycle events
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
     }
     
     // MARK: - Data Loading
-    private func loadGroupSettings() {
-        db.collection("groups").document(groupID)
-            .getDocument { [weak self] (snapshot, error) in
-                guard let self = self,
-                      let data = snapshot?.data(),
-                      let settings = data["settings"] as? [String: Any] else {
-                    return
-                }
-                
-                if let chatEnabled = settings["chatEnabled"] as? Bool {
-                    self.chatEnabled = chatEnabled
-                    self.updateChatUI()
-                }
-            }
-    }
-    
-    // MARK: - Load Members
-    private func loadMembers() {
-        groupManager.getGroupMembers(groupId: groupID) { [weak self] members in
-            guard let self = self else { return }
-            self.members = members
-            
-            // Extract admin IDs
-            self.adminIds = members.filter { $0.role == "admin" }.map { $0.userId }
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
-    
-    private func loadMessages() {
-        groupManager.getMessages(groupId: groupID) { [weak self] messages in
-            guard let self = self else { return }
-            self.messages = messages.sorted(by: { $0.timestamp < $1.timestamp })
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-                self.scrollToLatestMessage()
-            }
-        }
-    }
-    
-    private func addMessageObserver() {
-        // Setup a real-time listener for new messages
-        db.collection("groups").document(groupID)
-            .collection("messages")
-            .order(by: "timestamp")
-            .addSnapshotListener { [weak self] (snapshot, error) in
-                guard let self = self, let documents = snapshot?.documentChanges else { return }
-                
-                var shouldScroll = false
-                
-                // Only process new messages
-                for change in documents where change.type == .added {
-                    let data = change.document.data()
-                    
-                    if let id = data["id"] as? String,
-                       let userId = data["userId"] as? String,
-                       let userName = data["userName"] as? String,
-                       let timestamp = data["timestamp"] as? Timestamp,
-                       !self.messages.contains(where: { $0.id == id }) {
-                        
-                        let newMessage = GroupMessage(
-                            id: id,
-                            userId: userId,
-                            userName: userName,
-                            text: data["text"] as? String,
-                            timestamp: timestamp.dateValue(),
-                            profileImageURL: data["profileImageURL"] as? String,
-                            imageURL: data["imageURL"] as? String
-                        )
-                        
-                        self.messages.append(newMessage)
-                        shouldScroll = true
-                    }
-                }
-                
-                if shouldScroll {
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                        self.scrollToLatestMessage()
-                    }
-                }
-            }
-    }
-    
-    private func scrollToLatestMessage() {
-        guard !messages.isEmpty else { return }
-        
-        let lastIndex = IndexPath(row: messages.count - 1, section: 0)
-        tableView.scrollToRow(at: lastIndex, at: .bottom, animated: true)
-    }
-    
-    private func updateChatUI() {
-        if !chatEnabled {
-            messageField.isEnabled = false
-            sendButton.isEnabled = false
-            attachImageButton.isEnabled = false
-            noPermissionLabel.isHidden = false
-            noPermissionLabel.text = "Chat is disabled for this group"
-        } else {
-            checkCurrentUserChatPermission()
-        }
-    }
-    
-    private func checkCurrentUserChatPermission() {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            messageField.isEnabled = false
-            sendButton.isEnabled = false
-            attachImageButton.isEnabled = false
-            noPermissionLabel.isHidden = false
-            noPermissionLabel.text = "You must be logged in to chat"
-            return
-        }
-        
-        if let currentMember = members.first(where: { $0.userId == currentUserId }) {
-            messageField.isEnabled = currentMember.canChat
-            sendButton.isEnabled = currentMember.canChat
-            attachImageButton.isEnabled = currentMember.canChat
-            noPermissionLabel.isHidden = currentMember.canChat
-            if !currentMember.canChat {
-                noPermissionLabel.text = "You don't have permission to chat"
-            }
-        }
-    }
-    
-    // MARK: - Image Handling
-    @objc private func attachImage() {
-        present(imagePicker, animated: true)
-    }
-    
-    private func uploadImage(image: UIImage, completion: @escaping (String?) -> Void) {
-        guard let imageData = image.jpegData(compressionQuality: 0.5) else {
-            completion(nil)
-            return
-        }
-        
-        let storageRef = Storage.storage().reference()
-        let imageRef = storageRef.child("group_images/\(groupID)/\(UUID().uuidString).jpg")
-        
-        let uploadTask = imageRef.putData(imageData, metadata: nil) { (metadata, error) in
-            if let error = error {
-                print("Error uploading image: \(error.localizedDescription)")
-                completion(nil)
+    private func loadGroupDetails() {
+        db.collection("userGroups").document(groupId).getDocument { [weak self] snapshot, error in
+            guard let self = self, let data = snapshot?.data() else {
+                print("Error fetching group details: \(error?.localizedDescription ?? "unknown error")")
                 return
             }
             
-            imageRef.downloadURL { (url, error) in
-                if let error = error {
-                    print("Error getting download URL: \(error.localizedDescription)")
-                    completion(nil)
-                    return
+            self.groupDetails = data
+            
+            // Update UI with group details
+            DispatchQueue.main.async {
+                if let name = data["name"] as? String {
+                    self.groupNameLabel.text = name
+                    self.title = name
                 }
                 
-                guard let downloadURL = url else {
-                    completion(nil)
-                    return
+                // Load group image if available
+                if let imageURL = data["imageURL"] as? String, let url = URL(string: imageURL) {
+                    self.groupImageView.kf.setImage(
+                        with: url,
+                        placeholder: UIImage(systemName: "person.3"),
+                        options: [.transition(.fade(0.3))]
+                    )
                 }
-                
-                completion(downloadURL.absoluteString)
             }
         }
+    }
+    
+    private func loadMembers() {
+        userGroupManager.getGroupMembers(groupId: groupId) { [weak self] members in
+            guard let self = self else { return }
+            
+            self.members = members
+            self.admins = members.filter { $0.role == "admin" }.map { $0.userId }
+            
+            // Check if current user can chat
+            if let currentMember = members.first(where: { $0.userId == self.userCurrentId }) {
+                self.userCanChat = currentMember.canChat
+            }
+            
+            // Update group settings
+            self.loadGroupChatSettings()
+            
+            // Update UI
+            DispatchQueue.main.async {
+                self.updateParticipantLabel()
+                self.updateMessageInputAccessibility()
+            }
+        }
+    }
+    
+    private func loadGroupChatSettings() {
+        db.collection("userGroups").document(groupId).getDocument { [weak self] snapshot, error in
+            guard let self = self,
+                  let data = snapshot?.data(),
+                  let settings = data["settings"] as? [String: Any] else {
+                return
+            }
+            
+            self.chatEnabled = settings["chatEnabled"] as? Bool ?? true
+            
+            // Update UI
+            DispatchQueue.main.async {
+                self.updateMessageInputAccessibility()
+            }
+        }
+    }
+    
+    private func setupMessageListener() {
+        // Remove any existing listener
+        messageListener?.remove()
         
-        // Handle upload progress if needed
-        uploadTask.observe(.progress) { snapshot in
-            let percentComplete = 100.0 * Double(snapshot.progress!.completedUnitCount) / Double(snapshot.progress!.totalUnitCount)
-            print("Upload is \(percentComplete)% complete")
+        // Set up a new listener for messages
+        messageListener = messageManager.addMessageListener(groupId: groupId, limit: 100) { [weak self] messages in
+            guard let self = self else { return }
+            
+            // Update the UI with the new messages
+            DispatchQueue.main.async {
+                self.messages = messages
+                self.tableView.reloadData()
+                
+                // Scroll to bottom if user was at the bottom
+                if self.tableView.contentOffset.y <= 0 && !self.messages.isEmpty {
+                    self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: true)
+                }
+            }
+        }
+    }
+    
+    // MARK: - UI Updates
+    private func updateParticipantLabel() {
+        let memberCount = members.count
+        let adminCount = admins.count
+        
+        if memberCount == 0 {
+            participantsLabel.text = "No participants"
+        } else if memberCount == 1 {
+            participantsLabel.text = "1 participant"
+        } else {
+            participantsLabel.text = "\(memberCount) participants • \(adminCount) admin\(adminCount != 1 ? "s" : "")"
+        }
+    }
+    
+    private func updateMessageInputAccessibility() {
+        let canSendMessages = chatEnabled && userCanChat
+        groupMessageInputView.isEnabled = canSendMessages
+        
+        if !canSendMessages {
+            let reason: String
+            if !chatEnabled {
+                reason = "Chat has been disabled for this group"
+            } else {
+                reason = "You don't have permission to send messages"
+            }
+            groupMessageInputView.showDisabledState(with: reason)
+        } else {
+            groupMessageInputView.showEnabledState()
         }
     }
     
     // MARK: - Actions
-    @objc private func groupTitleTapped() {
-        let groupMemberVC = UserGroupMemberVC(groupId: groupID)
-        navigationController?.pushViewController(groupMemberVC, animated: true)
+    @objc private func titleTapped() {
+        // Show group details or members list
+        showMemberManagement()
     }
     
-    @objc private func sendMessage() {
-        // Check if we have an image to send
-        if let selectedImage = selectedImage {
-            // Show loading indicator
-            let activityIndicator = UIActivityIndicatorView(style: .medium)
-            activityIndicator.center = view.center
-            activityIndicator.startAnimating()
-            view.addSubview(activityIndicator)
+    @objc private func showMemberManagement() {
+        let memberVC = UserGroupMemberVC(groupId: groupId, groupName: groupName)
+        navigationController?.pushViewController(memberVC, animated: true)
+    }
+    
+    @objc private func keyboardWillShow(notification: Notification) {
+        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        
+        let keyboardHeight = keyboardFrame.height
+        
+        // Update constraint
+        bottomConstraint?.constant = -keyboardHeight
+        
+        // Animate the change
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc private func keyboardWillHide(notification: Notification) {
+        // Reset constraint
+        bottomConstraint?.constant = 0
+        
+        // Animate the change
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc private func appWillEnterForeground() {
+        // Refresh data when app comes back to foreground
+        loadMembers()
+        loadGroupDetails()
+    }
+    
+    @objc private func handleImageTap(_ notification: Notification) {
+        guard let cell = notification.object as? GroupMessageCell,
+              let indexPath = tableView.indexPath(for: cell) else {
+            return
+        }
+        
+        let message = messages[indexPath.row]
+        if let imageURLString = message.imageURL, let imageURL = URL(string: imageURLString) {
+            let fullScreenImageVC = GroupFullScreenImageViewController(imageURL: imageURL)
+            present(fullScreenImageVC, animated: true)
+        }
+    }
+    
+    // MARK: - Image Handling
+    private func selectImage() {
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .photoLibrary
+        present(imagePicker, animated: true)
+    }
+    
+    private func uploadImage(image: UIImage) {
+        // Show loading indicator
+        let alert = UIAlertController(title: "Uploading...", message: "Please wait", preferredStyle: .alert)
+        present(alert, animated: true)
+        
+        // Create image data
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            alert.dismiss(animated: true)
+            showErrorAlert(message: "Failed to process image")
+            return
+        }
+        
+        // Create a unique filename
+        let filename = UUID().uuidString + ".jpg"
+        let storageRef = Storage.storage().reference().child("group_messages/\(groupId)/\(filename)")
+        
+        // Upload the image
+        storageRef.putData(imageData, metadata: nil) { [weak self] metadata, error in
+            guard let self = self else { return }
             
-            // Upload the image first
-            uploadImage(image: selectedImage) { [weak self] imageURL in
-                guard let self = self else { return }
-                
+            if let error = error {
                 DispatchQueue.main.async {
-                    activityIndicator.removeFromSuperview()
+                    alert.dismiss(animated: true)
+                    self.showErrorAlert(message: "Upload failed: \(error.localizedDescription)")
                 }
-                
-                guard let imageURL = imageURL else {
-                    self.showAlert(title: "Error", message: "Failed to upload image. Please try again.")
-                    return
-                }
-                
-                // Get text message (if any)
-                let messageText = self.messageField.text?.trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                // Send message with image URL
-                self.groupManager.sendMessage(groupId: self.groupID, text: messageText, imageURL: imageURL) { success in
-                    if success {
-                        DispatchQueue.main.async {
-                            self.messageField.text = ""
-                            self.selectedImage = nil
-                            self.attachImageButton.tintColor = .systemBlue
-                        }
-                    } else {
-                        self.showAlert(title: "Error", message: "Failed to send message. Please try again.")
-                    }
-                }
+                return
             }
-        } else {
-            // Send text-only message
-            guard let messageText = messageField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !messageText.isEmpty else { return }
             
-            groupManager.sendMessage(groupId: groupID, text: messageText) { [weak self] success in
-                if success {
-                    DispatchQueue.main.async {
-                        self?.messageField.text = ""
+            // Get the download URL
+            storageRef.downloadURL { url, error in
+                DispatchQueue.main.async {
+                    alert.dismiss(animated: true)
+                    
+                    if let error = error {
+                        self.showErrorAlert(message: "Couldn't get download URL: \(error.localizedDescription)")
+                        return
                     }
-                } else {
-                    self?.showAlert(title: "Error", message: "Failed to send message. Please try again.")
+                    
+                    if let downloadURL = url {
+                        // Send message with image URL
+                        self.sendMessage(text: nil, imageURL: downloadURL.absoluteString)
+                    }
                 }
             }
         }
     }
     
-    private func showAlert(title: String, message: String) {
+    private func sendMessage(text: String?, imageURL: String? = nil) {
+        messageManager.sendMessage(
+            groupId: groupId,
+            userId: userCurrentId,
+            text: text,
+            imageURL: imageURL
+        ) { success, errorMessage in
+            if !success {
+                DispatchQueue.main.async { [weak self] in
+                    if let errorMessage = errorMessage {
+                        self?.showErrorAlert(message: errorMessage)
+                    } else {
+                        self?.showErrorAlert(message: "Failed to send message. Please try again.")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func showErrorAlert(message: String) {
         let alert = UIAlertController(
-            title: title,
+            title: "Error",
             message: message,
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
-    }
-    
-    @objc private func showSettings() {
-        let actionSheet = UIAlertController(
-            title: "Group Settings",
-            message: nil,
-            preferredStyle: .actionSheet
-        )
-        
-        actionSheet.addAction(UIAlertAction(title: "Manage Members", style: .default) { [weak self] _ in
-            self?.showMemberManagement()
-        })
-        
-        actionSheet.addAction(UIAlertAction(title: "Toggle Chat", style: .default) { [weak self] _ in
-            self?.toggleGroupChat()
-        })
-        
-        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(actionSheet, animated: true)
-    }
-    
-    private func toggleGroupChat() {
-        // Toggle the chat setting
-        let newChatEnabled = !chatEnabled
-        
-        groupManager.updateGroupChatSettings(groupId: groupID, chatEnabled: newChatEnabled) { [weak self] success in
-            guard let self = self else { return }
-            
-            if success {
-                self.chatEnabled = newChatEnabled
-                self.updateChatUI()
-                
-                let message = newChatEnabled ? "Chat has been enabled" : "Chat has been disabled"
-                self.showAlert(title: "Settings Updated", message: message)
-            } else {
-                self.showAlert(title: "Error", message: "Failed to update chat settings.")
-            }
-        }
-    }
-    
-    private func showMemberManagement() {
-        let groupMemberVC = UserGroupMemberVC(groupId: groupID)
-        navigationController?.pushViewController(groupMemberVC, animated: true)
     }
 }
 
@@ -468,10 +507,16 @@ extension GroupViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: GroupMessageCell.identifier, for: indexPath) as! GroupMessageCell
+        
+        // Get the message, taking into account the transform
         let message = messages[indexPath.row]
         
-        // Pass the admin IDs to the cell configuration
-        cell.configure(with: message, admins: adminIds)
+        // Configure the cell
+        cell.configure(with: message, admins: admins)
+        
+        // Transform the cell content to counteract the table view transform
+        cell.contentView.transform = CGAffineTransform(scaleX: 1, y: -1)
+        
         return cell
     }
 }
@@ -480,29 +525,39 @@ extension GroupViewController: UITableViewDataSource {
 extension GroupViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        // Handle cell selection if needed
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 100
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
 }
 
-// MARK: - UIImagePickerControllerDelegate & UINavigationControllerDelegate
+// MARK: - GroupMessageInputViewDelegate
+extension GroupViewController: GroupMessageInputViewDelegate {
+    func didTapSend(text: String) {
+        sendMessage(text: text)
+    }
+    
+    func didTapAttachment() {
+        selectImage()
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate
 extension GroupViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
         
-        if let editedImage = info[.editedImage] as? UIImage {
-            selectedImage = editedImage
-        } else if let originalImage = info[.originalImage] as? UIImage {
-            selectedImage = originalImage
+        if let selectedImage = info[.originalImage] as? UIImage {
+            uploadImage(image: selectedImage)
         }
-        
-        // Update the UI to show selected image
-        if selectedImage != nil {
-            attachImageButton.tintColor = .systemBlue
-        }
-        
-        dismiss(animated: true)
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true)
+        picker.dismiss(animated: true)
     }
 }

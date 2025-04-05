@@ -524,25 +524,67 @@ class ChatViewController: UIViewController {
     }
 
     
-    // Add this method to navigate to an event group
+
+
+    // Update the EventGroup.Member creation similarly
     private func openEventGroupChat(eventId: String) {
-        // Check user role in this event group
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
         
-        db.collection("eventGroups").document(eventId)
-            .collection("members").document(currentUserID)
+        // First check if current user is organizer
+        db.collection("eventGroups")
+            .document(eventId)
+            .collection("members")
+            .document(currentUserID)
             .getDocument { [weak self] (document, error) in
                 guard let self = self else { return }
                 
                 let isOrganizer = document?.data()?["role"] as? String == "organizer"
                 
-                DispatchQueue.main.async {
-                    let eventGroupVC = EventGroupViewController(eventId: eventId, isOrganizer: isOrganizer)
-                    self.navigationController?.pushViewController(eventGroupVC, animated: true)
-                }
+                // Find the event name
+                let eventName = self.eventGroups.first(where: { $0.eventId == eventId })?.name ?? "Event Group"
+                
+                // Now fetch all event group members
+                self.db.collection("eventGroups")
+                    .document(eventId)
+                    .collection("members")
+                    .getDocuments { (snapshot, error) in
+                        
+                        var members: [EventGroup.Member] = []
+                        
+                        for memberDoc in snapshot?.documents ?? [] {
+                            let userId = memberDoc.documentID
+                            let data = memberDoc.data()
+                            let name = data["name"] as? String ?? "Unknown"
+                            let role = data["role"] as? String ?? "member"
+                            let profileImageURL = data["profileImageURL"] as? String
+                            
+                            // Fix the Member creation by using the correct parameters
+                            let joinedAt = (data["joinedAt"] as? Timestamp)?.dateValue() ?? Date()
+                            let canChat = data["canChat"] as? Bool ?? true
+                            
+                            // Create a Member object according to EventGroup.Member structure
+                            let member = EventGroup.Member(
+                                userId: userId,
+                                name: name,
+                                role: role,
+                                joinedAt: joinedAt,
+                                canChat: canChat,
+                                profileImageURL: profileImageURL
+                            )
+                            members.append(member)
+                        }
+                        
+                        DispatchQueue.main.async {
+                            let eventGroupVC = EventGroupViewController(
+                                eventId: eventId,
+                                eventName: eventName,
+                                members: members
+                            )
+                            self.navigationController?.pushViewController(eventGroupVC, animated: true)
+                        }
+                    }
             }
     }
-    
     
 
     private func addMessageListeners() {
@@ -711,12 +753,15 @@ extension ChatViewController: UISearchBarDelegate {
 
 // Add this to your ChatViewController.swift file
 extension ChatViewController {
+    
+    
+    // Update the code for creating UserGroup.Member objects
     private func openGroupChat(group: Group) {
         print("Opening Group Chat for group ID: \(group.id)")
         
-        // Find if current user is admin
         let currentUserID = Auth.auth().currentUser?.uid ?? ""
         
+        // First check if current user is admin
         db.collection("groups")
             .document(group.id)
             .collection("members")
@@ -726,10 +771,46 @@ extension ChatViewController {
                 
                 let isAdmin = document?.data()?["role"] as? String == "admin"
                 
-                DispatchQueue.main.async {
-                    let groupVC = GroupViewController(groupID: group.id, isAdmin: isAdmin)
-                    self.navigationController?.pushViewController(groupVC, animated: true)
-                }
+                // Now fetch all group members
+                self.db.collection("groups")
+                    .document(group.id)
+                    .collection("members")
+                    .getDocuments { (snapshot, error) in
+                        
+                        var members: [UserGroup.Member] = []
+                        
+                        for memberDoc in snapshot?.documents ?? [] {
+                            let userId = memberDoc.documentID
+                            let data = memberDoc.data()
+                            let name = data["name"] as? String ?? "Unknown"
+                            let role = data["role"] as? String ?? "member"
+                            let profileImageURL = data["profileImageURL"] as? String
+                            
+                            // Fix the Member creation by using the correct parameters
+                            let joinedAt = (data["joinedAt"] as? Timestamp)?.dateValue() ?? Date()
+                            let canChat = data["canChat"] as? Bool ?? true
+                            
+                            // Create a Member object according to UserGroup.Member structure
+                            let member = UserGroup.Member(
+                                userId: userId,
+                                name: name,
+                                role: role,
+                                joinedAt: joinedAt,
+                                canChat: canChat,
+                                profileImageURL: profileImageURL
+                            )
+                            members.append(member)
+                        }
+                        
+                        DispatchQueue.main.async {
+                            let groupVC = GroupViewController(
+                                groupId: group.id,
+                                groupName: group.name,
+                                members: members
+                            )
+                            self.navigationController?.pushViewController(groupVC, animated: true)
+                        }
+                    }
             }
     }
     

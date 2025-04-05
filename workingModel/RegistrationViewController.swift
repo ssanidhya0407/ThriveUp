@@ -231,7 +231,7 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
                    let status = data["status"] as? String, status == "accepted" {
                     // Event is already approved, add user to group immediately
                     let eventGroupManager = EventGroupManager()
-                    eventGroupManager.addUserToEventGroup(eventId: self.event.eventId, userId: userId) { success in
+                    eventGroupManager.addUserToEvent(eventId: self.event.eventId, userId: userId, role: "member") { success in
                         print("User added to group: \(success)")
                     }
                 }

@@ -269,7 +269,7 @@ class EventGroupsListViewController: UIViewController {
                 let isOrganizer = document?.data()?["role"] as? String == "organizer"
                 
                 DispatchQueue.main.async {
-                    let eventGroupVC = EventGroupViewController(eventId: eventId, isOrganizer: isOrganizer)
+                    let eventGroupVC = EventGroupViewController(eventId: eventId, eventName: self.title!)
                     self.navigationController?.pushViewController(eventGroupVC, animated: true)
                 }
             }

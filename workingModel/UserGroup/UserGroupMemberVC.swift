@@ -1,29 +1,31 @@
 import UIKit
 import FirebaseFirestore
 import FirebaseAuth
-import FirebaseStorage
+import Kingfisher
 
 class UserGroupMemberVC: UIViewController {
     
     // MARK: - Properties
     private let groupId: String
+    private let groupName: String
     private let tableView = UITableView()
-    private let groupManager = GroupManager()
-    private var members: [GroupMember] = []
+    private var members: [UserGroup.Member] = [] // Updated to use namespaced type
     private let currentUserID = Auth.auth().currentUser?.uid ?? ""
     private var isCurrentUserAdmin = false
     private let db = Firestore.firestore()
+    private let userGroupManager = UserGroupManager()
     
     // UI Components
     private let headerView = UIView()
     private let groupImageView = UIImageView()
     private let groupNameLabel = UILabel()
-    private let membersLabel = UILabel()
+    private let detailsLabel = UILabel()
     private let dividerLine = UIView()
     
     // MARK: - Initialization
-    init(groupId: String) {
+    init(groupId: String, groupName: String) {
         self.groupId = groupId
+        self.groupName = groupName
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -56,77 +58,72 @@ class UserGroupMemberVC: UIViewController {
         addButton.isEnabled = false // Will be enabled when we confirm user is admin
     }
     
-
-
     private func setupHeaderView() {
         headerView.backgroundColor = .systemBackground
         headerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(headerView)
         
-        // Configure group image view
+        // Group image
         groupImageView.contentMode = .scaleAspectFill
         groupImageView.clipsToBounds = true
-        groupImageView.layer.cornerRadius = 60
+        groupImageView.layer.cornerRadius = 40
         groupImageView.backgroundColor = .systemGray6
-        groupImageView.image = UIImage(systemName: "person.3.fill")
+        groupImageView.image = UIImage(systemName: "person.3")
         groupImageView.tintColor = .systemGray3
         groupImageView.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(groupImageView)
         
-        // Configure group name label
-        groupNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        // Group name label
+        groupNameLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        groupNameLabel.text = groupName
         groupNameLabel.textAlignment = .center
-        groupNameLabel.numberOfLines = 0
+        groupNameLabel.numberOfLines = 2
         groupNameLabel.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(groupNameLabel)
         
-        // Configure members label - just "Group Details" now
-        membersLabel.text = "Group Details"
-        membersLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        membersLabel.textColor = .secondaryLabel
-        membersLabel.translatesAutoresizingMaskIntoConstraints = false
-        headerView.addSubview(membersLabel)
+        // Details label (members count)
+        detailsLabel.font = UIFont.systemFont(ofSize: 14)
+        detailsLabel.textColor = .secondaryLabel
+        detailsLabel.textAlignment = .center
+        detailsLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(detailsLabel)
         
-        // Configure divider line
+        // Divider line
         dividerLine.backgroundColor = .systemGray5
         dividerLine.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(dividerLine)
         
-        // Set header view constraints
+        // Set constraints
         NSLayoutConstraint.activate([
             headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            // Image view in the center
-            groupImageView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
+            groupImageView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
             groupImageView.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
-            groupImageView.widthAnchor.constraint(equalToConstant: 120),
-            groupImageView.heightAnchor.constraint(equalToConstant: 120),
+            groupImageView.widthAnchor.constraint(equalToConstant: 80),
+            groupImageView.heightAnchor.constraint(equalToConstant: 80),
             
-            // Group name below image
-            groupNameLabel.topAnchor.constraint(equalTo: groupImageView.bottomAnchor, constant: 16),
-            groupNameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            groupNameLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
+            groupNameLabel.topAnchor.constraint(equalTo: groupImageView.bottomAnchor, constant: 12),
+            groupNameLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            groupNameLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
             
-            // Members label below group name - now "Group Details"
-            membersLabel.topAnchor.constraint(equalTo: groupNameLabel.bottomAnchor, constant: 24),
-            membersLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+            detailsLabel.topAnchor.constraint(equalTo: groupNameLabel.bottomAnchor, constant: 4),
+            detailsLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            detailsLabel.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
             
-            // Divider line below members label
-            dividerLine.topAnchor.constraint(equalTo: membersLabel.bottomAnchor, constant: 8),
-            dividerLine.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            dividerLine.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
-            dividerLine.heightAnchor.constraint(equalToConstant: 1),
-            dividerLine.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -10)
+            dividerLine.topAnchor.constraint(equalTo: detailsLabel.bottomAnchor, constant: 16),
+            dividerLine.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            dividerLine.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            dividerLine.heightAnchor.constraint(equalToConstant: 0.5),
+            dividerLine.bottomAnchor.constraint(equalTo: headerView.bottomAnchor)
         ])
     }
-
     
     private func setupTableView() {
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(UserMemberCell.self, forCellReuseIdentifier: UserMemberCell.identifier)
+        tableView.register(GroupMemberCell.self, forCellReuseIdentifier: "GroupMemberCell")
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.separatorStyle = .none
         tableView.rowHeight = 70
@@ -144,42 +141,48 @@ class UserGroupMemberVC: UIViewController {
     
     // MARK: - Data Loading
     private func loadGroupDetails() {
-        db.collection("groups").document(groupId).getDocument { [weak self] snapshot, error in
+        db.collection("userGroups").document(groupId).getDocument { [weak self] (snapshot, error) in
             guard let self = self, let data = snapshot?.data() else {
-                print("Failed to load group details")
+                print("Error fetching group details: \(error?.localizedDescription ?? "unknown error")")
                 return
             }
             
-            // Set group name
-            if let name = data["name"] as? String {
-                self.groupNameLabel.text = name
-            }
-            
-            // Load group image if available
-            if let imageURL = data["imageURL"] as? String, let url = URL(string: imageURL) {
-                URLSession.shared.dataTask(with: url) { data, _, error in
-                    if let error = error {
-                        print("Error loading group image: \(error.localizedDescription)")
-                        return
-                    }
-                    
-                    if let data = data, let image = UIImage(data: data) {
-                        DispatchQueue.main.async {
-                            self.groupImageView.image = image
-                            self.groupImageView.tintColor = .clear // Hide the tint color when image is loaded
-                        }
-                    }
-                }.resume()
+            // Update UI with group details
+            DispatchQueue.main.async {
+                if let name = data["name"] as? String {
+                    self.groupNameLabel.text = name
+                    self.title = name
+                }
+                
+                // Load group image if available
+                if let imageURL = data["imageURL"] as? String, let url = URL(string: imageURL) {
+                    self.groupImageView.kf.setImage(
+                        with: url,
+                        placeholder: UIImage(systemName: "person.3"),
+                        options: [.transition(.fade(0.3))]
+                    )
+                }
             }
         }
     }
     
     private func loadMembers() {
-        groupManager.getGroupMembers(groupId: groupId) { [weak self] members in
+        userGroupManager.getGroupMembers(groupId: groupId) { [weak self] members in
             guard let self = self else { return }
             
+            self.members = members
+            
+            // Check if current user is admin
+            if let currentMember = members.first(where: { $0.userId == self.currentUserID }),
+               currentMember.role == "admin" {
+                self.isCurrentUserAdmin = true
+                DispatchQueue.main.async {
+                    self.navigationItem.rightBarButtonItem?.isEnabled = true
+                }
+            }
+            
             // Sort members: admins first, then alphabetically by name
-            self.members = members.sorted { (member1, member2) in
+            self.members.sort { (member1, member2) in
                 if member1.role == "admin" && member2.role != "admin" {
                     return true
                 } else if member1.role != "admin" && member2.role == "admin" {
@@ -189,24 +192,18 @@ class UserGroupMemberVC: UIViewController {
                 }
             }
             
-            // Check if current user is admin
-            if let currentMember = members.first(where: { $0.userId == self.currentUserID }) {
-                self.isCurrentUserAdmin = currentMember.role == "admin"
-                
-                DispatchQueue.main.async {
-                    self.navigationItem.rightBarButtonItem?.isEnabled = self.isCurrentUserAdmin
-                    self.updateMembersLabel()
-                    self.tableView.reloadData()
-                }
+            DispatchQueue.main.async {
+                self.updateMembersCount()
+                self.tableView.reloadData()
             }
         }
     }
     
-
-    private func updateMembersLabel() {
-        // Just keep the header as "Group Details" without counts
-        membersLabel.text = "Group Details"
+    private func updateMembersCount() {
+        let adminCount = members.filter { $0.role == "admin" }.count
+        detailsLabel.text = "\(members.count) Members • \(adminCount) Admin\(adminCount != 1 ? "s" : "")"
     }
+    
     // MARK: - Actions
     @objc private func addMemberTapped() {
         // Only admins can add members
@@ -225,11 +222,10 @@ class UserGroupMemberVC: UIViewController {
     
     private func showFriendSelection() {
         // This would navigate to a friend selection screen
-        // For simplicity, let's show a mock implementation
         showAlert(title: "Feature Coming Soon", message: "Friend selection will be implemented in a future update.")
     }
     
-    private func showMemberOptions(for member: GroupMember) {
+    private func showMemberOptions(for member: UserGroup.Member) {
         // Only admins can manage members, and they can't modify their own status
         guard isCurrentUserAdmin, member.userId != currentUserID else { return }
         
@@ -257,28 +253,26 @@ class UserGroupMemberVC: UIViewController {
         present(alert, animated: true)
     }
     
-    private func toggleMemberChatPermission(for member: GroupMember) {
+    private func toggleMemberChatPermission(for member: UserGroup.Member) {
         let newChatStatus = !member.canChat
         
-        groupManager.updateMemberChatPermission(groupId: groupId, userId: member.userId, canChat: newChatStatus) { [weak self] success in
+        userGroupManager.updateMemberChatPermission(groupId: groupId, userId: member.userId, canChat: newChatStatus) { [weak self] success in
             guard let self = self else { return }
             
-            if success {
-                self.showAlert(
-                    title: "Permission Updated",
-                    message: "\(member.name) can \(newChatStatus ? "now" : "no longer") send messages"
-                )
-                self.loadMembers() // Refresh the list
-            } else {
-                self.showAlert(
-                    title: "Error",
-                    message: "Failed to update chat permission. Please try again."
-                )
+            if !success {
+                self.showAlert(title: "Error", message: "Failed to update chat permission. Please try again.")
+                return
             }
+            
+            self.showAlert(
+                title: "Permission Updated",
+                message: "\(member.name) can \(newChatStatus ? "now" : "no longer") send messages"
+            )
+            self.loadMembers() // Refresh the list
         }
     }
     
-    private func removeMember(_ member: GroupMember) {
+    private func removeMember(_ member: UserGroup.Member) {
         let confirmAlert = UIAlertController(
             title: "Remove Member",
             message: "Are you sure you want to remove \(member.name) from this group?",
@@ -289,17 +283,18 @@ class UserGroupMemberVC: UIViewController {
         confirmAlert.addAction(UIAlertAction(title: "Remove", style: .destructive) { [weak self] _ in
             guard let self = self else { return }
             
-            self.groupManager.removeUserFromGroup(groupId: self.groupId, userId: member.userId) { success in
-                if success {
-                    DispatchQueue.main.async {
-                        if let index = self.members.firstIndex(where: { $0.userId == member.userId }) {
-                            self.members.remove(at: index)
-                            self.updateMembersLabel()
-                            self.tableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .fade)
-                        }
-                    }
-                } else {
+            self.userGroupManager.removeUserFromGroup(groupId: self.groupId, userId: member.userId) { success in
+                if !success {
                     self.showAlert(title: "Error", message: "Failed to remove member. Please try again.")
+                    return
+                }
+                
+                if let index = self.members.firstIndex(where: { $0.userId == member.userId }) {
+                    self.members.remove(at: index)
+                    DispatchQueue.main.async {
+                        self.updateMembersCount()
+                        self.tableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .fade)
+                    }
                 }
             }
         })
@@ -307,7 +302,7 @@ class UserGroupMemberVC: UIViewController {
         present(confirmAlert, animated: true)
     }
     
-    private func makeAdmin(_ member: GroupMember) {
+    private func makeAdmin(_ member: UserGroup.Member) {
         let confirmAlert = UIAlertController(
             title: "Make Admin",
             message: "Are you sure you want to make \(member.name) an admin? They will have full control over the group.",
@@ -319,7 +314,7 @@ class UserGroupMemberVC: UIViewController {
             guard let self = self else { return }
             
             // Update the user's role in Firestore
-            self.db.collection("groups").document(self.groupId)
+            self.db.collection("userGroups").document(self.groupId)
                 .collection("members").document(member.userId)
                 .updateData(["role": "admin"]) { error in
                     if let error = error {
@@ -333,6 +328,12 @@ class UserGroupMemberVC: UIViewController {
         })
         
         present(confirmAlert, animated: true)
+    }
+    
+    private func showProfileForMember(_ member: UserGroup.Member) {
+        // Use the renamed profile viewer
+        let userProfileVC = GroupUserProfileViewer(userId: member.userId)
+        navigationController?.pushViewController(userProfileVC, animated: true)
     }
     
     private func showAlert(title: String, message: String) {
@@ -352,19 +353,12 @@ extension UserGroupMemberVC: UITableViewDataSource {
         return members.count
     }
     
-    // Fix the cell background color in cellForRowAt method
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: UserMemberCell.identifier, for: indexPath) as? UserMemberCell else {
-            return UITableViewCell()
-        }
-        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "GroupMemberCell", for: indexPath) as! GroupMemberCell
         let member = members[indexPath.row]
         
-        // Configure the cell with member data
-        cell.configure(with: member)
-        
-        // Fix the cell background color
-        cell.backgroundColor = .systemBackground
+        // Configure the cell with UserGroup.Member directly
+        cell.configure(with: member, viewedByOrganizer: isCurrentUserAdmin)
         
         // Highlight current user with a subtle indicator
         if member.userId == currentUserID {
@@ -376,6 +370,7 @@ extension UserGroupMemberVC: UITableViewDataSource {
         return cell
     }
 }
+
 // MARK: - UITableViewDelegate
 extension UserGroupMemberVC: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -385,6 +380,8 @@ extension UserGroupMemberVC: UITableViewDelegate {
         
         if isCurrentUserAdmin && selectedMember.userId != currentUserID {
             showMemberOptions(for: selectedMember)
+        } else {
+            showProfileForMember(selectedMember)
         }
     }
     

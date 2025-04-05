@@ -753,7 +753,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
 
         if !missingFields.isEmpty {
             let message = "Please fill in the following fields: \(missingFields.joined(separator: ", "))"
-            showAlert(title: "Error", message: message)
+            showEventAlert(title: "Error", message: message)
             return
         }
 
@@ -772,7 +772,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
               let userId = Auth.auth().currentUser?.uid else {
             activityIndicator.stopAnimating()
             submitButton.isEnabled = true
-            showAlert(title: "Error", message: "Please fill in all required fields.")
+            showEventAlert(title: "Error", message: "Please fill in all required fields.")
+
             return
         }
 
@@ -800,7 +801,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         guard let eventImageData = image.jpegData(compressionQuality: 0.8) else {
             activityIndicator.stopAnimating()
             submitButton.isEnabled = true
-            showAlert(title: "Error", message: "Failed to process event image")
+            showEventAlert(title: "Error", message: "Failed to process event image")
+
             return
         }
 
@@ -813,7 +815,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             if let error = error {
                 self.activityIndicator.stopAnimating()
                 self.submitButton.isEnabled = true
-                self.showAlert(title: "Error", message: error.localizedDescription)
+                self.showEventAlert(title: "Error", message: error.localizedDescription)
                 dispatchGroup.leave()
                 return
             }
@@ -824,14 +826,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 if let error = error {
                     self.activityIndicator.stopAnimating()
                     self.submitButton.isEnabled = true
-                    self.showAlert(title: "Error", message: error.localizedDescription)
+                    self.showEventAlert(title: "Error", message: error.localizedDescription)
                     return
                 }
 
                 guard let eventImageUrl = url?.absoluteString else {
                     self.activityIndicator.stopAnimating()
                     self.submitButton.isEnabled = true
-                    self.showAlert(title: "Error", message: "Failed to get event image URL")
+                    self.showEventAlert(title: "Error", message: "Failed to get event image URL")
                     return
                 }
 
@@ -926,9 +928,9 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                         self.submitButton.isEnabled = true
                         
                         if let error = error {
-                            self.showAlert(title: "Error", message: error.localizedDescription)
+                            self.showEventAlert(title: "Error", message: error.localizedDescription)
                         } else {
-                            self.showAlert(title: "Success", message: "Event sent for review!") {
+                            self.showEventAlert(title: "Success", message: "Event sent for review!") {
                                 self.tabBarController?.selectedIndex = 0
                             }
                         }
@@ -1028,14 +1030,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                     }
                 }
 
-                private func showAlert(title: String, message: String, completion: (() -> Void)? = nil) {
-                    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                    let okAction = UIAlertAction(title: "OK", style: .default) { _ in
-                        completion?()
-                    }
-                    alert.addAction(okAction)
-                    present(alert, animated: true)
-                }
+    private func showEventAlert(title: String, message: String, completion: (() -> Void)? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            completion?()
+        }
+        alert.addAction(okAction)
+        present(alert, animated: true)
+    }
             }
 
             // MARK: - UIPickerViewDelegate and UIPickerViewDataSource

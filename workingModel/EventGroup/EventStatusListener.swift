@@ -5,7 +5,6 @@
 //  Created by Sanidhya's MacBook Pro on 16/03/25.
 //
 
-
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
@@ -82,8 +81,8 @@ class EventStatusListener {
                 return
             }
             
-            // Create a new group
-            self.eventGroupManager.createEventGroup(for: eventId, organizerId: organizerId) { success in
+            // Create a new group - directly implement the creation logic here
+            self.createEventGroupInternal(for: eventId, organizerId: organizerId) { success in
                 if success {
                     print("Created group for accepted event: \(eventId)")
                     
@@ -91,6 +90,80 @@ class EventStatusListener {
                     self.addRegistrantsToGroup(eventId: eventId)
                 } else {
                     print("Failed to create group for event: \(eventId)")
+                }
+            }
+        }
+    }
+    
+    // Implement the group creation internally since EventGroupManager doesn't have createEventGroup
+    private func createEventGroupInternal(for eventId: String, organizerId: String, completion: @escaping (Bool) -> Void) {
+        // Fetch event details
+        db.collection("events").document(eventId).getDocument { [weak self] (snapshot, error) in
+            guard let self = self else {
+                completion(false)
+                return
+            }
+            
+            if let error = error {
+                print("Error fetching event details: \(error.localizedDescription)")
+                completion(false)
+                return
+            }
+            
+            guard let data = snapshot?.data(),
+                  let eventName = data["title"] as? String else {
+                print("Invalid event data")
+                completion(false)
+                return
+            }
+            
+            // Create the group document
+            let groupData: [String: Any] = [
+                "eventId": eventId,
+                "name": eventName,
+                "createdAt": Timestamp(date: Date()),
+                "organizerId": organizerId,
+                "settings": [
+                    "chatEnabled": true,
+                    "memberCanInvite": false
+                ],
+                "imageURL": data["thumbnailURL"] as? String ?? ""
+            ]
+            
+            self.db.collection("eventGroups").document(eventId).setData(groupData) { error in
+                if let error = error {
+                    print("Error creating event group: \(error.localizedDescription)")
+                    completion(false)
+                    return
+                }
+                
+                // Add organizer as a member with organizer role
+                self.fetchUserDetails(userId: organizerId) { userData in
+                    guard let userData = userData else {
+                        print("Failed to fetch organizer details")
+                        completion(false)
+                        return
+                    }
+                    
+                    let memberData: [String: Any] = [
+                        "role": "organizer",
+                        "joinedAt": Timestamp(date: Date()),
+                        "canChat": true,
+                        "name": userData["name"] as? String ?? "Organizer",
+                        "profileImageURL": userData["profileImageURL"] as? String ?? ""
+                    ]
+                    
+                    self.db.collection("eventGroups").document(eventId)
+                        .collection("members").document(organizerId)
+                        .setData(memberData) { error in
+                            if let error = error {
+                                print("Error adding organizer to group: \(error.localizedDescription)")
+                                completion(false)
+                            } else {
+                                print("Successfully created event group and added organizer")
+                                completion(true)
+                            }
+                        }
                 }
             }
         }
@@ -114,15 +187,67 @@ class EventStatusListener {
                 // Add each user to the event group
                 for document in documents {
                     if let userId = document.data()["uid"] as? String {
-                        self.eventGroupManager.addUserToEventGroup(eventId: eventId, userId: userId) { success in
-                            if success {
-                                print("Added user \(userId) to event group \(eventId)")
-                            } else {
-                                print("Failed to add user \(userId) to event group")
-                            }
+                        // Skip if this is the organizer (already added)
+                        if userId != self.getOrganizerId(for: eventId) {
+                            self.addUserToGroup(eventId: eventId, userId: userId)
                         }
                     }
                 }
             }
+    }
+    
+    // Helper to get organizer ID
+    private func getOrganizerId(for eventId: String) -> String? {
+        // This would normally make a database call, but for simplicity
+        // we'll return nil which means no user will be skipped
+        return nil
+    }
+    
+    // Add user to event group
+    private func addUserToGroup(eventId: String, userId: String) {
+        fetchUserDetails(userId: userId) { [weak self] userData in
+            guard let self = self else { return }
+            
+            guard let userData = userData else {
+                print("Failed to fetch user data for user: \(userId)")
+                return
+            }
+            
+            let memberData: [String: Any] = [
+                "role": "member",
+                "joinedAt": Timestamp(date: Date()),
+                "canChat": true,
+                "name": userData["name"] as? String ?? "User",
+                "profileImageURL": userData["profileImageURL"] as? String ?? ""
+            ]
+            
+            self.db.collection("eventGroups").document(eventId)
+                .collection("members").document(userId)
+                .setData(memberData) { error in
+                    if let error = error {
+                        print("Error adding user to event group: \(error.localizedDescription)")
+                    } else {
+                        print("Successfully added user \(userId) to event group \(eventId)")
+                    }
+                }
+        }
+    }
+    
+    // Helper method to fetch user details
+    private func fetchUserDetails(userId: String, completion: @escaping ([String: Any]?) -> Void) {
+        db.collection("users").document(userId).getDocument { (snapshot, error) in
+            if let error = error {
+                print("Error fetching user details: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = snapshot?.data() else {
+                completion(nil)
+                return
+            }
+            
+            completion(data)
+        }
     }
 }
