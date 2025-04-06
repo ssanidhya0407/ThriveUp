@@ -74,7 +74,7 @@ class GroupMessageInputView: UIView {
         // Setup send button
         let sendImage = UIImage(systemName: "arrow.up.circle.fill")
         sendButton.setImage(sendImage, for: .normal)
-        sendButton.tintColor = .systemBlue
+        sendButton.tintColor = .systemOrange
         sendButton.addTarget(self, action: #selector(sendTapped), for: .touchUpInside)
         sendButton.translatesAutoresizingMaskIntoConstraints = false
         addSubview(sendButton)

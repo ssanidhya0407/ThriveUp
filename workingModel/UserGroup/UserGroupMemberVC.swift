@@ -141,7 +141,7 @@ class UserGroupMemberVC: UIViewController {
     
     // MARK: - Data Loading
     private func loadGroupDetails() {
-        db.collection("userGroups").document(groupId).getDocument { [weak self] (snapshot, error) in
+        db.collection("groups").document(groupId).getDocument { [weak self] (snapshot, error) in
             guard let self = self, let data = snapshot?.data() else {
                 print("Error fetching group details: \(error?.localizedDescription ?? "unknown error")")
                 return
@@ -314,7 +314,7 @@ class UserGroupMemberVC: UIViewController {
             guard let self = self else { return }
             
             // Update the user's role in Firestore
-            self.db.collection("userGroups").document(self.groupId)
+            self.db.collection("groups").document(self.groupId)
                 .collection("members").document(member.userId)
                 .updateData(["role": "admin"]) { error in
                     if let error = error {
@@ -362,7 +362,7 @@ extension UserGroupMemberVC: UITableViewDataSource {
         
         // Highlight current user with a subtle indicator
         if member.userId == currentUserID {
-            cell.contentView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.1)
+            cell.contentView.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.1)
         } else {
             cell.contentView.backgroundColor = .systemBackground
         }

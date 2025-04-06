@@ -37,7 +37,7 @@ class EventGroupMessageManager {
         imageURL: String?,
         completion: @escaping (Bool, String?) -> Void
     ) {
-        db.collection("events").document(eventId)
+        db.collection("eventGroups").document(eventId)
             .collection("members").document(userId)
             .getDocument { [weak self] (snapshot, error) in
                 guard let self = self else { return }
@@ -55,7 +55,7 @@ class EventGroupMessageManager {
                 }
                 
                 // Check if event chat is enabled
-                self.db.collection("events").document(eventId)
+                self.db.collection("eventGroups").document(eventId)
                     .getDocument { [weak self] (snapshot, error) in
                         guard let self = self else { return }
                         
@@ -114,7 +114,7 @@ class EventGroupMessageManager {
             }
             
             // Send the message
-            self.db.collection("events").document(eventId)
+            self.db.collection("eventGroups").document(eventId)
                 .collection("messages").document(messageId)
                 .setData(messageData) { error in
                     if let error = error {
@@ -128,7 +128,7 @@ class EventGroupMessageManager {
     
     // Get messages from an event
     func getMessages(eventId: String, limit: Int = 50, completion: @escaping ([EventGroup.Message]) -> Void) {
-        db.collection("events").document(eventId)
+        db.collection("eventGroups").document(eventId)
             .collection("messages")
             .order(by: "timestamp", descending: true)
             .limit(to: limit)
@@ -154,7 +154,7 @@ class EventGroupMessageManager {
     
     // Set up a real-time listener for messages
     func addMessageListener(eventId: String, limit: Int = 50, completion: @escaping ([EventGroup.Message]) -> Void) -> ListenerRegistration {
-        return db.collection("events").document(eventId)
+        return db.collection("eventGroups").document(eventId)
             .collection("messages")
             .order(by: "timestamp", descending: true)
             .limit(to: limit)

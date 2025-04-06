@@ -85,7 +85,7 @@ class GroupMemberCell: UITableViewCell {
         // Configure role text with appropriate style
         if member.role == "admin" {
             roleLabel.text = "Admin"
-            roleLabel.textColor = .systemBlue
+            roleLabel.textColor = .systemOrange
         } else {
             roleLabel.text = "Member"
             roleLabel.textColor = .secondaryLabel

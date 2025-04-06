@@ -6,7 +6,7 @@ import Kingfisher
 
 class GroupViewController: UIViewController {
     
-    // Update the initializer to accept UserGroup.Member array
+    // Keep only one initializer
     init(groupId: String, groupName: String, members: [UserGroup.Member] = []) {
         self.groupId = groupId
         self.groupName = groupName
@@ -18,13 +18,13 @@ class GroupViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    
     // MARK: - Properties
     private let groupId: String
     private let groupName: String
     private let db = Firestore.firestore()
     private let messageManager = GroupMessageManager()
     private let userGroupManager = UserGroupManager()
+    private var groupImageURL: String?
     
     // Use a computed property to avoid override issues
     private var userCurrentId: String {
@@ -47,15 +47,6 @@ class GroupViewController: UIViewController {
     private let groupImageView = UIImageView()
     private let groupNameLabel = UILabel()
     private let participantsLabel = UILabel()
-    
-    // MARK: - Initialization
-    init(groupId: String, groupName: String) {
-        self.groupId = groupId
-        self.groupName = groupName
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-
     
     // MARK: - View Lifecycle
     override func viewDidLoad() {
@@ -83,7 +74,7 @@ class GroupViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         // Set up navigation title with tap gesture
-        let titleTapGesture = UITapGestureRecognizer(target: self, action: #selector(titleTapped))
+        let titleTapGesture = UITapGestureRecognizer(target: self, action: #selector(showGroupDetails))
         let titleView = UILabel()
         titleView.text = groupName
         titleView.font = UIFont.boldSystemFont(ofSize: 18)
@@ -91,9 +82,14 @@ class GroupViewController: UIViewController {
         titleView.addGestureRecognizer(titleTapGesture)
         navigationItem.titleView = titleView
         
-        // Add member management button
-        let memberButton = UIBarButtonItem(image: UIImage(systemName: "person.3"), style: .plain, target: self, action: #selector(showMemberManagement))
-        navigationItem.rightBarButtonItem = memberButton
+        // Add settings button (replacing the member management button)
+        let settingsButton = UIBarButtonItem(
+            image: UIImage(systemName: "gearshape"),
+            style: .plain,
+            target: self,
+            action: #selector(showGroupDetails)
+        )
+        navigationItem.rightBarButtonItem = settingsButton
         
         // Setup header view
         setupHeaderView()
@@ -113,7 +109,12 @@ class GroupViewController: UIViewController {
         headerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(headerView)
         
-        // Group image
+        // Add tap gesture to header for group details
+        let headerTapGesture = UITapGestureRecognizer(target: self, action: #selector(showGroupDetails))
+        headerView.isUserInteractionEnabled = true
+        headerView.addGestureRecognizer(headerTapGesture)
+        
+        // Group image - now will display actual group image
         groupImageView.contentMode = .scaleAspectFill
         groupImageView.clipsToBounds = true
         groupImageView.layer.cornerRadius = 30
@@ -122,6 +123,10 @@ class GroupViewController: UIViewController {
         groupImageView.tintColor = .systemGray3
         groupImageView.translatesAutoresizingMaskIntoConstraints = false
         headerView.addSubview(groupImageView)
+        
+        // Add tap gesture to image for details
+        groupImageView.isUserInteractionEnabled = true
+        groupImageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showGroupDetails)))
         
         // Group name label
         groupNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
@@ -169,6 +174,23 @@ class GroupViewController: UIViewController {
             separatorLine.bottomAnchor.constraint(equalTo: headerView.bottomAnchor)
         ])
     }
+    
+    // Redirect old showMemberManagement to the new GroupDetails page
+    @objc private func showMemberManagement() {
+        showGroupDetails()
+    }
+    
+    // Add new method to show group details
+    @objc private func showGroupDetails() {
+        let detailsVC = GroupDetailsViewController(
+            groupId: groupId,
+            groupName: groupName,
+            imageURL: groupImageURL
+        )
+        navigationController?.pushViewController(detailsVC, animated: true)
+    }
+    
+    
     
     private func setupTableView() {
         tableView.register(GroupMessageCell.self, forCellReuseIdentifier: GroupMessageCell.identifier)
@@ -241,7 +263,7 @@ class GroupViewController: UIViewController {
     
     // MARK: - Data Loading
     private func loadGroupDetails() {
-        db.collection("userGroups").document(groupId).getDocument { [weak self] snapshot, error in
+        db.collection("groups").document(groupId).getDocument { [weak self] snapshot, error in
             guard let self = self, let data = snapshot?.data() else {
                 print("Error fetching group details: \(error?.localizedDescription ?? "unknown error")")
                 return
@@ -258,6 +280,7 @@ class GroupViewController: UIViewController {
                 
                 // Load group image if available
                 if let imageURL = data["imageURL"] as? String, let url = URL(string: imageURL) {
+                    self.groupImageURL = imageURL
                     self.groupImageView.kf.setImage(
                         with: url,
                         placeholder: UIImage(systemName: "person.3"),
@@ -269,6 +292,25 @@ class GroupViewController: UIViewController {
     }
     
     private func loadMembers() {
+        // If members were provided in initializer, use them
+        if !members.isEmpty {
+            self.admins = members.filter { $0.role == "admin" }.map { $0.userId }
+            
+            // Check if current user can chat
+            if let currentMember = members.first(where: { $0.userId == self.userCurrentId }) {
+                self.userCanChat = currentMember.canChat
+            }
+            
+            // Update group settings
+            self.loadGroupChatSettings()
+            
+            // Update UI
+            DispatchQueue.main.async {
+                self.updateParticipantLabel()
+                self.updateMessageInputAccessibility()
+            }
+            return
+        }
         userGroupManager.getGroupMembers(groupId: groupId) { [weak self] members in
             guard let self = self else { return }
             
@@ -292,7 +334,7 @@ class GroupViewController: UIViewController {
     }
     
     private func loadGroupChatSettings() {
-        db.collection("userGroups").document(groupId).getDocument { [weak self] snapshot, error in
+        db.collection("groups").document(groupId).getDocument { [weak self] snapshot, error in
             guard let self = self,
                   let data = snapshot?.data(),
                   let settings = data["settings"] as? [String: Any] else {
@@ -363,13 +405,9 @@ class GroupViewController: UIViewController {
     // MARK: - Actions
     @objc private func titleTapped() {
         // Show group details or members list
-        showMemberManagement()
+        showGroupDetails()
     }
     
-    @objc private func showMemberManagement() {
-        let memberVC = UserGroupMemberVC(groupId: groupId, groupName: groupName)
-        navigationController?.pushViewController(memberVC, animated: true)
-    }
     
     @objc private func keyboardWillShow(notification: Notification) {
         guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }

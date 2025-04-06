@@ -527,10 +527,11 @@ class ChatViewController: UIViewController {
 
 
     // Update the EventGroup.Member creation similarly
+    // Replace the openEventGroupChat method with this corrected version
     private func openEventGroupChat(eventId: String) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
         
-        // First check if current user is organizer
+        // First check if current user is a member of this event group
         db.collection("eventGroups")
             .document(eventId)
             .collection("members")
@@ -543,7 +544,7 @@ class ChatViewController: UIViewController {
                 // Find the event name
                 let eventName = self.eventGroups.first(where: { $0.eventId == eventId })?.name ?? "Event Group"
                 
-                // Now fetch all event group members
+                // Now fetch all event group members from the correct path
                 self.db.collection("eventGroups")
                     .document(eventId)
                     .collection("members")
@@ -558,11 +559,10 @@ class ChatViewController: UIViewController {
                             let role = data["role"] as? String ?? "member"
                             let profileImageURL = data["profileImageURL"] as? String
                             
-                            // Fix the Member creation by using the correct parameters
+                            // Create a Member object using the correct structure
                             let joinedAt = (data["joinedAt"] as? Timestamp)?.dateValue() ?? Date()
                             let canChat = data["canChat"] as? Bool ?? true
                             
-                            // Create a Member object according to EventGroup.Member structure
                             let member = EventGroup.Member(
                                 userId: userId,
                                 name: name,
@@ -756,6 +756,8 @@ extension ChatViewController {
     
     
     // Update the code for creating UserGroup.Member objects
+    // Replace the openGroupChat method with this corrected version
+    // In ChatViewController.swift, update the openGroupChat method:
     private func openGroupChat(group: Group) {
         print("Opening Group Chat for group ID: \(group.id)")
         
@@ -803,10 +805,11 @@ extension ChatViewController {
                         }
                         
                         DispatchQueue.main.async {
+                            // Use the initializer that accepts members array
                             let groupVC = GroupViewController(
                                 groupId: group.id,
                                 groupName: group.name,
-                                members: members
+                                members: members // Pass the members array here
                             )
                             self.navigationController?.pushViewController(groupVC, animated: true)
                         }

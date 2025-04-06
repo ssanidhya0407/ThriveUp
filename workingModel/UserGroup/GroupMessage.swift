@@ -34,7 +34,7 @@ class GroupMessageManager {
         imageURL: String?,
         completion: @escaping (Bool, String?) -> Void
     ) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .collection("members").document(userId)
             .getDocument { [weak self] (snapshot, error) in
                 guard let self = self else { return }
@@ -52,7 +52,7 @@ class GroupMessageManager {
                 }
                 
                 // Check if group chat is enabled
-                self.db.collection("userGroups").document(groupId)
+                self.db.collection("groups").document(groupId)
                     .getDocument { [weak self] (snapshot, error) in
                         guard let self = self else { return }
                         
@@ -111,7 +111,7 @@ class GroupMessageManager {
             }
             
             // Send the message
-            self.db.collection("userGroups").document(groupId)
+            self.db.collection("groups").document(groupId)
                 .collection("messages").document(messageId)
                 .setData(messageData) { error in
                     if let error = error {
@@ -125,7 +125,7 @@ class GroupMessageManager {
     
     // Get messages from a group
     func getMessages(groupId: String, limit: Int = 50, completion: @escaping ([UserGroup.Message]) -> Void) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .collection("messages")
             .order(by: "timestamp", descending: true)
             .limit(to: limit)
@@ -151,7 +151,7 @@ class GroupMessageManager {
     
     // Set up a real-time listener for messages
     func addMessageListener(groupId: String, limit: Int = 50, completion: @escaping ([UserGroup.Message]) -> Void) -> ListenerRegistration {
-        return db.collection("userGroups").document(groupId)
+        return db.collection("groups").document(groupId)
             .collection("messages")
             .order(by: "timestamp", descending: true)
             .limit(to: limit)

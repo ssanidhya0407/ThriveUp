@@ -173,8 +173,8 @@ class GroupMessageCell: UITableViewCell {
         // Style for current user's and admins' messages
         let currentUserId = Auth.auth().currentUser?.uid ?? ""
         if message.userId == currentUserId {
-            messageContainer.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.2)
-            nameLabel.textColor = .systemBlue
+            messageContainer.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.2)
+            nameLabel.textColor = .systemOrange
         } else if admins.contains(message.userId) {
             messageContainer.backgroundColor = UIColor.systemGray6
             nameLabel.textColor = .systemIndigo  // Admin name color

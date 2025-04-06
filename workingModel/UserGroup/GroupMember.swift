@@ -15,7 +15,7 @@ class UserGroupManager {
     // MARK: - Group Creation
     func createUserGroup(groupId: String, adminId: String, groupName: String, completion: @escaping (Bool) -> Void) {
         // Check if group already exists
-        let groupRef = db.collection("userGroups").document(groupId)
+        let groupRef = db.collection("groups").document(groupId)
         
         groupRef.getDocument { (snapshot, error) in
             if let error = error {
@@ -93,7 +93,7 @@ class UserGroupManager {
                 "profileImageURL": userData["profileImageURL"] as? String ?? ""
             ]
             
-            self.db.collection("userGroups").document(groupId)
+            self.db.collection("groups").document(groupId)
                 .collection("members").document(userId)
                 .setData(memberData) { error in
                     if let error = error {
@@ -109,7 +109,7 @@ class UserGroupManager {
     
     // MARK: - Member Removal
     func removeUserFromGroup(groupId: String, userId: String, completion: @escaping (Bool) -> Void) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .collection("members").document(userId)
             .delete() { error in
                 if let error = error {
@@ -124,7 +124,7 @@ class UserGroupManager {
     
     // MARK: - Member Permissions
     func updateMemberChatPermission(groupId: String, userId: String, canChat: Bool, completion: @escaping (Bool) -> Void) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .collection("members").document(userId)
             .updateData(["canChat": canChat]) { error in
                 if let error = error {
@@ -139,7 +139,7 @@ class UserGroupManager {
     
     // MARK: - Group Settings
     func updateGroupChatSettings(groupId: String, chatEnabled: Bool, completion: @escaping (Bool) -> Void) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .updateData(["settings.chatEnabled": chatEnabled]) { error in
                 if let error = error {
                     print("Error updating group chat settings: \(error.localizedDescription)")
@@ -153,7 +153,7 @@ class UserGroupManager {
     
     // MARK: - Member Retrieval
     func getGroupMembers(groupId: String, completion: @escaping ([UserGroup.Member]) -> Void) {
-        db.collection("userGroups").document(groupId)
+        db.collection("groups").document(groupId)
             .collection("members")
             .getDocuments { (snapshot, error) in
                 if let error = error {

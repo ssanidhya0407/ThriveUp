@@ -13,8 +13,9 @@ class EventGroupManager {
     private let db = Firestore.firestore()
     
     // Get members from an event
+    // Replace the getEventMembers method in EventGroupManager with this:
     func getEventMembers(eventId: String, completion: @escaping ([EventGroup.Member]) -> Void) {
-        db.collection("events").document(eventId)
+        db.collection("eventGroups").document(eventId)
             .collection("members")
             .getDocuments { (snapshot, error) in
                 if let error = error {
