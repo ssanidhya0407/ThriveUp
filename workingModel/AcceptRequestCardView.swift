@@ -17,7 +17,7 @@ class AcceptRequestCardView: UIView {
     var user: UserDetails?
     weak var delegate: AcceptRequestCardViewDelegate?
     
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let aboutTitleLabel = UILabel()
     private let aboutLabel = UILabel()

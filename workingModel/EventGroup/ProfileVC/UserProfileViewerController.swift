@@ -21,7 +21,7 @@ class UserProfileViewerController: UIViewController, UITableViewDelegate, UITabl
     // UI Elements
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    private let profileImageView = UIImageView()
+    public let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let emailLabel = UILabel()
     private let friendsLabel = UILabel()
