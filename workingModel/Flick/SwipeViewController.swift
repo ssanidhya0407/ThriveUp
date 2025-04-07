@@ -17,8 +17,36 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    
+    private let refreshButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Refresh Events", for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .systemOrange
+        button.layer.cornerRadius = 8
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
+        button.alpha = 0
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.2
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
+        return button
+    }()
+    
+    private let endOfEventsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "You've reached the end of today's events!\nNew events coming soon..."
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 20, weight: .medium)
+        label.textColor = .gray
+        label.numberOfLines = 0
+        label.alpha = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
-    // CoachMarksController instance for the guided tour
     let coachMarksController = CoachMarksController()
     let swipeButton = UIButton(type: .system)
     let filterButton = UIButton(type: .system)
@@ -32,13 +60,10 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
         setupConstraints()
         fetchEventsFromDatabase()
         fetchUsersFromDatabase()
-        displayTopCards(for: .swipe)
 
-        // Configure CoachMarksController
         coachMarksController.dataSource = self
         coachMarksController.delegate = self
 
-        // Check if it's the user's first time logging in
         if isFirstTimeUser() {
             askForTutorial()
         }
@@ -51,14 +76,12 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
     }
 
     private func setupTitleStackView() {
-        // Configure swipeButton
         swipeButton.setTitle("Flick", for: .normal)
         swipeButton.setTitleColor(.orange, for: .normal)
         swipeButton.titleLabel?.font = UIFont.systemFont(ofSize: 36, weight: .bold)
         swipeButton.addTarget(self, action: #selector(handleSwipeButtonTapped), for: .touchUpInside)
         
-        // Configure filterButton
-        let config = UIImage.SymbolConfiguration(pointSize: 28, weight: .bold)
+        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
         filterButton.setImage(UIImage(systemName: "line.horizontal.3.decrease.circle", withConfiguration: config), for: .normal)
         filterButton.tintColor = .orange
         filterButton.addTarget(self, action: #selector(handleFilterButtonTapped), for: .touchUpInside)
@@ -108,6 +131,20 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
 
     private func setupViews() {
         view.addSubview(cardContainerView)
+        view.addSubview(endOfEventsLabel)
+        view.addSubview(refreshButton)
+        
+        refreshButton.addTarget(self, action: #selector(refreshEvents), for: .touchUpInside)
+        
+        NSLayoutConstraint.activate([
+            endOfEventsLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            endOfEventsLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -40),
+            endOfEventsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            endOfEventsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            
+            refreshButton.topAnchor.constraint(equalTo: endOfEventsLabel.bottomAnchor, constant: 20),
+            refreshButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+        ])
     }
 
     private func setupConstraints() {
@@ -147,7 +184,8 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
                     }
                 }
 
-                self?.eventStack = fetchedEvents.reversed()
+                // Shuffle the events before assigning to eventStack
+                self?.eventStack = fetchedEvents.shuffled()
                 DispatchQueue.main.async {
                     self?.displayTopCards(for: .swipe)
                 }
@@ -187,7 +225,7 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
                 fetchedUsers.append(user)
             }
 
-            self?.userStack = fetchedUsers.reversed()
+            self?.userStack = fetchedUsers.shuffled()
         }
     }
 
@@ -201,19 +239,29 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
         case .acceptRequests:
             cards = acceptRequests.suffix(3).map { createCard(for: $0) }
         }
+        
+        if cards.isEmpty {
+            UIView.animate(withDuration: 0.3) {
+                self.endOfEventsLabel.alpha = 1
+                self.refreshButton.alpha = 1
+            }
+        } else {
+            endOfEventsLabel.alpha = 0
+            refreshButton.alpha = 0
+            
+            for cardView in cards {
+                cardContainerView.addSubview(cardView)
+                cardView.translatesAutoresizingMaskIntoConstraints = false
 
-        for cardView in cards {
-            cardContainerView.addSubview(cardView)
-            cardView.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    cardView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
+                    cardView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
+                    cardView.topAnchor.constraint(equalTo: cardContainerView.topAnchor),
+                    cardView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor)
+                ])
 
-            NSLayoutConstraint.activate([
-                cardView.leadingAnchor.constraint(equalTo: cardContainerView.leadingAnchor),
-                cardView.trailingAnchor.constraint(equalTo: cardContainerView.trailingAnchor),
-                cardView.topAnchor.constraint(equalTo: cardContainerView.topAnchor),
-                cardView.bottomAnchor.constraint(equalTo: cardContainerView.bottomAnchor)
-            ])
-
-            cardContainerView.sendSubviewToBack(cardView)
+                cardContainerView.sendSubviewToBack(cardView)
+            }
         }
     }
     
@@ -221,7 +269,6 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
         let cardView = FlippableCardView(event: eventWithDeadline.event)
         cardView.translatesAutoresizingMaskIntoConstraints = false
         
-        // Add shadow and rounded corners
         cardView.layer.shadowColor = UIColor.black.cgColor
         cardView.layer.shadowOpacity = 0.2
         cardView.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -268,7 +315,6 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
     private func bookmarkEvent(for eventWithDeadline: EventWithDeadline) {
         bookmarkedEvents.append(eventWithDeadline)
         
-        // Show confirmation popup
         let confirmationView = UIView()
         confirmationView.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.9)
         confirmationView.layer.cornerRadius = 12
@@ -307,7 +353,6 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
             confirmationView.widthAnchor.constraint(equalToConstant: 250)
         ])
         
-        // Animate in
         confirmationView.alpha = 0
         confirmationView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         UIView.animate(withDuration: 0.3) {
@@ -315,7 +360,6 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
             confirmationView.transform = .identity
         }
         
-        // Auto-dismiss after 2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             UIView.animate(withDuration: 0.3, animations: {
                 confirmationView.alpha = 0
@@ -324,20 +368,22 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
             }
         }
         
-        // Save the bookmarked event to Firestore
         guard let userId = Auth.auth().currentUser?.uid else {
             print("Error: User not authenticated")
             return
         }
         
         let swipedEventRef = db.collection("swipedeventsdb").document()
-        let swipedEventData: [String: Any] = [
+        var swipedEventData: [String: Any] = [
             "eventId": eventWithDeadline.event.eventId,
             "userId": userId,
             "timestamp": Timestamp(),
-            "eventName": eventWithDeadline.event.title ?? "Unknown Event",
-            "deadlineDate": eventWithDeadline.deadlineDate ?? FieldValue.delete()
+            "eventName": eventWithDeadline.event.title ?? "Unknown Event"
         ]
+
+        if let deadlineDate = eventWithDeadline.deadlineDate {
+            swipedEventData["deadlineDate"] = deadlineDate
+        }
         
         swipedEventRef.setData(swipedEventData) { error in
             if let error = error {
@@ -377,7 +423,12 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
             if let index = self.eventStack.firstIndex(where: { $0.event.eventId == cardView.event.eventId }) {
                 self.eventStack.remove(at: index)
             }
-            self.displayTopCards(for: .swipe)
+            
+            if self.eventStack.isEmpty {
+                self.displayTopCards(for: .swipe)
+            } else {
+                self.displayTopCards(for: .swipe)
+            }
         }
     }
 
@@ -430,6 +481,15 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
         }
     }
 
+    @objc private func refreshEvents() {
+        UIView.animate(withDuration: 0.3) {
+            self.endOfEventsLabel.alpha = 0
+            self.refreshButton.alpha = 0
+        }
+        
+        fetchEventsFromDatabase()
+    }
+
     private func isFirstTimeUser() -> Bool {
         return false
     }
@@ -446,8 +506,6 @@ class SwipeViewController: UIViewController, CoachMarksControllerDataSource, Coa
     func startGuidedTour() {
         coachMarksController.start(in: .window(over: self))
     }
-
-    // MARK: - CoachMarksControllerDataSource
 
     func numberOfCoachMarks(for coachMarksController: CoachMarksController) -> Int {
         return 3

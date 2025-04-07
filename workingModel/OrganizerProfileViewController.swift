@@ -781,7 +781,7 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
        }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
            let selectedEvent = createdEvents[indexPath.row]
-           let registrationsListVC = RegistrationListViewController(eventId: selectedEvent.eventId)
+           let registrationsListVC = RegistrationListTabViewController(eventId: selectedEvent.eventId)
            navigationController?.pushViewController(registrationsListVC, animated: true)
        }
     

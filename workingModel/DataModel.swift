@@ -24,103 +24,46 @@ struct Friend: Decodable {
 }
 
 
+
+
+
 struct NotificationModel {
     let id: String
+    let userId: String
+    let senderId: String?
     let title: String
     let message: String
     let date: Date
     var isRead: Bool
+    let type: String
+    let eventId: String?
     let chatId: String?
-    let messageId: String?
-    let senderId: String?
+    let imageUrl: String?
+    let eventName: String?
+    let eventImageName: String?
     
-    init(id: String, title: String, message: String, date: Date, isRead: Bool,
-         chatId: String? = nil, messageId: String? = nil, senderId: String? = nil) {
-        self.id = id
-        self.title = title
-        self.message = message
-        self.date = date
-        self.isRead = isRead
-        self.chatId = chatId
-        self.messageId = messageId
-        self.senderId = senderId
-    }
-    
-    // Convenience initializer from Firestore document
-    init?(document: QueryDocumentSnapshot) {
+    init(document: QueryDocumentSnapshot) {
+        self.id = document.documentID
         let data = document.data()
         
-        guard let title = data["title"] as? String,
-              let message = data["message"] as? String else {
-            return nil
-        }
-        
-        self.id = document.documentID
-        self.title = title
-        self.message = message
-        self.date = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-        self.isRead = data["isRead"] as? Bool ?? false
-        self.chatId = data["chatId"] as? String
-        self.messageId = data["messageId"] as? String
+        self.userId = data["userId"] as? String ?? ""
         self.senderId = data["senderId"] as? String
-    }
-    
-    // Helper method to create a notification model from raw data
-    static func fromDictionary(_ data: [String: Any], documentId: String) -> NotificationModel? {
-        guard let title = data["title"] as? String,
-              let message = data["message"] as? String else {
-            return nil
+        self.title = data["title"] as? String ?? "Notification"
+        self.message = data["message"] as? String ?? ""
+        self.isRead = data["isRead"] as? Bool ?? false
+        self.type = data["type"] as? String ?? "general"
+        self.eventId = data["eventId"] as? String
+        self.chatId = data["chatId"] as? String
+        self.imageUrl = data["senderImageURL"] as? String
+        self.eventName = data["eventName"] as? String
+        self.eventImageName = data["eventImageName"] as? String
+        
+        // Handle timestamp
+        if let timestamp = data["timestamp"] as? Timestamp {
+            self.date = timestamp.dateValue()
+        } else {
+            self.date = Date()
         }
-        
-        return NotificationModel(
-            id: documentId,
-            title: title,
-            message: message,
-            date: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-            isRead: data["isRead"] as? Bool ?? false,
-            chatId: data["chatId"] as? String,
-            messageId: data["messageId"] as? String,
-            senderId: data["senderId"] as? String
-        )
-    }
-    
-    // Helper to convert notification to dictionary for storage
-    func toDictionary() -> [String: Any] {
-        var dict: [String: Any] = [
-            "title": title,
-            "message": message,
-            "timestamp": FieldValue.serverTimestamp(),
-            "isRead": isRead
-        ]
-        
-        // Add optional fields if they exist
-        if let chatId = chatId {
-            dict["chatId"] = chatId
-        }
-        
-        if let messageId = messageId {
-            dict["messageId"] = messageId
-        }
-        
-        if let senderId = senderId {
-            dict["senderId"] = senderId
-        }
-        
-        return dict
-    }
-    
-    // Create a copy of this notification with updated read status
-    func withUpdatedReadStatus(_ newStatus: Bool) -> NotificationModel {
-        return NotificationModel(
-            id: self.id,
-            title: self.title,
-            message: self.message,
-            date: self.date,
-            isRead: newStatus,
-            chatId: self.chatId,
-            messageId: self.messageId,
-            senderId: self.senderId
-        )
     }
 }
 

@@ -114,6 +114,9 @@
 		57F22AE82D7F8C04006DA3B4 /* HackmateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AE72D7F8C04006DA3B4 /* HackmateViewController.swift */; };
 		57F22AEA2D7F95BB006DA3B4 /* HackmateRequestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AE92D7F95BB006DA3B4 /* HackmateRequestsViewController.swift */; };
 		57F22AED2D804992006DA3B4 /* CollegeFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F22AEC2D804992006DA3B4 /* CollegeFeedViewController.swift */; };
+		780D3CDD2DA3929200EB9EF5 /* RegistrationListTabViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780D3CDC2DA3929200EB9EF5 /* RegistrationListTabViewController.swift */; };
+		780D3CDF2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780D3CDE2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift */; };
+		780D3CE72DA3D65A00EB9EF5 /* EventNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 780D3CE62DA3D65A00EB9EF5 /* EventNotificationService.swift */; };
 		781DC1CC2D5B76A100322EF3 /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781DC1CB2D5B76A100322EF3 /* NotificationTableViewCell.swift */; };
 		781DC1D02D5B771A00322EF3 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781DC1CF2D5B771A00322EF3 /* NotificationViewController.swift */; };
 		7841AAA22D36902E00438FE0 /* InterestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7841AAA12D36902E00438FE0 /* InterestsViewController.swift */; };
@@ -257,6 +260,9 @@
 		57F22AE72D7F8C04006DA3B4 /* HackmateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackmateViewController.swift; sourceTree = "<group>"; };
 		57F22AE92D7F95BB006DA3B4 /* HackmateRequestsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HackmateRequestsViewController.swift; sourceTree = "<group>"; };
 		57F22AEC2D804992006DA3B4 /* CollegeFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollegeFeedViewController.swift; sourceTree = "<group>"; };
+		780D3CDC2DA3929200EB9EF5 /* RegistrationListTabViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationListTabViewController.swift; sourceTree = "<group>"; };
+		780D3CDE2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationDetailViewController.swift; sourceTree = "<group>"; };
+		780D3CE62DA3D65A00EB9EF5 /* EventNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventNotificationService.swift; sourceTree = "<group>"; };
 		781DC1CB2D5B76A100322EF3 /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
 		781DC1CF2D5B771A00322EF3 /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		7841AAA12D36902E00438FE0 /* InterestsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestsViewController.swift; sourceTree = "<group>"; };
@@ -392,6 +398,9 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				780D3CE62DA3D65A00EB9EF5 /* EventNotificationService.swift */,
+				780D3CDE2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift */,
+				780D3CDC2DA3929200EB9EF5 /* RegistrationListTabViewController.swift */,
 				570DD4822DA2F71900901E69 /* UserGroup */,
 				570DD4732DA2F67500901E69 /* Shared */,
 				78B2C68E2D8D3FBD0046B030 /* EventGroup */,
@@ -731,11 +740,13 @@
 				570DD4692DA2F5BE00901E69 /* EventGroupViewController.swift in Sources */,
 				570DD46A2DA2F5BE00901E69 /* EventMessageInputView.swift in Sources */,
 				570DD46B2DA2F5BE00901E69 /* GroupMemberVC.swift in Sources */,
+				780D3CDF2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift in Sources */,
 				570DD46C2DA2F5BE00901E69 /* EventGroupMessageManager.swift in Sources */,
 				570DD46D2DA2F5BE00901E69 /* EventStatusListener.swift in Sources */,
 				570DD46E2DA2F5BE00901E69 /* MemberCell.swift in Sources */,
 				570DD46F2DA2F5BE00901E69 /* EventGroupMember.swift in Sources */,
 				570DD4702DA2F5BE00901E69 /* EventGroupsListViewController.swift in Sources */,
+				780D3CDD2DA3929200EB9EF5 /* RegistrationListTabViewController.swift in Sources */,
 				570DD4712DA2F5BE00901E69 /* EventGroupManager.swift in Sources */,
 				570DD4722DA2F5BE00901E69 /* FullScreenImageViewController.swift in Sources */,
 				577DA1DC2CE4837700760BFA /* EventDetailViewController.swift in Sources */,
@@ -744,6 +755,7 @@
 				577DA1D42CE3BE2800760BFA /* EventCell.swift in Sources */,
 				57D977B12CEC9524004B1314 /* OrganizerTabBar.swift in Sources */,
 				57F22AE82D7F8C04006DA3B4 /* HackmateViewController.swift in Sources */,
+				780D3CE72DA3D65A00EB9EF5 /* EventNotificationService.swift in Sources */,
 				5756E10D2D81C8EF005EF598 /* FriendsService.swift in Sources */,
 				57F22AE32D7F7576006DA3B4 /* UserProfileCardView.swift in Sources */,
 				577DA2022CE5DF9C00760BFA /* RegistrationViewController.swift in Sources */,
@@ -936,7 +948,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5P9MT7PS5M;
+				DEVELOPMENT_TEAM = K75YG36RDS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = workingModel/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to scan QR codes.";
@@ -951,7 +963,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = me.yash.workingModel;
+				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.thriveup;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -968,7 +980,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5P9MT7PS5M;
+				DEVELOPMENT_TEAM = K75YG36RDS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = workingModel/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to scan QR codes.";
@@ -983,7 +995,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = me.yash.workingModel;
+				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.thriveup;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;

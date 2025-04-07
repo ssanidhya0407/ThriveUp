@@ -1,4 +1,3 @@
-
 import FirebaseFirestore
 import UIKit
 import FirebaseAuth
@@ -11,7 +10,8 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
     private var filteredEventsByCategory: [String: [EventModel]] = [:]
     private let predefinedCategories = [
         "Trending", "Fun and Entertainment", "Tech and Innovation",
-        "Club and Societies", "Cultural", "Networking", "Sports","Hackathons", "Career Connect", "Wellness", "Other"
+        "Club and Societies", "Cultural", "Networking", "Sports","Hackathons",
+        "Career Connect", "Wellness", "Other"
     ]
     private var categories: [String] = []
     private var filteredCategories: [String] = []
@@ -19,11 +19,29 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
     private let searchBar = UISearchBar()
     private let feedLabel = UILabel()
     private let filterButton = UIButton(type: .system)
-    private let bookmarkButton = UIButton(type: .system)
-    private let notificationButton = UIButton(type: .system)
+    
+    // Navigation buttons
+    private lazy var bookmarkButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(bookmarkButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var notificationButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "bell"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(notificationButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private var bookmarkedViewController: BookmarkViewController?
 
-    // Helper struct to hold events with deadline dates
+    // Helper struct
     private struct EventWithDeadline {
         let event: EventModel
         let deadlineDate: Date?
@@ -31,23 +49,20 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        setupUI()
+        fetchEventsFromFirestore()
+    }
+    
+    // MARK: - Setup Methods
+    private func setupUI() {
         setupNavigationBar()
         setupGradientBackground()
         setupFeedLabel()
         setupSearchBar()
         setupFilterButton()
         setupCollectionView()
-        fetchEventsFromFirestore()
-
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.bookmarkButton.addTarget(self, action: #selector(self.bookmarkButtonTapped), for: .touchUpInside)
-            self.notificationButton.addTarget(self, action: #selector(self.notificationButtonTapped), for: .touchUpInside)
-        }
     }
     
-    // MARK: - Setup Methods
     private func setupNavigationBar() {
         guard let user = Auth.auth().currentUser else {
             print("No user signed in")
@@ -78,26 +93,20 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
             profileImageView.translatesAutoresizingMaskIntoConstraints = false
             profileImageView.sd_setImage(with: URL(string: profileImageURL), placeholderImage: UIImage(named: "defaultProfile"))
             
+            // Name Label
             let nameLabel = UILabel()
             nameLabel.text = userName
             nameLabel.font = UIFont.systemFont(ofSize: 24, weight: .medium)
             nameLabel.textColor = .black
             nameLabel.translatesAutoresizingMaskIntoConstraints = false
 
+            // Container View
             let profileContainerView = UIView()
             profileContainerView.addSubview(profileImageView)
             profileContainerView.addSubview(nameLabel)
             profileContainerView.translatesAutoresizingMaskIntoConstraints = false
 
-            // Configure Buttons
-            self.bookmarkButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-            self.bookmarkButton.tintColor = .black
-            self.bookmarkButton.translatesAutoresizingMaskIntoConstraints = false
-            
-            self.notificationButton.setImage(UIImage(systemName: "bell"), for: .normal)
-            self.notificationButton.tintColor = .black
-            self.notificationButton.translatesAutoresizingMaskIntoConstraints = false
-
+            // Top Bar View
             let topBarView = UIView()
             topBarView.addSubview(profileContainerView)
             topBarView.addSubview(self.bookmarkButton)
@@ -106,26 +115,39 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
 
             self.view.addSubview(topBarView)
             
+            // Constraints
             NSLayoutConstraint.activate([
-                topBarView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor, constant: -16),
+                topBarView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor),
                 topBarView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
                 topBarView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-                topBarView.heightAnchor.constraint(equalToConstant: 70),
+                topBarView.heightAnchor.constraint(equalToConstant: 60),
+                
+                profileContainerView.leadingAnchor.constraint(equalTo: topBarView.leadingAnchor, constant: 16),
+                profileContainerView.centerYAnchor.constraint(equalTo: topBarView.centerYAnchor),
                 
                 profileImageView.widthAnchor.constraint(equalToConstant: 50),
                 profileImageView.heightAnchor.constraint(equalToConstant: 50),
-                profileImageView.leadingAnchor.constraint(equalTo: profileContainerView.leadingAnchor, constant: 16),
-                profileImageView.centerYAnchor.constraint(equalTo: profileContainerView.centerYAnchor),
+                profileImageView.leadingAnchor.constraint(equalTo: profileContainerView.leadingAnchor),
+                profileImageView.centerYAnchor.constraint(equalTo: profileContainerView.centerYAnchor,constant: -26),
 
                 nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-                nameLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
                 nameLabel.trailingAnchor.constraint(equalTo: profileContainerView.trailingAnchor),
+                nameLabel.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
                 
-                self.bookmarkButton.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+                self.notificationButton.trailingAnchor.constraint(equalTo: topBarView.trailingAnchor, constant: -16),
                 self.notificationButton.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
-                self.notificationButton.trailingAnchor.constraint(equalTo: topBarView.trailingAnchor, constant: -20),
-                self.bookmarkButton.trailingAnchor.constraint(equalTo: self.notificationButton.leadingAnchor, constant: -16)
+                self.notificationButton.widthAnchor.constraint(equalToConstant: 44),
+                self.notificationButton.heightAnchor.constraint(equalToConstant: 44),
+                
+                self.bookmarkButton.trailingAnchor.constraint(equalTo: self.notificationButton.leadingAnchor, constant: -16),
+                self.bookmarkButton.centerYAnchor.constraint(equalTo: profileImageView.centerYAnchor),
+                self.bookmarkButton.widthAnchor.constraint(equalToConstant: 44),
+                self.bookmarkButton.heightAnchor.constraint(equalToConstant: 44)
             ])
+            
+            // Ensure buttons are on top
+            topBarView.bringSubviewToFront(self.bookmarkButton)
+            topBarView.bringSubviewToFront(self.notificationButton)
         }
     }
 
@@ -484,7 +506,7 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
 //            fireIcon.tintColor = .systemOrange
 //            fireIcon.translatesAutoresizingMaskIntoConstraints = false
 //            header.addSubview(fireIcon)
-//            
+//
 //            NSLayoutConstraint.activate([
 //                fireIcon.leadingAnchor.constraint(equalTo: header.titleLabel.trailingAnchor, constant: 8),
 //                fireIcon.centerYAnchor.constraint(equalTo: header.titleLabel.centerYAnchor),
@@ -547,28 +569,26 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
     }
 
     @objc private func bookmarkButtonTapped() {
-        print("Bookmark button was tapped - CONFIRMED")
-        
-        if bookmarkedViewController == nil {
-            bookmarkedViewController = BookmarkViewController()
-        }
-        
-        if let currentVC = navigationController?.topViewController {
-            if currentVC is BookmarkViewController {
-                navigationController?.popViewController(animated: true)
-            } else {
-                if let bookmarkedVC = bookmarkedViewController {
-                    navigationController?.pushViewController(bookmarkedVC, animated: true)
-                }
-            }
-        }
-    }
+           print("Bookmark button tapped")
+           
+           if bookmarkedViewController == nil {
+               bookmarkedViewController = BookmarkViewController()
+           }
+           
+           if let navController = navigationController {
+               if navController.topViewController is BookmarkViewController {
+                   navController.popViewController(animated: true)
+               } else if let bookmarkedVC = bookmarkedViewController {
+                   navController.pushViewController(bookmarkedVC, animated: true)
+               }
+           }
+       }
     
     @objc private func notificationButtonTapped() {
-        print("Notification button tapped")
-        let notificationVC = NotificationViewController()
-        navigationController?.pushViewController(notificationVC, animated: true)
-    }
+            print("Notification button tapped")
+            let notificationVC = NotificationViewController()
+            navigationController?.pushViewController(notificationVC, animated: true)
+        }
 
     @objc private func arrowButtonTapped(_ sender: UIButton) {
         let section = sender.tag
@@ -616,206 +636,6 @@ class ExpiringBackgroundView: UICollectionReusableView {
         layer.shadowRadius = 4
     }
 }
-//class FilterViewController: UIViewController {
-//    
-//    // MARK: - Properties
-//    weak var delegate: FilterViewControllerDelegate?
-//    private var selectedFilters: Set<String> = []
-//    
-//    private let availableFilters = [
-//        "Trending", "Fun & Entertainment", "Tech & Innovation",
-//        "Club & Societies", "Cultural", "Networking", "Sports",
-//        "Career Connect", "Wellness", "Other"
-//    ]
-//    
-//    private let collectionView: UICollectionView = {
-//        let layout = UICollectionViewFlowLayout()
-//        layout.scrollDirection = .vertical
-//        layout.minimumInteritemSpacing = 12
-//        layout.minimumLineSpacing = 15
-//        layout.sectionInset = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-//        return UICollectionView(frame: .zero, collectionViewLayout: layout)
-//    }()
-//    
-//    private let applyButton = UIButton()
-//    private let resetButton = UIButton()
-//    private let titleLabel = UILabel()
-//    
-//    // MARK: - Lifecycle
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        setupUI()
-//    }
-//    
-//    // MARK: - Setup UI
-//    private func setupUI() {
-//        view.backgroundColor = .white
-//        
-//        // Title Label
-//        titleLabel.text = "Select Filters"
-//        titleLabel.font = UIFont.boldSystemFont(ofSize: 26)
-//        titleLabel.textAlignment = .center
-//        titleLabel.textColor = .black
-//        
-//        view.addSubview(titleLabel)
-//        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Collection View
-//        collectionView.delegate = self
-//        collectionView.dataSource = self
-//        collectionView.backgroundColor = .clear
-//        collectionView.register(FilterCell.self, forCellWithReuseIdentifier: "FilterCell")
-//        
-//        view.addSubview(collectionView)
-//        collectionView.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Apply Button
-//        applyButton.setTitle("Apply Filters", for: .normal)
-//        applyButton.backgroundColor = .systemOrange
-//        applyButton.setTitleColor(.white, for: .normal)
-//        applyButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-//        applyButton.layer.cornerRadius = 12
-//        applyButton.layer.shadowColor = UIColor.black.cgColor
-//        applyButton.layer.shadowOpacity = 0.1
-//        applyButton.layer.shadowOffset = CGSize(width: 0, height: 4)
-//        applyButton.addTarget(self, action: #selector(applyFilters), for: .touchUpInside)
-//        
-//        view.addSubview(applyButton)
-//        applyButton.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Reset Button
-//        resetButton.setTitle("Reset Filters", for: .normal)
-//        resetButton.backgroundColor = .white
-//        resetButton.setTitleColor(.systemOrange, for: .normal)
-//        resetButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-//        resetButton.layer.borderWidth = 1
-//        resetButton.layer.borderColor = UIColor.systemOrange.cgColor
-//        resetButton.layer.cornerRadius = 12
-//        resetButton.layer.shadowColor = UIColor.black.cgColor
-//        resetButton.layer.shadowOpacity = 0.05
-//        resetButton.layer.shadowOffset = CGSize(width: 0, height: 2)
-//        resetButton.addTarget(self, action: #selector(resetFilters), for: .touchUpInside)
-//        
-//        view.addSubview(resetButton)
-//        resetButton.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        // Constraints
-//        NSLayoutConstraint.activate([
-//            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
-//            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-//            
-//            collectionView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
-//            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-//            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-//            collectionView.bottomAnchor.constraint(equalTo: applyButton.topAnchor, constant: -20),
-//            
-//            resetButton.bottomAnchor.constraint(equalTo: applyButton.topAnchor, constant: -12),
-//            resetButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-//            resetButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-//            resetButton.heightAnchor.constraint(equalToConstant: 50),
-//            
-//            applyButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-//            applyButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-//            applyButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-//            applyButton.heightAnchor.constraint(equalToConstant: 50),
-//        ])
-//    }
-//    
-//    // MARK: - Actions
-//    @objc private func applyFilters() {
-//        delegate?.didApplyFilters(Array(selectedFilters))
-//        dismiss(animated: true)
-//    }
-//    
-//    @objc private func resetFilters() {
-//        selectedFilters.removeAll()
-//        collectionView.reloadData()
-//    }
-//}
-//
-//// MARK: - Collection View Delegate & Data Source
-//extension FilterViewController: UICollectionViewDelegate, UICollectionViewDataSource {
-//    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-//        return availableFilters.count
-//    }
-//    
-//    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-//        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FilterCell", for: indexPath) as! FilterCell
-//        let filter = availableFilters[indexPath.row]
-//        
-//        cell.configure(with: filter, isSelected: selectedFilters.contains(filter))
-//        return cell
-//    }
-//    
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        let filter = availableFilters[indexPath.row]
-//        if selectedFilters.contains(filter) {
-//            selectedFilters.remove(filter)
-//        } else {
-//            selectedFilters.insert(filter)
-//        }
-//        collectionView.reloadItems(at: [indexPath])
-//    }
-//}
-////
-//// MARK: - Custom Collection View Cell
-//class FilterCell: UICollectionViewCell {
-//    private let label = UILabel()
-//    private let containerView = UIView()
-//    
-//    override init(frame: CGRect) {
-//        super.init(frame: frame)
-//        
-//        contentView.addSubview(containerView)
-//        containerView.addSubview(label)
-//        
-//        containerView.layer.cornerRadius = 15
-//        containerView.layer.borderWidth = 1
-//        containerView.layer.borderColor = UIColor.systemOrange.cgColor
-//        containerView.backgroundColor = .white
-//        containerView.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-//        label.textAlignment = .center
-//        label.translatesAutoresizingMaskIntoConstraints = false
-//        
-//        NSLayoutConstraint.activate([
-//            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-//            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-//            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-//            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-//            
-//            label.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
-//            label.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-//        ])
-//    }
-//    
-//    required init?(coder: NSCoder) {
-//        fatalError("init(coder:) has not been implemented")
-//    }
-//    
-//    func configure(with text: String, isSelected: Bool) {
-//        label.text = text
-//        containerView.backgroundColor = isSelected ? .systemOrange : .white
-//        label.textColor = isSelected ? .white : .black
-//    }
-//}
-//
-//// MARK: - Collection View Flow Layout
-//extension FilterViewController: UICollectionViewDelegateFlowLayout {
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-//        let columns: CGFloat = 2
-//        let spacing: CGFloat = 16
-//        let totalSpacing = (columns - 1) * spacing
-//        let itemWidth = (collectionView.frame.width - totalSpacing - 32) / columns
-//        return CGSize(width: itemWidth, height: 60) // Adjusted height for better spacing
-//    }
-//}
-//
-//
-//protocol FilterViewControllerDelegate: AnyObject {
-//    func didApplyFilters(_ filters: [String])
-//}
 
 import UIKit
 

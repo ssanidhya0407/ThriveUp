@@ -241,19 +241,36 @@ class NotificationViewController: UIViewController, UITableViewDelegate, UITable
         }
     }
     
+    // Add this to the loadNotifications method in NotificationViewController.swift
+
     private func loadNotifications() {
         guard let userId = Auth.auth().currentUser?.uid else {
             print("User not authenticated.")
             return
         }
         
+        print("🔍 Attempting to load notifications for user: \(userId)")
+        
         db.collection("notifications")
             .whereField("userId", isEqualTo: userId)
             .order(by: "timestamp", descending: true)
             .getDocuments { [weak self] querySnapshot, error in
                 if let error = error {
-                    print("Error fetching notifications: \(error.localizedDescription)")
+                    print("❌ Error fetching notifications: \(error.localizedDescription)")
                     return
+                }
+                
+                guard let snapshot = querySnapshot else {
+                    print("❌ No snapshot returned for notifications query")
+                    return
+                }
+                
+                print("📄 Found \(snapshot.documents.count) notification documents")
+                
+                // Debug print each notification document
+                for (index, doc) in snapshot.documents.enumerated() {
+                    print("📄 Notification[\(index)]: ID=\(doc.documentID)")
+                    print("📄 Data: \(doc.data())")
                 }
                 
                 self?.loadNotificationsFromSnapshot(querySnapshot)

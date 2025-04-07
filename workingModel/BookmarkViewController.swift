@@ -4,13 +4,13 @@ import FirebaseAuth
 
 class BookmarkViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UISearchBarDelegate {
 
-    private var bookmarkedEvents: [EventModel] = [] {
+    private var bookmarkedEvents: [EventWithDeadline] = [] {
         didSet {
             categorizedEvents = categorizeEvents(bookmarkedEvents)
             collectionView.reloadData()
         }
     }
-    private var categorizedEvents: [String: [EventModel]] = [:]
+    private var categorizedEvents: [String: [EventWithDeadline]] = [:]
 
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
@@ -86,87 +86,97 @@ class BookmarkViewController: UIViewController, UICollectionViewDelegate, UIColl
     }
 
     private func loadBookmarkedEvents() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("User is not authenticated")
-            return
-        }
+           guard let userId = Auth.auth().currentUser?.uid else {
+               print("User is not authenticated")
+               return
+           }
 
-        let db = Firestore.firestore()
-        
-        db.collection("swipedeventsdb").whereField("userId", isEqualTo: userId).getDocuments { [weak self] (querySnapshot, error) in
-            if let error = error {
-                print("Error getting documents: \(error)")
-                return
-            }
-            
-            guard let documents = querySnapshot?.documents else { return }
-            var eventIds: [String] = []
-            for document in documents {
-                let data = document.data()
-                if let eventId = data["eventId"] as? String {
-                    eventIds.append(eventId)
-                }
-            }
-            
-            self?.fetchEvents(eventIds: eventIds)
-        }
-    }
+           let db = Firestore.firestore()
+           
+           db.collection("swipedeventsdb").whereField("userId", isEqualTo: userId).getDocuments { [weak self] (querySnapshot, error) in
+               if let error = error {
+                   print("Error getting documents: \(error)")
+                   return
+               }
+               
+               guard let documents = querySnapshot?.documents else { return }
+               var eventIds: [String] = []
+               for document in documents {
+                   let data = document.data()
+                   if let eventId = data["eventId"] as? String {
+                       eventIds.append(eventId)
+                   }
+               }
+               
+               self?.fetchEvents(eventIds: eventIds)
+           }
+       }
     
     private func fetchEvents(eventIds: [String]) {
-        let db = Firestore.firestore()
-        let eventsCollection = db.collection("events")
-        
-        let dispatchGroup = DispatchGroup()
-        var fetchedEvents: [EventModel] = []
-        
-        for eventId in eventIds {
-            dispatchGroup.enter()
-            eventsCollection.document(eventId).getDocument { (document, error) in
-                if let document = document, document.exists {
-                    do {
-                        let data = document.data()!
-                        let jsonData = try JSONSerialization.data(withJSONObject: data)
-                        let event = try JSONDecoder().decode(EventModel.self, from: jsonData)
-                        fetchedEvents.append(event)
-                    } catch {
-                        print("Error decoding event: \(error)")
+            let db = Firestore.firestore()
+            let eventsCollection = db.collection("events")
+            
+            let dispatchGroup = DispatchGroup()
+            var fetchedEvents: [EventWithDeadline] = []
+            
+            for eventId in eventIds {
+                dispatchGroup.enter()
+                eventsCollection.document(eventId).getDocument { (document, error) in
+                    defer { dispatchGroup.leave() }
+                    
+                    if let error = error {
+                        print("Error fetching event \(eventId): \(error)")
+                        return
                     }
-                } else {
-                    print("Event not found: \(eventId)")
+                    
+                    guard let document = document, document.exists else {
+                        print("Event not found: \(eventId)")
+                        return
+                    }
+                    
+                    do {
+                        let event = try document.data(as: EventModel.self)
+                        let deadlineDate = document.get("deadlineDate") as? Timestamp
+                        let eventWithDeadline = EventWithDeadline(
+                            event: event,
+                            deadlineDate: deadlineDate?.dateValue()
+                        )
+                        fetchedEvents.append(eventWithDeadline)
+                    } catch {
+                        print("Error decoding event \(eventId): \(error)")
+                    }
                 }
-                dispatchGroup.leave()
+            }
+            
+            dispatchGroup.notify(queue: .main) { [weak self] in
+                self?.bookmarkedEvents = fetchedEvents
             }
         }
-        
-        dispatchGroup.notify(queue: .main) { [weak self] in
-            self?.bookmarkedEvents = fetchedEvents
-        }
-    }
 
-    private func categorizeEvents(_ events: [EventModel]) -> [String: [EventModel]] {
-        return Dictionary(grouping: events, by: { $0.category })
-    }
+    private func categorizeEvents(_ events: [EventWithDeadline]) -> [String: [EventWithDeadline]] {
+            return Dictionary(grouping: events, by: { $0.event.category })
+        }
 
     // MARK: - UICollectionViewDataSource
 
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return categorizedEvents.keys.count
-    }
+           return categorizedEvents.keys.count
+       }
 
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let category = Array(categorizedEvents.keys)[section]
-        return categorizedEvents[category]?.count ?? 0
-    }
+       func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+           let category = Array(categorizedEvents.keys)[section]
+           return categorizedEvents[category]?.count ?? 0
+       }
 
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let category = Array(categorizedEvents.keys)[indexPath.section]
-        guard let events = categorizedEvents[category] else { return UICollectionViewCell() }
+       func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+           let category = Array(categorizedEvents.keys)[indexPath.section]
+           guard let events = categorizedEvents[category] else { return UICollectionViewCell() }
 
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookmarkCell.identifier, for: indexPath) as! BookmarkCell
-        cell.configure(with: events[indexPath.row])
-        return cell
-    }
-
+           let cell = collectionView.dequeueReusableCell(withReuseIdentifier: BookmarkCell.identifier, for: indexPath) as! BookmarkCell
+           cell.configure(with: events[indexPath.row].event)
+           return cell
+       }
+    
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         if kind == UICollectionView.elementKindSectionHeader {
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: HeaderReusableView.identifier, for: indexPath) as! HeaderReusableView
@@ -188,9 +198,9 @@ class BookmarkViewController: UIViewController, UICollectionViewDelegate, UIColl
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let category = Array(categorizedEvents.keys)[indexPath.section]
-        if let event = categorizedEvents[category]?[indexPath.item] {
+        if let eventWithDeadline = categorizedEvents[category]?[indexPath.item] {
             let eventDetailsVC = EventDetailViewController()
-            eventDetailsVC.eventId = event.eventId // Pass the event ID to fetch the specific event details
+            eventDetailsVC.eventId = eventWithDeadline.event.eventId // Access eventId through the event property
             navigationController?.pushViewController(eventDetailsVC, animated: true)
         }
     }
@@ -201,50 +211,50 @@ class BookmarkViewController: UIViewController, UICollectionViewDelegate, UIColl
         if searchText.isEmpty {
             categorizedEvents = categorizeEvents(bookmarkedEvents)
         } else {
-            let filteredEvents = bookmarkedEvents.filter { $0.title.lowercased().contains(searchText.lowercased()) }
+            let filteredEvents = bookmarkedEvents.filter {
+                $0.event.title.lowercased().contains(searchText.lowercased()) // Access title through the event property
+            }
             categorizedEvents = categorizeEvents(filteredEvents)
         }
         collectionView.reloadData()
     }
 
     @objc private func handleUnbookmarkEvent(_ notification: Notification) {
-        if let event = notification.userInfo?["event"] as? EventModel {
-            // Remove the event from the bookmarkedEvents array
-            if let index = bookmarkedEvents.firstIndex(where: { $0.eventId == event.eventId }) {
-                bookmarkedEvents.remove(at: index)
-                collectionView.reloadData()
+           if let event = notification.userInfo?["event"] as? EventModel {
+               // Remove the event from the bookmarkedEvents array
+               if let index = bookmarkedEvents.firstIndex(where: { $0.event.eventId == event.eventId }) {
+                   bookmarkedEvents.remove(at: index)
+                   collectionView.reloadData()
 
-                // Query Firestore to get the document ID
-                Firestore.firestore().collection("swipedeventsdb")
-                    .whereField("eventId", isEqualTo: event.eventId)
-                    .getDocuments { querySnapshot, error in
-                        if let error = error {
-                            print("Error querying documents: \(error)")
-                            return
-                        }
-                        
-                        guard let documents = querySnapshot?.documents, !documents.isEmpty else {
-                            print("No matching documents found")
-                            return
-                        }
+                   // Query Firestore to get the document ID
+                   Firestore.firestore().collection("swipedeventsdb")
+                       .whereField("eventId", isEqualTo: event.eventId)
+                       .getDocuments { querySnapshot, error in
+                           if let error = error {
+                               print("Error querying documents: \(error)")
+                               return
+                           }
+                           
+                           guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                               print("No matching documents found")
+                               return
+                           }
 
-                        // Assuming eventId is unique, so we take the first document
-                        let document = documents.first
-                        let documentId = document?.documentID ?? ""
-
-                        // Remove the event from Firestore using the document ID
-                        Firestore.firestore().collection("swipedeventsdb").document(documentId).delete { error in
-                            if let error = error {
-                                print("Error removing document: \(error)")
-                            } else {
-                                print("Document successfully removed!")
-                            }
-                        }
-                }
-            }
-        }
-    }
-}
+                           // Remove the event from Firestore using the document ID
+                           let document = documents.first
+                           let documentId = document?.documentID ?? ""
+                           Firestore.firestore().collection("swipedeventsdb").document(documentId).delete { error in
+                               if let error = error {
+                                   print("Error removing document: \(error)")
+                               } else {
+                                   print("Document successfully removed!")
+                               }
+                           }
+                   }
+               }
+           }
+       }
+   }
 
 // MARK: - HeaderReusableView
 
@@ -402,4 +412,10 @@ class BookmarkCell: UICollectionViewCell {
         // Notify the view controller about the unbookmark action
         NotificationCenter.default.post(name: NSNotification.Name("UnbookmarkEvent"), object: nil, userInfo: ["event": event])
     }
+}
+extension EventWithDeadline {
+    var eventId: String { event.eventId }
+    var title: String { event.title }
+    var category: String { event.category }
+    // Add other properties you need to access frequently
 }

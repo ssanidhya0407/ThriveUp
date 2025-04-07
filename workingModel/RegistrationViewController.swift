@@ -194,15 +194,15 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
         var data: [String: Any] = [
             "uid": userId,
             "eventId": event.eventId,
-            "timestamp": Timestamp(date: Date()) // Consistent with HackathonRegistrationVC
+            "timestamp": Timestamp(date: Date())
         ]
         
-        // Add form field data using original placeholder names (like HackathonRegistrationVC)
+        // Add form field data using original placeholder names
         for field in formFields {
             data[field.placeholder] = field.value
         }
         
-        // Generate QR code like in HackathonRegistrationVC
+        // Generate QR code
         let qrData = [
             "uid": userId,
             "eventId": event.eventId
@@ -213,7 +213,7 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
             data["qrCode"] = qrCode.pngData()?.base64EncodedString()
         }
         
-        // Add to "registrations" collection (consistent with HackathonRegistrationVC)
+        // Add to "registrations" collection
         db.collection("registrations").addDocument(data: data) { [weak self] error in
             guard let self = self else { return }
             
@@ -225,7 +225,7 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
                 return
             }
             
-            // Check if event is already approved and add user to group (like in HackathonRegistrationVC)
+            // Check if event is already approved and add user to group
             self.db.collection("events").document(self.event.eventId).getDocument { (document, error) in
                 if let document = document, let data = document.data(),
                    let status = data["status"] as? String, status == "accepted" {
@@ -240,15 +240,25 @@ class RegistrationViewController: UIViewController, UITableViewDataSource, UITab
             // Successfully registered
             print("Successfully registered for event")
             
+            // 👇 NEW CODE: Send notifications to friends
+            EventNotificationService.shared.notifyFriendsAboutEventRegistration(
+                eventId: self.event.eventId,
+                eventName: self.event.title,
+                eventImageURL: self.event.imageName
+            ) { success in
+                if success {
+                    print("Successfully sent notifications to friends about event registration")
+                } else {
+                    print("Failed to notify some friends about event registration")
+                }
+            }
+            
             // Show success message with QR code info before navigating
-            let alert = UIAlertController(title: "Success", message: "Registration successful! QR Code generated.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                // Now navigate to the next screen
-                self.navigationController?.popViewController(animated: true)
-            })
-            self.present(alert, animated: true)
+            let successVC = EventRegistrationSuccessViewController(event: self.event)
+            self.navigationController?.pushViewController(successVC, animated: true)
         }
     }
+
 
     // Add this QR code generation method from HackathonRegistrationVC
     private func generateQRCode(from string: String) -> UIImage? {
@@ -333,5 +343,91 @@ class RegistrationFormTableViewCell: UITableViewCell {
         } else if field.placeholder.contains("Email") {
             textField.keyboardType = .emailAddress
         }
+    }
+}
+
+class EventRegistrationSuccessViewController: UIViewController {
+    
+    private let event: EventModel
+    
+    init(event: EventModel) {
+        self.event = event
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = .systemBackground
+        navigationItem.setHidesBackButton(true, animated: false)
+        title = "Registration Complete"
+        
+        // Success icon
+        let checkmarkImageView = UIImageView()
+        checkmarkImageView.translatesAutoresizingMaskIntoConstraints = false
+        checkmarkImageView.contentMode = .scaleAspectFit
+        checkmarkImageView.tintColor = .systemGreen
+        checkmarkImageView.image = UIImage(systemName: "checkmark.circle.fill")
+        view.addSubview(checkmarkImageView)
+        
+        // Congrats label
+        let congratsLabel = UILabel()
+        congratsLabel.translatesAutoresizingMaskIntoConstraints = false
+        congratsLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        congratsLabel.textAlignment = .center
+        congratsLabel.text = "Registration Successful!"
+        view.addSubview(congratsLabel)
+        
+        // Event details
+        let detailsLabel = UILabel()
+        detailsLabel.translatesAutoresizingMaskIntoConstraints = false
+        detailsLabel.font = UIFont.systemFont(ofSize: 16)
+        detailsLabel.textAlignment = .center
+        detailsLabel.numberOfLines = 0
+        detailsLabel.text = "You have successfully registered for \(event.title).\nYour friends have been notified!"
+        view.addSubview(detailsLabel)
+        
+        // Close button
+        let doneButton = UIButton(type: .system)
+        doneButton.translatesAutoresizingMaskIntoConstraints = false
+        doneButton.setTitle("Done", for: .normal)
+        doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        doneButton.backgroundColor = .orange
+        doneButton.setTitleColor(.white, for: .normal)
+        doneButton.layer.cornerRadius = 10
+        doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
+        view.addSubview(doneButton)
+        
+        NSLayoutConstraint.activate([
+            checkmarkImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            checkmarkImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 60),
+            checkmarkImageView.widthAnchor.constraint(equalToConstant: 100),
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 100),
+            
+            congratsLabel.topAnchor.constraint(equalTo: checkmarkImageView.bottomAnchor, constant: 24),
+            congratsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            congratsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            detailsLabel.topAnchor.constraint(equalTo: congratsLabel.bottomAnchor, constant: 16),
+            detailsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            detailsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
+            doneButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            doneButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            doneButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+    }
+    
+    @objc private func doneButtonTapped() {
+        // Navigate back to the main events screen
+        navigationController?.popToRootViewController(animated: true)
     }
 }

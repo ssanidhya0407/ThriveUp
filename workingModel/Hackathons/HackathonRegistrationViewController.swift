@@ -174,15 +174,15 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
         var data: [String: Any] = [
             "uid": userId,
             "eventId": event.eventId,
-            "timestamp": Timestamp(date: Date()) // Consistent with RegistrationVC
+            "timestamp": Timestamp(date: Date())
         ]
         
-        // Add form field data using original placeholder names (like RegistrationVC)
+        // Add form field data using original placeholder names
         for field in formFields {
             data[field.placeholder] = field.value
         }
         
-        // Generate QR code like in RegistrationVC
+        // Generate QR code
         let qrData = [
             "uid": userId,
             "eventId": event.eventId
@@ -193,7 +193,7 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
             data["qrCode"] = qrCode.pngData()?.base64EncodedString()
         }
         
-        // Add to "registrations" collection (consistent with RegistrationVC)
+        // Add to "registrations" collection
         db.collection("registrations").addDocument(data: data) { [weak self] error in
             guard let self = self else { return }
             
@@ -205,7 +205,7 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
                 return
             }
             
-            // Check if event is already approved and add user to group (like in RegistrationVC)
+            // Check if event is already approved and add user to group
             self.db.collection("events").document(self.event.eventId).getDocument { (document, error) in
                 if let document = document, let data = document.data(),
                    let status = data["status"] as? String, status == "accepted" {
@@ -220,11 +220,27 @@ class HackathonRegistrationViewController: UIViewController, UITableViewDelegate
             // Successfully registered
             print("Successfully registered for event")
             
-            // Show success message with QR code info before navigating
-            let alert = UIAlertController(title: "Success", message: "Registration successful! QR Code generated.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
-                // Now navigate to the team selection screen
-                self.navigateToTeamSelection()
+            // 👇 NEW CODE: Send notifications to friends
+            EventNotificationService.shared.notifyFriendsAboutEventRegistration(
+                eventId: self.event.eventId,
+                eventName: self.event.title,
+                eventImageURL: self.event.imageName
+            ) { success in
+                if success {
+                    print("Successfully sent notifications to friends about event registration")
+                } else {
+                    print("Failed to notify some friends about event registration")
+                }
+            }
+            
+            // Show success message with QR code info before navigating to team selection
+            let alert = UIAlertController(
+                title: "Registration Successful!",
+                message: "Your QR Code has been generated and your friends have been notified about your registration!",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "Continue to Team Selection", style: .default) { [weak self] _ in
+                self?.navigateToTeamSelection()
             })
             self.present(alert, animated: true)
         }
