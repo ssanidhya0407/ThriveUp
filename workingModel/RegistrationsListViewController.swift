@@ -1,8 +1,3 @@
-//
-//  RegistrationsListViewController.swift
-//  ThriveUp
-//
-
 import UIKit
 import FirebaseFirestore
 
@@ -17,9 +12,9 @@ class RegistrationListViewController: UIViewController, UITableViewDataSource, U
     private let registrationsTableView: UITableView = {
         let tableView = UITableView()
         tableView.register(RegistrationTableViewCell.self, forCellReuseIdentifier: RegistrationTableViewCell.identifier)
-        tableView.rowHeight = 60
-        tableView.separatorStyle = .singleLine
-        tableView.separatorInset = .zero
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 200
+        tableView.separatorStyle = .none
         return tableView
     }()
     
@@ -31,9 +26,6 @@ class RegistrationListViewController: UIViewController, UITableViewDataSource, U
         label.text = "Total Registrations: 0" // Default text
         return label
     }()
-
-
-
     
     private let downloadButton: UIButton = {
         let button = UIButton(type: .system)
@@ -60,7 +52,6 @@ class RegistrationListViewController: UIViewController, UITableViewDataSource, U
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        setupTableHeader() // Setup for headings
         fetchRegistrations()
         downloadButton.addTarget(self, action: #selector(handleDownload), for: .touchUpInside)
     }
@@ -100,28 +91,6 @@ class RegistrationListViewController: UIViewController, UITableViewDataSource, U
             downloadButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             downloadButton.heightAnchor.constraint(equalToConstant: 50)
         ])
-
-
-    }
-    
-    private func setupTableHeader() {
-        // Create the table header view
-        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: view.frame.width, height: 40))
-        headerView.backgroundColor = UIColor.systemGray6
-        
-        let headers = ["S.No", "Name", "Email", "Year"]
-        let headerWidth = view.frame.width / CGFloat(headers.count)
-        
-        for (index, title) in headers.enumerated() {
-            let label = UILabel(frame: CGRect(x: CGFloat(index) * headerWidth, y: 0, width: headerWidth, height: 40))
-            label.text = title
-            label.font = UIFont.boldSystemFont(ofSize: 16)
-            label.textColor = .black
-            label.textAlignment = .center
-            headerView.addSubview(label)
-        }
-        
-        registrationsTableView.tableHeaderView = headerView
     }
     
     // MARK: - Fetch Registrations
