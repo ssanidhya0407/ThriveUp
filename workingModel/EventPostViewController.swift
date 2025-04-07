@@ -67,7 +67,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
     
     private let locationLabel = UILabel()
     private let locationTextField = UITextField()
-    
+    private let deadlineDateLabel = UILabel()
+    private let deadlineDatePicker = UIDatePicker()
     
     private let mapView: MKMapView = {
         let mapView = MKMapView()
@@ -190,8 +191,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         // Center map on user's current location
         let coordinateRegion = MKCoordinateRegion(
             center: userLocation.coordinate,
-            latitudinalMeters: 1000,
-            longitudinalMeters: 1000
+            latitudinalMeters: 500,
+            longitudinalMeters: 500
         )
         mapView.setRegion(coordinateRegion, animated: true)
         
@@ -217,6 +218,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+       
         
         // Hackathon-specific components (Initially hidden)
         teamSizeLabel.text = "Team Size"
@@ -271,6 +273,11 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         datePicker.datePickerMode = .date
         datePicker.preferredDatePickerStyle = .compact
         contentView.addSubview(datePicker)
+        
+        setupLabel(deadlineDateLabel, text: "Registration Deadline")
+        deadlineDatePicker.datePickerMode = .dateAndTime
+        deadlineDatePicker.preferredDatePickerStyle = .compact
+        contentView.addSubview(deadlineDatePicker)
         
         // Time
         setupLabel(timeLabel, text: "Event Time")
@@ -331,6 +338,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         submitButton.layer.cornerRadius = 8
         submitButton.addTarget(self, action: #selector(postEvent), for: .touchUpInside)
         contentView.addSubview(submitButton)
+        
+        
     }
 
     private func setupConstraints() {
@@ -342,7 +351,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             categoryLabel, categoryTextField,
             attendanceLabel, attendanceTextField,
             organizerLabel, organizerTextField,
-            dateLabel, datePicker,
+            dateLabel, datePicker, deadlineDateLabel,deadlineDatePicker,
             timeLabel, timeTextField,
             locationLabel, locationTextField,
             mapView, locationDetailsLabel,
@@ -432,6 +441,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             datePicker.leadingAnchor.constraint(equalTo: dateLabel.trailingAnchor, constant: 8),
             datePicker.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
+            
             // Time Label
             timeLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 16),
             timeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -443,8 +453,13 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             timeTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             timeTextField.heightAnchor.constraint(equalToConstant: 44),
             
+            deadlineDateLabel.topAnchor.constraint(equalTo: timeTextField.bottomAnchor, constant: 28),
+            deadlineDateLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            deadlineDatePicker.topAnchor.constraint(equalTo: deadlineDateLabel.bottomAnchor,constant: 16),
+            deadlineDatePicker.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
             // Location Label
-            locationLabel.topAnchor.constraint(equalTo: timeTextField.bottomAnchor, constant: 16),
+            locationLabel.topAnchor.constraint(equalTo: deadlineDatePicker.bottomAnchor, constant: 16),
             locationLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             locationLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             
@@ -753,9 +768,10 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
 
         if !missingFields.isEmpty {
             let message = "Please fill in the following fields: \(missingFields.joined(separator: ", "))"
-            showAlert(title: "Error", message: message)
+            showEventAlert(title: "Error", message: message)
             return
         }
+        let deadlineTimestamp = Timestamp(date: deadlineDatePicker.date)
 
         // Start Activity Indicator
         activityIndicator.startAnimating()
@@ -772,7 +788,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
               let userId = Auth.auth().currentUser?.uid else {
             activityIndicator.stopAnimating()
             submitButton.isEnabled = true
-            showAlert(title: "Error", message: "Please fill in all required fields.")
+            showEventAlert(title: "Error", message: "Please fill in all required fields.")
+
             return
         }
 
@@ -800,7 +817,8 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
         guard let eventImageData = image.jpegData(compressionQuality: 0.8) else {
             activityIndicator.stopAnimating()
             submitButton.isEnabled = true
-            showAlert(title: "Error", message: "Failed to process event image")
+            showEventAlert(title: "Error", message: "Failed to process event image")
+
             return
         }
 
@@ -813,7 +831,7 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
             if let error = error {
                 self.activityIndicator.stopAnimating()
                 self.submitButton.isEnabled = true
-                self.showAlert(title: "Error", message: error.localizedDescription)
+                self.showEventAlert(title: "Error", message: error.localizedDescription)
                 dispatchGroup.leave()
                 return
             }
@@ -824,14 +842,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                 if let error = error {
                     self.activityIndicator.stopAnimating()
                     self.submitButton.isEnabled = true
-                    self.showAlert(title: "Error", message: error.localizedDescription)
+                    self.showEventAlert(title: "Error", message: error.localizedDescription)
                     return
                 }
 
                 guard let eventImageUrl = url?.absoluteString else {
                     self.activityIndicator.stopAnimating()
                     self.submitButton.isEnabled = true
-                    self.showAlert(title: "Error", message: "Failed to get event image URL")
+                    self.showEventAlert(title: "Error", message: "Failed to get event image URL")
                     return
                 }
 
@@ -895,11 +913,12 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                     // Now save event data to Firestore with all speaker data
                     var eventData: [String: Any] = [
                         "eventId": eventId,
-                        "title": title,
-                        "category": selectedCategory,
-                        "attendanceCount": attendanceCount,
-                        "date": eventDate,
-                        "time": time,
+                                "title": title,
+                                "category": selectedCategory,
+                                "attendanceCount": attendanceCount,
+                                "date": eventDate,
+                                "deadline": deadlineTimestamp, // <-- Add this line
+                                "time": time,
                         "location": location,
                         "speakers": finalSpeakerData,
                         "organizerName": organizerName,
@@ -926,9 +945,9 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                         self.submitButton.isEnabled = true
                         
                         if let error = error {
-                            self.showAlert(title: "Error", message: error.localizedDescription)
+                            self.showEventAlert(title: "Error", message: error.localizedDescription)
                         } else {
-                            self.showAlert(title: "Success", message: "Event sent for review!") {
+                            self.showEventAlert(title: "Success", message: "Event sent for review!") {
                                 self.tabBarController?.selectedIndex = 0
                             }
                         }
@@ -1028,14 +1047,14 @@ class EventPostViewController: UIViewController, CLLocationManagerDelegate, TagV
                     }
                 }
 
-                private func showAlert(title: String, message: String, completion: (() -> Void)? = nil) {
-                    let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                    let okAction = UIAlertAction(title: "OK", style: .default) { _ in
-                        completion?()
-                    }
-                    alert.addAction(okAction)
-                    present(alert, animated: true)
-                }
+    private func showEventAlert(title: String, message: String, completion: (() -> Void)? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            completion?()
+        }
+        alert.addAction(okAction)
+        present(alert, animated: true)
+    }
             }
 
             // MARK: - UIPickerViewDelegate and UIPickerViewDataSource

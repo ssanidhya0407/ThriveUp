@@ -8,7 +8,7 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
     var userID: String?
     var selectedTechStack = [String]()
     var onSave: (([String]) -> Void)?
-    private let maxSelection = 10
+//    private let maxSelection = 10
 
     // Data structure for tech stack
     private let techStack: [String: [String]] = [
@@ -33,9 +33,26 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
         return label
     }()
 
+    private let clearButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Clear All", for: .normal)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+//    private let subHeaderLabel: UILabel = {
+//        let label = UILabel()
+//        label.text = "Pick exactly 10 tools, languages, or frameworks you use. It’ll help you showcase your skills."
+//        label.font = UIFont.systemFont(ofSize: 16)
+//        label.textColor = .darkGray
+//        label.numberOfLines = 0
+//        label.translatesAutoresizingMaskIntoConstraints = false
+//        return label
+//    }()
+    
     private let subHeaderLabel: UILabel = {
         let label = UILabel()
-        label.text = "Pick exactly 10 tools, languages, or frameworks you use. It’ll help you showcase your skills."
+        label.text = "Select the tools, languages, or frameworks you use. It'll help showcase your skills."
         label.font = UIFont.systemFont(ofSize: 16)
         label.textColor = .darkGray
         label.numberOfLines = 0
@@ -73,7 +90,9 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
         setupConstraints()
 
         // Initialize selection label
-        selectionLabel.text = "0/\(maxSelection) selected"
+//        selectionLabel.text = "0/\(maxSelection) selected"
+        // In viewDidLoad(), change to:
+        selectionLabel.text = "\(selectedTechStack.count) selected"
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -86,6 +105,9 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
         view.addSubview(subHeaderLabel)
         view.addSubview(selectionLabel)
         view.addSubview(saveButton)
+        // Add to setupHeader():
+        view.addSubview(clearButton)
+        clearButton.addTarget(self, action: #selector(clearButtonTapped), for: .touchUpInside)
     }
 
     private func setupCollectionView() {
@@ -140,23 +162,54 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
             saveButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            saveButton.heightAnchor.constraint(equalToConstant: 50)
+            saveButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            clearButton.centerYAnchor.constraint(equalTo: selectionLabel.centerYAnchor),
+            clearButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+
         ])
+    }
+    // Add the clear action:
+    @objc private func clearButtonTapped() {
+        selectedTechStack.removeAll()
+        collectionView.reloadData()
+        selectionLabel.text = "0 selected"
     }
 
     @objc private func saveButtonTapped() {
-        if selectedTechStack.count == maxSelection {
-            saveTechStackToFirestore()
-        } else {
-            let alert = UIAlertController(title: "Selection Incomplete", message: "Please select exactly \(maxSelection) items before saving.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            present(alert, animated: true, completion: nil)
-        }
+        // Remove the count validation and just save
+        saveTechStackToFirestore()
     }
+
+//    private func saveTechStackToFirestore() {
+//        guard let userID = userID else {
+//            print("User ID is nil") // Debugging statement
+//            return
+//        }
+//
+//        let db = Firestore.firestore()
+//        let userTechStack = ["userID": userID, "techStack": selectedTechStack] as [String : Any]
+//
+//        db.collection("TechStack").document(userID).setData(userTechStack) { error in
+//            if let error = error {
+//                print("Error saving tech stack: \(error.localizedDescription)") // Debugging statement
+//                return
+//            }
+//            print("Tech stack saved successfully.") // Debugging statement
+//
+//            // Show an alert controller confirming the tech stack has been saved
+//            let alertController = UIAlertController(title: "Success", message: "Your tech stack has been saved.", preferredStyle: .alert)
+//            alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { [weak self] _ in
+//                self?.onSave?(self?.selectedTechStack ?? [])
+//                self?.navigationController?.popViewController(animated: true)
+//            }))
+//            self.present(alertController, animated: true, completion: nil)
+//        }
+//    }
 
     private func saveTechStackToFirestore() {
         guard let userID = userID else {
-            print("User ID is nil") // Debugging statement
+            print("User ID is nil")
             return
         }
 
@@ -165,25 +218,56 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
 
         db.collection("TechStack").document(userID).setData(userTechStack) { error in
             if let error = error {
-                print("Error saving tech stack: \(error.localizedDescription)") // Debugging statement
+                print("Error saving tech stack: \(error.localizedDescription)")
+                // Show error alert
+                let alert = UIAlertController(title: "Error", message: "Failed to save tech stack: \(error.localizedDescription)", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(alert, animated: true)
                 return
             }
-            print("Tech stack saved successfully.") // Debugging statement
 
-            // Show an alert controller confirming the tech stack has been saved
-            let alertController = UIAlertController(title: "Success", message: "Your tech stack has been saved.", preferredStyle: .alert)
-            alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { [weak self] _ in
-                self?.onSave?(self?.selectedTechStack ?? [])
-                self?.navigationController?.popViewController(animated: true)
-            }))
-            self.present(alertController, animated: true, completion: nil)
+            // Remove the success alert from here and just call the completion handler
+            self.onSave?(self.selectedTechStack)
+            self.navigationController?.popViewController(animated: true)
         }
     }
-
     // Fetch saved tech stack from Firestore
+//    private func fetchSavedTechStack() {
+//        guard let userID = userID else {
+//            print("User ID is nil") // Debugging statement
+//            return
+//        }
+//
+//        let db = Firestore.firestore()
+//        db.collection("TechStack").document(userID).getDocument { [weak self] document, error in
+//            if let error = error {
+//                print("Error fetching saved tech stack: \(error.localizedDescription)")
+//                return
+//            }
+//
+//            guard let document = document, document.exists, let data = document.data() else {
+//                print("No saved tech stack found for user \(userID)") // Debugging statement
+//                return
+//            }
+//
+//            // Clear the selectedTechStack array to avoid duplication
+//            self?.selectedTechStack.removeAll()
+//
+//            // Fetch the tech stack from the document
+//            if let fetchedTechStack = data["techStack"] as? [String] {
+//                self?.selectedTechStack = fetchedTechStack.filter { !$0.isEmpty }
+//            }
+//
+//            // Update the selection label
+//            self?.selectionLabel.text = "\(self?.selectedTechStack.count ?? 0)/\(self?.maxSelection ?? 10) selected"
+//
+//            // Reload the collection view to reflect the updated selections
+//            self?.collectionView.reloadData()
+//        }
+//    }
     private func fetchSavedTechStack() {
         guard let userID = userID else {
-            print("User ID is nil") // Debugging statement
+            print("User ID is nil")
             return
         }
 
@@ -194,23 +278,16 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
                 return
             }
 
-            guard let document = document, document.exists, let data = document.data() else {
-                print("No saved tech stack found for user \(userID)") // Debugging statement
-                return
-            }
-
-            // Clear the selectedTechStack array to avoid duplication
+            // Clear current selection
             self?.selectedTechStack.removeAll()
             
-            // Fetch the tech stack from the document
-            if let fetchedTechStack = data["techStack"] as? [String] {
-                self?.selectedTechStack = fetchedTechStack.filter { !$0.isEmpty }
+            if let document = document, document.exists {
+                if let fetchedTechStack = document.data()?["techStack"] as? [String] {
+                    self?.selectedTechStack = fetchedTechStack.filter { !$0.isEmpty }
+                }
             }
             
-            // Update the selection label
-            self?.selectionLabel.text = "\(self?.selectedTechStack.count ?? 0)/\(self?.maxSelection ?? 10) selected"
-            
-            // Reload the collection view to reflect the updated selections
+            self?.selectionLabel.text = "\(self?.selectedTechStack.count ?? 0) selected"
             self?.collectionView.reloadData()
         }
     }
@@ -235,6 +312,27 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
         return cell
     }
 
+//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        let category = Array(techStack.keys)[indexPath.section]
+//        let selectedItem = techStack[category]?[indexPath.row] ?? ""
+//
+//        if selectedItem.isEmpty {
+//            return
+//        }
+//
+//        if let index = selectedTechStack.firstIndex(of: selectedItem) {
+//            selectedTechStack.remove(at: index)
+//        } else if selectedTechStack.count < maxSelection {
+//            selectedTechStack.append(selectedItem)
+//        } else {
+//            let alert = UIAlertController(title: "Limit Reached", message: "You can only select up to \(maxSelection) items.", preferredStyle: .alert)
+//            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+//            present(alert, animated: true, completion: nil)
+//        }
+//
+//        collectionView.reloadData()
+//        selectionLabel.text = "\(selectedTechStack.count)/\(maxSelection) selected"
+//    }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let category = Array(techStack.keys)[indexPath.section]
         let selectedItem = techStack[category]?[indexPath.row] ?? ""
@@ -245,16 +343,12 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
 
         if let index = selectedTechStack.firstIndex(of: selectedItem) {
             selectedTechStack.remove(at: index)
-        } else if selectedTechStack.count < maxSelection {
-            selectedTechStack.append(selectedItem)
         } else {
-            let alert = UIAlertController(title: "Limit Reached", message: "You can only select up to \(maxSelection) items.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            present(alert, animated: true, completion: nil)
+            selectedTechStack.append(selectedItem)
         }
 
         collectionView.reloadData()
-        selectionLabel.text = "\(selectedTechStack.count)/\(maxSelection) selected"
+        selectionLabel.text = "\(selectedTechStack.count) selected"
     }
 
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -264,3 +358,4 @@ class TechStackViewController: UIViewController, UICollectionViewDelegate, UICol
         return header
     }
 }
+

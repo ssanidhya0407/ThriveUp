@@ -3,85 +3,83 @@ import FirebaseFirestore
 
 class FriendRequestsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UISearchBarDelegate, UICollectionViewDelegateFlowLayout {
     
-    
+    // MARK: - Properties
     var currentUser: User?
     var friendRequests: [FriendRequest] = []
     var users: [User] = []
     var filteredUsers: [User] = []
     var userCache: [String: User] = [:]
+    private var searchTimer: Timer?
 
-    let searchBar = UISearchBar()
-    let tableView = UITableView()
+    // MARK: - UI Components
+    private let scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
     
-
-//    private let quickAddCollectionView: UICollectionView = {
-//        let layout = UICollectionViewFlowLayout()
-//        layout.scrollDirection = .vertical
-//        layout.itemSize = CGSize(width: 120, height: 160) // Adjusted for grid layout
-//        layout.minimumInteritemSpacing = 10
-//        layout.minimumLineSpacing = 15
-//        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-//        collectionView.translatesAutoresizingMaskIntoConstraints = false
-//        collectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
-//        return collectionView
-//    }()
-//    private let quickAddCollectionView: UICollectionView = {
-//        let layout = UICollectionViewFlowLayout()
-//        layout.scrollDirection = .vertical
-//        layout.itemSize = CGSize(width: 150, height: 200) // Increased size
-//        layout.minimumInteritemSpacing = 12
-//        layout.minimumLineSpacing = 18
-//        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-//        collectionView.translatesAutoresizingMaskIntoConstraints = false
-//        collectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
-//        return collectionView
-//    }()
-
+    private let contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let searchBar: UISearchBar = {
+        let searchBar = UISearchBar()
+        searchBar.placeholder = "Search users"
+        searchBar.backgroundImage = UIImage()
+        searchBar.searchBarStyle = .minimal
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        return searchBar
+    }()
+    
+    private let tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .white
+        tableView.showsVerticalScrollIndicator = false
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        return tableView
+    }()
+    
     private let firstRowCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.itemSize = CGSize(width: 150, height: 200)
         layout.minimumInteritemSpacing = 12
         layout.sectionInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-
+        
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
+        collectionView.backgroundColor = .white
         return collectionView
     }()
-
+    
     private let secondRowCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
         layout.itemSize = CGSize(width: 150, height: 200)
         layout.minimumInteritemSpacing = 12
         layout.sectionInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-
+        
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
+        collectionView.backgroundColor = .white
         return collectionView
     }()
-
-
-
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .white
-        title = "Add Friends"
-
-        setupSearchBar()
-        setupAddedMeHeading()
-        setupTableView()
-        setupQuickAddHeading()
-        setupCollectionViews() // ✅ Ensure this runs
-        fetchFriendRequests()
-        fetchUsersExcludingFriendsAndRequests()
-    }
-
+    
+    private let noResultsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "No users found"
+        label.textColor = .gray
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
     
     private let addedMeLabel: UILabel = {
         let label = UILabel()
@@ -90,7 +88,7 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
+    
     private let quickAddLabel: UILabel = {
         let label = UILabel()
         label.text = "Quick Add"
@@ -98,170 +96,149 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
-    private func setupAddedMeHeading() {
-        view.addSubview(addedMeLabel)
-        NSLayoutConstraint.activate([
-            addedMeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
-            addedMeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16)
-        ])
+    
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        title = "Add Friends"
+        
+        // 1. First setup scroll view and content view
+        setupScrollView()
+        
+        // 2. Then add all other components to contentView
+        setupSearchBar()
+        setupTableView()       // This now adds both label and table view
+        setupQuickAddLabel()   // Separate method for quickAddLabel
+        setupCollectionViews()
+       
+        
+        fetchFriendRequests()
+        fetchUsersExcludingFriendsAndRequests()
     }
 
-    private func setupQuickAddHeading() {
-        view.addSubview(quickAddLabel)
+    private func setupQuickAddLabel() {
+        contentView.addSubview(quickAddLabel)
         NSLayoutConstraint.activate([
             quickAddLabel.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
-            quickAddLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16)
+            quickAddLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16)
         ])
     }
-
     
-    private func setupCollectionView() {
-        quickAddCollectionView.dataSource = self
-        quickAddCollectionView.delegate = self
-        quickAddCollectionView.backgroundColor = .white
-        view.addSubview(quickAddCollectionView)
-
+    // MARK: - Setup Methods
+    private func setupScrollView() {
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
         NSLayoutConstraint.activate([
-            quickAddCollectionView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
-            quickAddCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            quickAddCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            quickAddCollectionView.heightAnchor.constraint(equalToConstant: 420) // Adjusted height
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
     }
-
-
+    
     private func setupSearchBar() {
         searchBar.delegate = self
-        searchBar.placeholder = "Search users"
-        searchBar.backgroundImage = UIImage()
-        searchBar.searchBarStyle = .minimal
-        view.addSubview(searchBar)
-
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -80),
-            searchBar.heightAnchor.constraint(equalToConstant: 40)
-        ])
-
+        contentView.addSubview(searchBar)
+        
         let cancelButton = UIButton(type: .system)
         cancelButton.setTitle("Cancel", for: .normal)
         cancelButton.setTitleColor(.systemOrange, for: .normal)
         cancelButton.addTarget(self, action: #selector(cancelSearch), for: .touchUpInside)
-        view.addSubview(cancelButton)
-
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(cancelButton)
+        
         NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            searchBar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            searchBar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -80),
+            searchBar.heightAnchor.constraint(equalToConstant: 40),
+            
             cancelButton.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
-            cancelButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
+            cancelButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         ])
     }
-
-    @objc private func cancelSearch() {
-        searchBar.text = ""
-        searchBar.resignFirstResponder()
-        filteredUsers = users
-        quickAddCollectionView.reloadData()
+    
+    private func setupLabels() {
+        contentView.addSubview(addedMeLabel)
+        contentView.addSubview(quickAddLabel)
+        contentView.addSubview(noResultsLabel)
+        
+        NSLayoutConstraint.activate([
+            addedMeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
+            addedMeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            quickAddLabel.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
+            quickAddLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            noResultsLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            noResultsLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 20)
+        ])
     }
     
-    private let quickAddCollectionView: UICollectionView
-
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.itemSize = CGSize(width: 150, height: 200)
-        layout.minimumInteritemSpacing = 12
-        layout.minimumLineSpacing = 12
-        layout.sectionInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-
-        self.quickAddCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        self.quickAddCollectionView.showsHorizontalScrollIndicator = false
-        self.quickAddCollectionView.isPagingEnabled = false
-        self.quickAddCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        self.quickAddCollectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
-
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-
     private func setupTableView() {
-        tableView.separatorStyle = .none
-        tableView.backgroundColor = .white
-        tableView.showsVerticalScrollIndicator = false
+        // First add the label and table view to the contentView
+        contentView.addSubview(addedMeLabel)
+        contentView.addSubview(tableView)
+        
+        // Then set up constraints between them
+        NSLayoutConstraint.activate([
+            addedMeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
+            addedMeLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            
+            tableView.topAnchor.constraint(equalTo: addedMeLabel.bottomAnchor, constant: 8),
+            tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            tableView.heightAnchor.constraint(equalToConstant: 250)
+        ])
+        
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(FriendRequestCell.self, forCellReuseIdentifier: "FriendRequestCell")
-
-        view.addSubview(addedMeLabel) // ✅ Add the label before the table
-        view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            addedMeLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 12),
-            addedMeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-
-            tableView.topAnchor.constraint(equalTo: addedMeLabel.bottomAnchor, constant: 8),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.heightAnchor.constraint(equalToConstant: 250) // Adjusted height
-        ])
     }
-
-
-//    private func setupCollectionView() {
-//        quickAddCollectionView.dataSource = self
-//        quickAddCollectionView.delegate = self
-//        quickAddCollectionView.backgroundColor = .white
-//        view.addSubview(quickAddCollectionView)
-//
-//        NSLayoutConstraint.activate([
-//            quickAddCollectionView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
-//            quickAddCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-//            quickAddCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-//            quickAddCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
-//        ])
-//    }
+    
     private func setupCollectionViews() {
-        
-        
-        
-        firstRowCollectionView.dataSource = self  // ✅ Set data source
+        firstRowCollectionView.dataSource = self
         firstRowCollectionView.delegate = self
-        firstRowCollectionView.backgroundColor = .white
-        view.addSubview(firstRowCollectionView)
-
-        secondRowCollectionView.dataSource = self  // ✅ Set data source
+        firstRowCollectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
+        
+        
+        secondRowCollectionView.dataSource = self
         secondRowCollectionView.delegate = self
-        secondRowCollectionView.backgroundColor = .white
-        view.addSubview(secondRowCollectionView)
-
+        secondRowCollectionView.register(QuickAddCell.self, forCellWithReuseIdentifier: QuickAddCell.identifier)
+        contentView.addSubview(secondRowCollectionView)
+        contentView.addSubview(firstRowCollectionView)
+        
+        let collectionViewHeight: CGFloat = 220
+        
         NSLayoutConstraint.activate([
-            quickAddLabel.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 16),
-            quickAddLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-
-            firstRowCollectionView.topAnchor.constraint(equalTo: quickAddLabel.bottomAnchor, constant: 12),
-            firstRowCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            firstRowCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            firstRowCollectionView.heightAnchor.constraint(equalToConstant: 200),
-
-            secondRowCollectionView.topAnchor.constraint(equalTo: firstRowCollectionView.bottomAnchor, constant: 20), // ✅ Add spacing between rows
-            secondRowCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            secondRowCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            secondRowCollectionView.heightAnchor.constraint(equalToConstant: 200)
+            firstRowCollectionView.topAnchor.constraint(equalTo: secondRowCollectionView.bottomAnchor, constant: 12),
+            firstRowCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            firstRowCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            firstRowCollectionView.heightAnchor.constraint(equalToConstant: collectionViewHeight),
             
+            secondRowCollectionView.topAnchor.constraint(equalTo: quickAddLabel.bottomAnchor, constant: 20),
+            secondRowCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            secondRowCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            secondRowCollectionView.heightAnchor.constraint(equalToConstant: collectionViewHeight),
             
+            contentView.bottomAnchor.constraint(equalTo: firstRowCollectionView.bottomAnchor, constant: 20)
         ])
     }
-
-
-
-
+    
+    // MARK: - Data Methods
+    private func fetchData() {
+        fetchFriendRequests()
+        fetchUsersExcludingFriendsAndRequests()
+    }
+    
     private func fetchFriendRequests() {
         guard let currentUser = currentUser else { return }
         FriendsService.shared.fetchFriendRequests(forUserID: currentUser.id) { [weak self] requests, error in
@@ -273,7 +250,7 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
             self?.fetchUserDetailsForRequests()
         }
     }
-
+    
     private func fetchUserDetailsForRequests() {
         let dispatchGroup = DispatchGroup()
         for request in friendRequests {
@@ -291,7 +268,7 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
             self.tableView.reloadData()
         }
     }
-
+    
     private func fetchUsersExcludingFriendsAndRequests() {
         guard let currentUser = currentUser else { return }
         FriendsService.shared.fetchUsersExcludingFriendsAndRequests(currentUserID: currentUser.id) { [weak self] users, error in
@@ -302,59 +279,30 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
             DispatchQueue.main.async {
                 self?.users = users ?? []
                 self?.filteredUsers = self?.users ?? []
-                self?.firstRowCollectionView.reloadData()  // ✅ Reload first row
-                self?.secondRowCollectionView.reloadData() // ✅ Reload second row
+                self?.firstRowCollectionView.reloadData()
+                self?.secondRowCollectionView.reloadData()
             }
         }
     }
-
-
-//    private func acceptFriendRequest(_ request: FriendRequest) {
-//        FriendsService.shared.acceptFriendRequest(requestID: request.id) { [weak self] success, error in
-//            if let error = error {
-//                print("Error accepting friend request: \(error)")
-//                return
-//            }
-//
-//            // Remove the request from UI
-//            self?.friendRequests.removeAll { $0.id == request.id }
-//            self?.tableView.reloadData()
-//
-//            // Fetch updated users and friends list
-//            self?.fetchUsersExcludingFriendsAndRequests()
-//            NotificationCenter.default.post(name: NSNotification.Name("FriendListUpdated"), object: nil)
-//
-//
-//            // Notify ChatViewController to update chat list
-//            NotificationCenter.default.post(name: NSNotification.Name("FriendRequestUpdated"), object: nil)
-//            NotificationCenter.default.post(name: NSNotification.Name("ChatListUpdated"), object: nil)
-//        }
-//    }
-    private func acceptFriendRequest(_ request: FriendRequest) {
-            FriendsService.shared.acceptFriendRequest(requestID: request.id) { [weak self] success, error in
-                if let error = error {
-                    print("Error accepting friend request: \(error)")
-                    return
-                }
-
-                // Remove the request from UI
-                self?.friendRequests.removeAll { $0.id == request.id }
-                self?.tableView.reloadData()
-
-                // Fetch updated users and friends list
-                self?.fetchUsersExcludingFriendsAndRequests()
-
-                // Immediately update the friend's list in the Chat section
-                NotificationCenter.default.post(name: NSNotification.Name("FriendAddedToChat"), object: nil)
-
-                // Notify ChatViewController to update the chat list
-                NotificationCenter.default.post(name: NSNotification.Name("FriendListUpdated"), object: nil)
-                NotificationCenter.default.post(name: NSNotification.Name("FriendRequestUpdated"), object: nil)
-            }
-        }
     
-
-
+    // MARK: - Action Methods
+    private func acceptFriendRequest(_ request: FriendRequest) {
+        FriendsService.shared.acceptFriendRequest(requestID: request.id) { [weak self] success, error in
+            if let error = error {
+                print("Error accepting friend request: \(error)")
+                return
+            }
+            
+            self?.friendRequests.removeAll { $0.id == request.id }
+            self?.tableView.reloadData()
+            self?.fetchUsersExcludingFriendsAndRequests()
+            
+            NotificationCenter.default.post(name: NSNotification.Name("FriendAddedToChat"), object: nil)
+            NotificationCenter.default.post(name: NSNotification.Name("FriendListUpdated"), object: nil)
+            NotificationCenter.default.post(name: NSNotification.Name("FriendRequestUpdated"), object: nil)
+        }
+    }
+    
     private func rejectFriendRequest(_ request: FriendRequest) {
         FriendsService.shared.removeFriendRequest(requestID: request.id) { [weak self] success, error in
             if let error = error {
@@ -365,19 +313,7 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
             self?.tableView.reloadData()
         }
     }
-
-//    private func sendFriendRequest(to user: User) {
-//        guard let currentUser = currentUser else { return }
-//        FriendsService.shared.sendFriendRequest(fromUserID: currentUser.id, toUserID: user.id) { [weak self] success, error in
-//            if let error = error {
-//                print("Error sending friend request: \(error)")
-//                return
-//            }
-//            self?.filteredUsers.removeAll { $0.id == user.id }
-//            self?.quickAddCollectionView.reloadData()
-//        }
-//    }
-
+    
     private func sendFriendRequest(to user: User) {
         guard let currentUser = currentUser else { return }
         FriendsService.shared.sendFriendRequest(fromUserID: currentUser.id, toUserID: user.id) { [weak self] success, error in
@@ -385,28 +321,68 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
                 print("Error sending friend request: \(error)")
                 return
             }
-
+            
             DispatchQueue.main.async {
                 if let index = self?.filteredUsers.firstIndex(where: { $0.id == user.id }) {
                     let indexPath = IndexPath(item: index, section: 0)
-                    if let cell = self?.quickAddCollectionView.cellForItem(at: indexPath) as? QuickAddCell {
-                        cell.addButton.setTitle("Added", for: .normal)
-                        cell.addButton.backgroundColor = .lightGray
-                        cell.addButton.setTitleColor(.darkGray, for: .normal)
-                        cell.addButton.isUserInteractionEnabled = false
+                    if let cell = self?.firstRowCollectionView.cellForItem(at: indexPath) as? QuickAddCell {
+                        self?.updateCellAfterRequestSent(cell: cell)
+                    }
+                    if let cell = self?.secondRowCollectionView.cellForItem(at: indexPath) as? QuickAddCell {
+                        self?.updateCellAfterRequestSent(cell: cell)
                     }
                 }
             }
         }
     }
-
     
+    private func updateCellAfterRequestSent(cell: QuickAddCell) {
+        cell.addButton.setTitle("Added", for: .normal)
+        cell.addButton.backgroundColor = .lightGray
+        cell.addButton.setTitleColor(.darkGray, for: .normal)
+        cell.addButton.isUserInteractionEnabled = false
+    }
+    
+    @objc private func cancelSearch() {
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+        filteredUsers = users
+        firstRowCollectionView.reloadData()
+        secondRowCollectionView.reloadData()
+        noResultsLabel.isHidden = true
+    }
+    
+    // MARK: - SearchBar Delegate
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        searchTimer?.invalidate()
+        searchTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+            if searchText.isEmpty {
+                self.filteredUsers = self.users
+            } else {
+                let searchLower = searchText.lowercased()
+                self.filteredUsers = self.users.filter { user in
+                    return user.name.lowercased().contains(searchLower) ||
+                           user.id.lowercased().contains(searchLower)
+                }
+            }
+            
+            self.firstRowCollectionView.reloadData()
+            self.secondRowCollectionView.reloadData()
+            self.noResultsLabel.isHidden = !self.filteredUsers.isEmpty || searchText.isEmpty
+        }
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+    
+    // MARK: - TableView DataSource & Delegate
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return friendRequests.count
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: FriendRequestCell.identifier, for: indexPath) as! FriendRequestCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "FriendRequestCell", for: indexPath) as! FriendRequestCell
         let request = friendRequests[indexPath.row]
         
         if let user = userCache[request.fromUserID] {
@@ -424,24 +400,24 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
         return cell
     }
     
-
+    // MARK: - CollectionView DataSource & Delegate
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let halfCount = max(filteredUsers.count / 2, 0) // ✅ Ensure no negative values
+        let halfCount = max(filteredUsers.count / 2, 0)
         if collectionView == firstRowCollectionView {
             return halfCount
         } else {
-            return max(filteredUsers.count - halfCount, 0) // ✅ Ensure no negative values
+            return max(filteredUsers.count - halfCount, 0)
         }
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: QuickAddCell.identifier, for: indexPath) as! QuickAddCell
         
         let halfCount = filteredUsers.count / 2
-        guard !filteredUsers.isEmpty else { return cell } // ✅ Prevents crash if filteredUsers is empty
-
+        guard !filteredUsers.isEmpty else { return cell }
+        
         let user: User
-
+        
         if collectionView == firstRowCollectionView, indexPath.row < halfCount {
             user = filteredUsers[indexPath.row]
         } else if collectionView == secondRowCollectionView, indexPath.row < filteredUsers.count - halfCount {
@@ -449,37 +425,22 @@ class FriendRequestsViewController: UIViewController, UITableViewDataSource, UIT
         } else {
             return cell
         }
-
+        
         cell.configure(with: user, addAction: {
             self.sendFriendRequest(to: user)
         })
-
+        
         return cell
     }
-
-
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let numberOfColumns: CGFloat = 2 // ✅ Set 2 columns
-        let spacing: CGFloat = 12 // ✅ Adjust spacing between items
-        let totalSpacing = (numberOfColumns - 1) * spacing // ✅ Total spacing
+        let numberOfColumns: CGFloat = 2
+        let spacing: CGFloat = 12
+        let totalSpacing = (numberOfColumns - 1) * spacing
         let availableWidth = collectionView.frame.width - totalSpacing
-        let width = availableWidth / numberOfColumns // ✅ Dynamically calculate width
+        let width = availableWidth / numberOfColumns
+        let height: CGFloat = 180
         
-        let height: CGFloat = 180 // ✅ Fixed height for uniform row display
-
-        return CGSize(width: width, height: height) // ✅ Ensures two rows
+        return CGSize(width: width, height: height)
     }
-
-
-
-}
-
-
-#Preview {
-    FriendRequestsViewController()
-}
-
-
-#Preview {
-    FriendRequestsViewController()
 }

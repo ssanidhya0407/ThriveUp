@@ -1,31 +1,20 @@
-//
-//  HackathonTeamDetailViewController.swift
-//  ThriveUp
-//
-//  Created by Sanidhya's MacBook Pro on 19/03/25.
-//
-
-
-//
-//  HackathonTeamDetailViewController.swift
-//  workingModel
-//
-//  Created by ThriveUp on 2025-03-18.
-//
-
 import UIKit
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
+import SDWebImage // We'll use this library for image loading
 
 class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     // MARK: - Properties
     private let db = Firestore.firestore()
+    private let storage = Storage.storage()
     private var team: HackathonTeam
     private var event: EventModel
     private var userId: String?
     private var isTeamLead: Bool = false
     private var pendingRequests: [TeamJoinRequest] = []
+    private var memberProfiles: [String: UserProfile] = [:] // Cache for user profiles
     
     private let headerView = UIView()
     private let teamNameLabel = UILabel()
@@ -56,6 +45,11 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
         super.viewDidLoad()
         setupUI()
         
+        // Fetch member profiles first
+        fetchMemberProfiles {
+            self.membersTableView.reloadData()
+        }
+        
         if isTeamLead {
             fetchPendingRequests()
         }
@@ -63,6 +57,7 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
     
     // MARK: - UI Setup
     private func setupUI() {
+        // (existing UI setup code remains the same)
         view.backgroundColor = .white
         title = "Team Details"
         
@@ -168,6 +163,45 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
         NSLayoutConstraint.activate(constraints)
     }
     
+    // MARK: - Data Fetching Methods
+    
+    // New method to fetch member profiles
+    private func fetchMemberProfiles(completion: @escaping () -> Void) {
+        let dispatchGroup = DispatchGroup()
+        
+        for memberId in team.memberIds {
+            dispatchGroup.enter()
+            
+            db.collection("users").document(memberId).getDocument { [weak self] snapshot, error in
+                defer { dispatchGroup.leave() }
+                guard let self = self,
+                      let snapshot = snapshot,
+                      snapshot.exists,
+                      let data = snapshot.data() else {
+                    print("Error fetching user profile: \(error?.localizedDescription ?? "Unknown error")")
+                    return
+                }
+                
+                // Extract user profile data
+                let profileImageURL = data["profileImageURL"] as? String
+                let name = data["name"] as? String ?? "Unknown"
+                
+                // Create and store user profile
+                let userProfile = UserProfile(
+                    id: memberId,
+                    name: name,
+                    profileImageURL: profileImageURL
+                )
+                
+                self.memberProfiles[memberId] = userProfile
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion()
+        }
+    }
+    
     // MARK: - Table View DataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch tableView.tag {
@@ -186,9 +220,13 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
             let cell = tableView.dequeueReusableCell(withIdentifier: "MemberCell1", for: indexPath) as! MemberCell1
             let memberId = team.memberIds[indexPath.row]
             let memberName = team.memberNames[indexPath.row]
+            let isLead = memberId == team.teamLeadId
             
-            var isLead = memberId == team.teamLeadId
-            cell.configure(name: memberName, isLead: isLead)
+            // Get user profile if available
+            let profile = memberProfiles[memberId]
+            
+            // Configure cell with profile image URL
+            cell.configure(name: memberName, isLead: isLead, profileImageURL: profile?.profileImageURL)
             
             return cell
             
@@ -209,24 +247,7 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
         }
     }
     
-    // MARK: - Actions
-    @objc private func acceptRequest(_ sender: UIButton) {
-        let index = sender.tag
-        guard index < pendingRequests.count else { return }
-        
-        let request = pendingRequests[index]
-        updateRequestStatus(request, status: "accepted")
-    }
-    
-    @objc private func rejectRequest(_ sender: UIButton) {
-        let index = sender.tag
-        guard index < pendingRequests.count else { return }
-        
-        let request = pendingRequests[index]
-        updateRequestStatus(request, status: "rejected")
-    }
-    
-    // MARK: - Helper Methods
+    // MARK: - Existing helper methods (fetchPendingRequests, updateRequestStatus, etc.)
     private func fetchPendingRequests() {
         db.collection("teamJoinRequests")
             .whereField("teamId", isEqualTo: team.id)
@@ -267,6 +288,22 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
                     self.requestsTableView.reloadData()
                 }
             }
+    }
+    
+    @objc private func acceptRequest(_ sender: UIButton) {
+        let index = sender.tag
+        guard index < pendingRequests.count else { return }
+        
+        let request = pendingRequests[index]
+        updateRequestStatus(request, status: "accepted")
+    }
+    
+    @objc private func rejectRequest(_ sender: UIButton) {
+        let index = sender.tag
+        guard index < pendingRequests.count else { return }
+        
+        let request = pendingRequests[index]
+        updateRequestStatus(request, status: "rejected")
     }
     
     private func updateRequestStatus(_ request: TeamJoinRequest, status: String) {
@@ -335,12 +372,34 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
                 createdAt: self.team.createdAt
             )
             
-            DispatchQueue.main.async {
-                // Update table view height
-                let heightConstraint = self.membersTableView.constraints.first { $0.firstAttribute == .height }
-                heightConstraint?.constant = CGFloat(self.team.memberIds.count * 60)
+            // Fetch the new member's profile
+            self.db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
+                guard let self = self,
+                      let snapshot = snapshot,
+                      snapshot.exists,
+                      let data = snapshot.data() else {
+                    return
+                }
                 
-                self.membersTableView.reloadData()
+                // Extract user profile data
+                let profileImageURL = data["profileImageURL"] as? String
+                
+                // Create and store user profile
+                let userProfile = UserProfile(
+                    id: userId,
+                    name: userName,
+                    profileImageURL: profileImageURL
+                )
+                
+                self.memberProfiles[userId] = userProfile
+                
+                DispatchQueue.main.async {
+                    // Update table view height
+                    let heightConstraint = self.membersTableView.constraints.first { $0.firstAttribute == .height }
+                    heightConstraint?.constant = CGFloat(self.team.memberIds.count * 60)
+                    
+                    self.membersTableView.reloadData()
+                }
             }
         }
     }
@@ -365,6 +424,13 @@ class HackathonTeamDetailViewController: UIViewController, UITableViewDelegate, 
         // Add notification to user's notifications collection
         db.collection("users").document(userId).collection("notifications").addDocument(data: notificationData)
     }
+}
+
+// MARK: - User Profile Model
+struct UserProfile {
+    let id: String
+    let name: String
+    let profileImageURL: String?
 }
 
 // MARK: - Member Cell
@@ -425,16 +491,31 @@ class MemberCell1: UITableViewCell {
         ])
     }
     
-    func configure(name: String, isLead: Bool) {
+    func configure(name: String, isLead: Bool, profileImageURL: String?) {
         nameLabel.text = name
         roleLabel.text = isLead ? "Team Lead" : "Team Member"
         roleLabel.textColor = isLead ? .orange : .gray
         
-        // You could fetch user profile image here if you have user ID
+        // Reset to default image
+        avatarImageView.image = UIImage(systemName: "person.circle")
+        avatarImageView.tintColor = .gray
+        
+        // Load profile image if available
+        if let imageURLString = profileImageURL, let imageURL = URL(string: imageURLString) {
+            // Using SDWebImage for image loading and caching
+            avatarImageView.sd_setImage(with: imageURL, placeholderImage: UIImage(systemName: "person.circle")) { [weak self] (image, error, cacheType, url) in
+                if let error = error {
+                    print("Error loading profile image: \(error.localizedDescription)")
+                    // Keep default image on error
+                    self?.avatarImageView.image = UIImage(systemName: "person.circle")
+                    self?.avatarImageView.tintColor = .gray
+                }
+            }
+        }
     }
 }
 
-// MARK: - Request Cell
+// MARK: - Request Cell (unchanged)
 class RequestCell: UITableViewCell {
     
     private let nameLabel = UILabel()

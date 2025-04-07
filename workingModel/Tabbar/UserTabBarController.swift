@@ -16,8 +16,7 @@ class UserTabBarController: UITabBarController {
         appearance.stackedLayoutAppearance.normal.iconColor = .gray // Default icon color
         appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
             .foregroundColor: UIColor.gray // Default title color
-        ]
-        
+        ]        
         tabBar.standardAppearance = appearance
         if #available(iOS 15.0, *) {
             tabBar.scrollEdgeAppearance = appearance
@@ -28,21 +27,21 @@ class UserTabBarController: UITabBarController {
     
     private func setupTabs() {
         let feedVC = UINavigationController(rootViewController:EventListViewController())
-        feedVC.tabBarItem = UITabBarItem(title: "Feed", image: UIImage(systemName: "house"), tag: 0)
+        feedVC.tabBarItem = UITabBarItem(title: "Discover", image: UIImage(systemName: "house"), tag: 0)
         
         let chatVC = UINavigationController(rootViewController: ChatViewController())
-        chatVC.tabBarItem = UITabBarItem(title: "Chat", image: UIImage(systemName: "bubble.right"), tag: 1)
+        chatVC.tabBarItem = UITabBarItem(title: "Engage", image: UIImage(systemName: "bubble.right"), tag: 1)
         
 //        let collegeFeedVC = UINavigationController(rootViewController: CollegeFeedViewController())
 //        collegeFeedVC.tabBarItem = UITabBarItem(title: "Community", image: UIImage(systemName: "newspaper"), tag: 2)
         
         let swipeVC = UINavigationController(rootViewController: SwipeViewController())
         swipeVC.view.backgroundColor = .white
-        swipeVC.tabBarItem = UITabBarItem(title: "Swipe", image: UIImage(systemName: "rectangle.on.rectangle.angled"), tag: 3)
+        swipeVC.tabBarItem = UITabBarItem(title: "Flick", image: UIImage(systemName: "rectangle.on.rectangle.angled"), tag: 3)
         
         let profileVC = UINavigationController(rootViewController: ProfileViewController()) // Profile tab
         profileVC.view.backgroundColor = .white
-        profileVC.tabBarItem = UITabBarItem(title: "Profile", image: UIImage(systemName: "person"), tag: 4)
+        profileVC.tabBarItem = UITabBarItem(title: "Dashboard", image: UIImage(systemName: "person"), tag: 4)
         
         viewControllers = [feedVC, chatVC, swipeVC, profileVC]
     }

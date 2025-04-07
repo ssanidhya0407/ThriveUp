@@ -11,6 +11,7 @@
     import UIKit
     import MapKit
     import FirebaseFirestore
+import FirebaseAuth
 
     class OrganiserEventDetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
 
@@ -33,6 +34,7 @@
             imageView.clipsToBounds = true
             return imageView
         }()
+        
 
         private let detailSectionView: UIView = {
             let view = UIView()
@@ -69,6 +71,8 @@
             imageView.clipsToBounds = true
             imageView.layer.cornerRadius = 20
             imageView.backgroundColor = .lightGray
+            
+            imageView.tintColor = .gray
             return imageView
         }()
 
@@ -202,7 +206,11 @@
                 contentView.addSubview($0)
                 $0.translatesAutoresizingMaskIntoConstraints = false
             }
-
+            speakersCollectionView.dataSource = self
+                speakersCollectionView.delegate = self
+                speakersCollectionView.register(SpeakerCell2.self, forCellWithReuseIdentifier: SpeakerCell2.identifier)
+                speakersCollectionView.showsHorizontalScrollIndicator = false
+                speakersCollectionView.backgroundColor = .clear
             setupConstraints()
         }
 
@@ -333,14 +341,10 @@
                     return Speaker(name: name, imageURL: imageURL)
                 } ?? []
                 
-                // Debugging: Print the parsed speakers
-                print("Parsed Speakers: \(speakers)")
-
-                // Fetch organizer details (UID from event document)
-                let uid = data["userId"] as? String ?? ""
-                self.fetchOrganizerDetails(uid: uid)
-
-                // Initialize the EventModel
+                // Get the event creator's user ID
+                let creatorUserId = data["userId"] as? String ?? ""
+                
+                // Initialize the EventModel with the creator's user ID
                 let event = EventModel(
                     eventId: data["eventId"] as? String ?? "",
                     title: data["title"] as? String ?? "Untitled",
@@ -353,20 +357,35 @@
                     locationDetails: data["locationDetails"] as? String ?? "",
                     imageName: data["imageName"] as? String ?? "",
                     speakers: speakers,
-                    userId : "",
+                    userId: creatorUserId, // Store the creator's user ID
                     description: data["description"] as? String ?? "",
                     latitude: data["latitude"] as? Double,
                     longitude: data["longitude"] as? Double,
-                    
                     tags: []
                 )
                 
                 self.event = event
+                self.fetchOrganizerDetails(uid: creatorUserId)
 
-                // Update the UI
+                // Update the UI and check edit permissions
                 DispatchQueue.main.async {
                     self.updateUI()
+                    self.checkEditPermissions()
                 }
+            }
+        }
+        private func checkEditPermissions() {
+            // Get the current user's ID (you'll need to implement your auth system here)
+            guard let currentUserId = Auth.auth().currentUser?.uid else {
+                EditButton.isHidden = true
+                return
+            }
+            
+            // Compare with the event creator's ID
+            if let creatorId = event?.userId, creatorId == currentUserId {
+                EditButton.isHidden = false
+            } else {
+                EditButton.isHidden = true
             }
         }
 
@@ -398,13 +417,19 @@
                     self.organizerNameLabel.text = organizerName
                     
                     if let url = URL(string: profileImageURL) {
-                        DispatchQueue.global().async {
-                            if let data = try? Data(contentsOf: url) {
+                        // Use URLSession instead of Data(contentsOf:)
+                        URLSession.shared.dataTask(with: url) { data, _, error in
+                            if let error = error {
+                                print("Error loading organizer image: \(error.localizedDescription)")
+                                return
+                            }
+                            
+                            if let data = data, let image = UIImage(data: data) {
                                 DispatchQueue.main.async {
-                                    self.organizerImageView.image = UIImage(data: data)
+                                    self.organizerImageView.image = image
                                 }
                             }
-                        }
+                        }.resume()
                     }
                 }
             }
@@ -416,6 +441,8 @@
             descriptionLabel.text = event.description
             locationLabel.text = event.location
             dateLabel.text = "\(event.date), \(event.time)"
+            organizerNameLabel.text = event.organizerName
+            
             
             if let latitude = event.latitude, let longitude = event.longitude {
                 let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -452,15 +479,21 @@
             EditButton.addTarget(self, action: #selector(EditButtonTapped), for: .touchUpInside)
         }
         @objc private func EditButtonTapped() {
-            guard let event = event else { return }
-                   
-                   let editEventVC = EditEventViewController()
-                   editEventVC.event = event
-                   editEventVC.onEventUpdated = { [weak self] updatedEvent in
-                       self?.event = updatedEvent
-                       self?.updateUI() // Refresh UI after editing
-                   }
-                   navigationController?.pushViewController(editEventVC, animated: true)
+            // Double-check permissions before allowing edit
+            guard let currentUserId = Auth.auth().currentUser?.uid,
+                  let creatorId = event?.userId,
+                  currentUserId == creatorId,
+                  let event = event else {
+                return
+            }
+            
+            let editEventVC = EditEventViewController()
+            editEventVC.event = event
+            editEventVC.onEventUpdated = { [weak self] updatedEvent in
+                self?.event = updatedEvent
+                self?.updateUI() // Refresh UI after editing
+            }
+            navigationController?.pushViewController(editEventVC, animated: true)
         }
 
 

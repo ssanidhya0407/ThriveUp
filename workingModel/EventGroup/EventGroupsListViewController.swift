@@ -1,10 +1,3 @@
-//
-//  EventGroupsListViewController.swift
-//  ThriveUp
-//
-//  Created by Sanidhya's MacBook Pro on 16/03/25.
-//
-
 import UIKit
 import FirebaseFirestore
 import FirebaseAuth
@@ -25,6 +18,9 @@ class EventGroupsListViewController: UIViewController {
     // Filtered groups for search functionality
     private var filteredEventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
     
+    // Timestamp to track the last fetch time
+    private var lastFetchTime: Date?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
@@ -37,8 +33,21 @@ class EventGroupsListViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Refresh the list when returning to this screen
-        fetchEventGroups()
+        // Check if the data needs to be refreshed
+        if shouldFetchData() {
+            fetchEventGroups()
+        }
+    }
+    
+    private func shouldFetchData() -> Bool {
+        // Add logic to determine if data needs to be fetched
+        // For example, fetch data if it has been more than 5 minutes since the last fetch
+        if let lastFetchTime = lastFetchTime {
+            let currentTime = Date()
+            let timeInterval = currentTime.timeIntervalSince(lastFetchTime)
+            return timeInterval > 300 // 5 minutes
+        }
+        return true
     }
     
     private func setupTitleStackView() {
@@ -46,7 +55,6 @@ class EventGroupsListViewController: UIViewController {
         titleLabel.text = "Event Groups"
         titleLabel.font = UIFont.systemFont(ofSize: 36, weight: .bold)
         titleLabel.textAlignment = .left
-        
         
         // Configure titleStackView
         titleStackView.axis = .horizontal
@@ -172,7 +180,7 @@ class EventGroupsListViewController: UIViewController {
                                    let eventName = eventData["title"] as? String {
                                     
                                     // Get the image URL if available
-                                    let imageURL = eventData["profileImageURL"] as? String
+                                    let imageURL = eventData["imageName"] as? String
                                     
                                     // Fetch the most recent message
                                     self.fetchLastMessage(for: eventId) { (message, timestamp) in
@@ -252,21 +260,23 @@ class EventGroupsListViewController: UIViewController {
     }
     
     private func navigateToEventGroup(eventId: String) {
-        // Determine if current user is an organizer of this event
-        db.collection("eventGroups").document(eventId)
-            .collection("members").document(currentUserID)
-            .getDocument { [weak self] (document, error) in
-                guard let self = self else { return }
-                
-                let isOrganizer = document?.data()?["role"] as? String == "organizer"
-                
-                DispatchQueue.main.async {
-                    let eventGroupVC = EventGroupViewController(eventId: eventId, isOrganizer: isOrganizer)
-                    self.navigationController?.pushViewController(eventGroupVC, animated: true)
+            // Find the event name from our filtered groups array
+            let eventName = filteredEventGroups.first(where: { $0.eventId == eventId })?.name ?? "Event"
+            
+            // Determine if current user is an organizer of this event
+            db.collection("eventGroups").document(eventId)
+                .collection("members").document(currentUserID)
+                .getDocument { [weak self] (document, error) in
+                    guard let self = self else { return }
+                    
+                    let isOrganizer = document?.data()?["role"] as? String == "organizer"
+                    
+                    DispatchQueue.main.async {
+                        let eventGroupVC = EventGroupViewController(eventId: eventId, eventName: eventName)
+                        self.navigationController?.pushViewController(eventGroupVC, animated: true)
+                    }
                 }
-            }
-    }
-}
+        }}
 
 // MARK: - UITableViewDataSource and UITableViewDelegate
 extension EventGroupsListViewController: UITableViewDataSource, UITableViewDelegate {
@@ -296,6 +306,20 @@ extension EventGroupsListViewController: UITableViewDataSource, UITableViewDeleg
             time: timeString,
             profileImageURL: group.imageURL // Pass the image URL
         )
+        
+        // Use cached images to prevent flickering
+        if let imageURL = group.imageURL, let url = URL(string: imageURL) {
+            ImageCache.shared.image(for: url) { image in
+                DispatchQueue.main.async {
+                    // Ensure the cell is still visible and correct before updating
+                    if tableView.indexPath(for: cell) == indexPath {
+                        cell.profileImageView.image = image
+                    }
+                }
+            }
+        } else {
+            cell.profileImageView.image = UIImage(named: "placeholder") // Use a placeholder image
+        }
         
         return cell
     }

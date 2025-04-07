@@ -3,7 +3,7 @@ import MapKit
 import FirebaseFirestore
 import FirebaseAuth
 
-class EventDetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class EventDetailViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, MKMapViewDelegate {
 
     // MARK: - Properties
     var eventId: String? // Event ID passed from the previous page
@@ -123,7 +123,7 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
     private let mapView: MKMapView = {
         let map = MKMapView()
         map.layer.cornerRadius = 10
-        map.isUserInteractionEnabled = false
+        map.isUserInteractionEnabled = true
         return map
     }()
 
@@ -169,6 +169,7 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         super.viewDidLoad()
         setupUI()
         fetchEventDetails()
+        mapView.delegate = self
     }
 
     // MARK: - Setup UI
@@ -451,13 +452,14 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
             }
         }
         
+        
         // Reload the collection view to display speakers
         speakersCollectionView.reloadData()
     }
 
     @objc private func registerButtonTapped() {
         guard let event = event else { return }
-
+        
         if openedFromEventVC {
             // Navigate to LoginViewController
             let loginVC = LoginViewController()
@@ -465,39 +467,73 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         } else {
             checkIfUserIsRegistered(eventId: event.eventId) { [weak self] isRegistered in
                 guard let self = self else { return }
-
+                
                 if isRegistered {
-                    self.checkIfUserIsInTeam(eventId: event.eventId) { isInTeam in
-                        if isInTeam {
-                            // If the user is already in a team, navigate to team detail
-                            self.navigateToTeamDetail()
-                        } else {
-                            // If registered but not in a team, navigate to team selection
-                            self.navigateToTeamSelection()
+                    if event.category == "Hackathons" {
+                        self.checkIfUserIsInTeam(eventId: event.eventId) { isInTeam in
+                            DispatchQueue.main.async {
+                                if isInTeam {
+                                    // Show alert for already in team
+                                    self.showAlert(title: "Already in Team", message: "You are already part of a team for this hackathon.") {
+                                        self.navigateToTeamDetail()
+                                    }
+                                } else {
+                                    // Show alert for registered but not in team
+                                    self.showAlert(title: "Registered", message: "You have already registered for this hackathon but haven't joined a team yet.") {
+                                        self.navigateToTeamSelection()
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            // Show alert for already registered
+                            self.showAlert(title: "Registered", message: "You have already registered for this event.") {
+                                let ticketVC = TicketViewController()
+                                ticketVC.eventId = event.eventId
+                                self.navigationController?.pushViewController(ticketVC, animated: true)
+                            }
                         }
                     }
                 } else {
                     // Define form fields with placeholders and empty values
-                    let formFields = [
-                        FormField(placeholder: "Name", value: ""),
-                        FormField(placeholder: "Phone Number", value: ""),
-                        FormField(placeholder: "Year of Study", value: ""),
-                        FormField(placeholder: "Course", value: ""),
-                        FormField(placeholder: "Department", value: ""),
-                        FormField(placeholder: "Specialization", value: "")
-                    ]
-                    
-                    // Initialize and push the registration view controller
-                    if event.category == "Hackathons" {
-                        let hackathonVC = HackathonRegistrationViewController(formFields: formFields, event: event)
-                        self.navigationController?.pushViewController(hackathonVC, animated: true)
-                    } else {
-                        let eventDetailVC = RegistrationViewController(formFields: formFields, event: event)
-                        self.navigationController?.pushViewController(eventDetailVC, animated: true)
+                    DispatchQueue.main.async {
+                        let formFields = [
+                            FormField(placeholder: "Name", value: ""),
+                            FormField(placeholder: "Registration No.", value: ""),
+                            FormField(placeholder: "Contact Number", value: ""),
+                            FormField(placeholder: "Personal Email ID", value: ""),
+                            FormField(placeholder: "College Email ID", value: ""),
+                            FormField(placeholder: "Section", value: ""),
+                            FormField(placeholder: "Faculty Advisor", value: ""),
+                            FormField(placeholder: "FA Number", value: ""),
+                            FormField(placeholder: "Year of Study", value: ""),
+                            FormField(placeholder: "Specialization", value: ""),
+                            FormField(placeholder: "Course", value: ""),
+                            FormField(placeholder: "Department", value: "")
+                        ]
+                        
+                        if event.category == "Hackathons" {
+                            let hackathonVC = HackathonRegistrationViewController(formFields: formFields, event: event)
+                            self.navigationController?.pushViewController(hackathonVC, animated: true)
+                        } else {
+                            let eventDetailVC = RegistrationViewController(formFields: formFields, event: event)
+                            self.navigationController?.pushViewController(eventDetailVC, animated: true)
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Helper function to show alert
+    private func showAlert(title: String, message: String, completion: @escaping () -> Void) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "OK", style: .default) { _ in
+            completion()
+        }
+        alert.addAction(okAction)
+        self.present(alert, animated: true, completion: nil)
     }
 
     private func checkIfUserIsRegistered(eventId: String, completion: @escaping (Bool) -> Void) {
@@ -541,6 +577,37 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         let teamSelectionVC = HackathonTeamSelectionViewController(event: event)
         navigationController?.pushViewController(teamSelectionVC, animated: true)
     }
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+          guard let event = event,
+                let latitude = event.latitude,
+                let longitude = event.longitude else {
+              return
+          }
+          
+          let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+          let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+          mapItem.name = event.location
+          mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
+          
+          // Deselect the annotation so it can be tapped again
+          mapView.deselectAnnotation(view.annotation, animated: false)
+      }
+      
+      func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+          guard annotation is MKPointAnnotation else { return nil }
+          
+          let identifier = "Annotation"
+          var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+          
+          if annotationView == nil {
+              annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+              annotationView?.canShowCallout = true
+          } else {
+              annotationView?.annotation = annotation
+          }
+          
+          return annotationView
+      }
 
     private func navigateToTeamDetail() {
         guard let event = event, let userId = Auth.auth().currentUser?.uid else { return }
@@ -588,6 +655,8 @@ class EventDetailViewController: UIViewController, UICollectionViewDataSource, U
         return cell
     }
 }
+
+
 
 
 
@@ -710,3 +779,4 @@ class ImagePreviewViewController: UIViewController {
         dismiss(animated: true, completion: nil)
     }
 }
+

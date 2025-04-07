@@ -178,6 +178,7 @@ struct EventModel: Codable, Equatable {
     var latitude: Double? // New property
     var longitude: Double? // New property
     let tags: [String]
+    
 }
 
 extension EventModel {
@@ -330,6 +331,8 @@ struct Group {
     let id: String
     let name: String
     let members: [String]
+    let imageURL: String?
+    
 }
 
 

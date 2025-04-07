@@ -10,7 +10,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let window = KeyWindow(windowScene: windowScene)
         self.window = window
-
+        
+        
+            let appearance = UINavigationBar.appearance()
+            appearance.tintColor = UIColor.orange
+            appearance.titleTextAttributes = [.foregroundColor: UIColor.orange]
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.orange]
+        
         // Check if this is the first launch
         let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
         

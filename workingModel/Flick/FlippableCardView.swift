@@ -10,6 +10,7 @@ import UIKit
 
 class FlippableCardView: UIView, UITableViewDataSource, UITableViewDelegate {
     private var isFlipped = false
+    let deadlineDate: Date?
     private let frontView = UIView()
     private let backView = UIView()
     private let gradientLayer = CAGradientLayer()
@@ -29,6 +30,7 @@ class FlippableCardView: UIView, UITableViewDataSource, UITableViewDelegate {
             ("person.2", "Organizer: \(event.organizerName)"),
             ("text.bubble", event.description ?? "No description available.")
         ]
+        self.deadlineDate =  nil
         
         super.init(frame: .zero)
         setupViews()

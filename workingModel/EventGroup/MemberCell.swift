@@ -1,20 +1,19 @@
-//
-//  MemberCell.swift
-//  ThriveUp
-//
-//  Created by Sanidhya's MacBook Pro on 16/03/25.
-//
-
-
 import UIKit
+import Kingfisher
 
 class MemberCell: UITableViewCell {
     
+    static let identifier = "MemberCell"
+    
+    // MARK: - Properties
+    private let profileImageView = UIImageView()
     private let nameLabel = UILabel()
     private let roleLabel = UILabel()
-    private let statusLabel = UILabel()
-    private let profileImageView = UIImageView()
+    private let joinedDateLabel = UILabel()
+    private let chatStatusLabel = UILabel()
+    private let chatStatusIndicator = UIView()
     
+    // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -24,90 +23,129 @@ class MemberCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - UI Setup
     private func setupUI() {
-        // Configure profile image view
-        profileImageView.contentMode = .scaleAspectFit
-        profileImageView.layer.cornerRadius = 20
+        selectionStyle = .default
+        
+        // Profile image setup
+        profileImageView.contentMode = .scaleAspectFill
         profileImageView.clipsToBounds = true
+        profileImageView.layer.cornerRadius = 25
+        profileImageView.backgroundColor = .systemGray6
+        profileImageView.tintColor = .systemGray3
         profileImageView.image = UIImage(systemName: "person.circle.fill")
         profileImageView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(profileImageView)
         
-        // Configure name label
-        nameLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        // Name label setup
+        nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(nameLabel)
         
-        // Configure role label
+        // Role label setup
         roleLabel.font = UIFont.systemFont(ofSize: 14)
-        roleLabel.textColor = .gray
+        roleLabel.textColor = .secondaryLabel
         roleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(roleLabel)
         
-        // Configure status label
-        statusLabel.font = UIFont.systemFont(ofSize: 12)
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(statusLabel)
+        // Joined date label
+        joinedDateLabel.font = UIFont.systemFont(ofSize: 12)
+        joinedDateLabel.textColor = .tertiaryLabel
+        joinedDateLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(joinedDateLabel)
         
-        // Add chevron indicator for organizer view
-        accessoryType = .disclosureIndicator
+        // Chat status indicator
+        chatStatusIndicator.layer.cornerRadius = 4
+        chatStatusIndicator.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(chatStatusIndicator)
         
+        // Chat status label
+        chatStatusLabel.font = UIFont.systemFont(ofSize: 12)
+        chatStatusLabel.textColor = .secondaryLabel
+        chatStatusLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(chatStatusLabel)
+        
+        // Add constraints
         NSLayoutConstraint.activate([
-            // Profile image constraints
             profileImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             profileImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            profileImageView.widthAnchor.constraint(equalToConstant: 40),
-            profileImageView.heightAnchor.constraint(equalToConstant: 40),
+            profileImageView.widthAnchor.constraint(equalToConstant: 50),
+            profileImageView.heightAnchor.constraint(equalToConstant: 50),
             
-            // Name label constraints
-            nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
             nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -80),
             
-            // Role label constraints
-            roleLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            roleLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            roleLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            roleLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            roleLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -16),
             
-            // Status label constraints
-            statusLabel.leadingAnchor.constraint(equalTo: roleLabel.trailingAnchor, constant: 8),
-            statusLabel.centerYAnchor.constraint(equalTo: roleLabel.centerYAnchor),
-            statusLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
+            joinedDateLabel.topAnchor.constraint(equalTo: roleLabel.bottomAnchor, constant: 2),
+            joinedDateLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            joinedDateLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -8),
+            
+            chatStatusIndicator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            chatStatusIndicator.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            chatStatusIndicator.widthAnchor.constraint(equalToConstant: 8),
+            chatStatusIndicator.heightAnchor.constraint(equalToConstant: 8),
+            
+            chatStatusLabel.trailingAnchor.constraint(equalTo: chatStatusIndicator.leadingAnchor, constant: -4),
+            chatStatusLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
         ])
     }
     
-    func configure(with member: EventGroupMember, viewedByOrganizer: Bool = false) {
+    // MARK: - Configuration
+    func configure(with member: EventGroup.Member, viewedByOrganizer: Bool) {
         nameLabel.text = member.name
-        roleLabel.text = member.role.capitalized
-       
         
-        // Show chat status only if viewed by an organizer
-        if viewedByOrganizer {
-            statusLabel.isHidden = false
-            if member.canChat {
-                statusLabel.text = "Can chat"
-                statusLabel.textColor = .systemGreen
-            } else {
-                statusLabel.text = "Chat disabled"
-                statusLabel.textColor = .systemRed
-            }
+        // Set role text and styling
+        if member.role == "organizer" {
+            roleLabel.text = "Organizer"
+            roleLabel.textColor = .systemOrange
+            roleLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         } else {
-            // Hide the chat status label when viewed by regular users
-            statusLabel.isHidden = true
+            roleLabel.text = "Participant"
+            roleLabel.textColor = .secondaryLabel
+            roleLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         }
         
+        // Set joined date
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+        joinedDateLabel.text = "Joined: \(dateFormatter.string(from: member.joinedAt))"
+        
+        // Set chat status
+        if member.canChat {
+            chatStatusLabel.text = "Can chat"
+            chatStatusIndicator.backgroundColor = .systemGreen
+        } else {
+            chatStatusLabel.text = "Can't chat"
+            chatStatusIndicator.backgroundColor = .systemRed
+        }
+        
+        // Only show chat status for organizers
+        chatStatusLabel.isHidden = !viewedByOrganizer
+        chatStatusIndicator.isHidden = !viewedByOrganizer
+        
         // Load profile image if available
-        if let profileImageURL = member.profileImageURL, let url = URL(string: profileImageURL) {
-            print("Profile Image URL: \(profileImageURL)")  // Debugging line
-            URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-                if let data = data, let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self?.profileImageView.image = image
-                    }
-                }
-            }.resume()
+        if let imageURL = member.profileImageURL, let url = URL(string: imageURL) {
+            profileImageView.kf.setImage(
+                with: url,
+                placeholder: UIImage(systemName: "person.circle.fill"),
+                options: [.transition(.fade(0.3))]
+            )
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
-
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        profileImageView.image = UIImage(systemName: "person.circle.fill")
+        nameLabel.text = nil
+        roleLabel.text = nil
+        joinedDateLabel.text = nil
+        chatStatusLabel.text = nil
     }
 }

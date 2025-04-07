@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 class ChatViewController: UIViewController {
+    // MARK: - UI Components
     let tableView = UITableView()
     let chatManager = FirestoreChatManager()
     let searchBar = UISearchBar()
@@ -11,131 +12,140 @@ class ChatViewController: UIViewController {
     let titleStackView = UIStackView()
     let friendRequestsButton = UIButton(type: .system)
     let createGroupButton = UIButton(type: .system)
-
-    private func setupCreateGroupButton() {
-        let createGroupIcon = UIImage(systemName: "plus.bubble.fill")
-        createGroupButton.setImage(createGroupIcon, for: .normal)
-        createGroupButton.tintColor = .systemGreen
-        createGroupButton.addTarget(self, action: #selector(openCreateGroupView), for: .touchUpInside)
-        titleStackView.addArrangedSubview(createGroupButton)
-    }
-
-    
-    
     private let requestBadgeView: UILabel = {
         let label = UILabel()
-        label.backgroundColor = .systemGray // Badge background color
+        label.backgroundColor = .systemRed // Changed to red for better visibility
         label.textColor = .white
-        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.font = UIFont.boldSystemFont(ofSize: 12)
         label.textAlignment = .center
-        label.layer.cornerRadius = 11
+        label.layer.cornerRadius = 9 // Slightly smaller than before
         label.clipsToBounds = true
-        label.isHidden = true // Initially hidden
+        label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
+        // Set a minimum width so single digits look good
+        label.widthAnchor.constraint(greaterThanOrEqualToConstant: 18).isActive = true
+        label.heightAnchor.constraint(equalToConstant: 18).isActive = true
         return label
     }()
-
-
-    var friends: [User] = [] // Friends fetched from Firestore
-    var groups: [Group] = [] // Store fetched groups
-
-    var filteredFriends: [User] = [] // Friends filtered by search
-    var currentUser: User? // Current logged-in user
-    var lastMessages: [String: ChatMessage] = [:] // Last messages for each
-    var messageListeners: [String: ListenerRegistration] = [:] // Listeners for each chat thread
-    // Add this property with your other properties
+    
+    // MARK: - Data Properties
+    var friends: [User] = []
+    var groups: [Group] = []
+    var filteredFriends: [User] = []
+    var currentUser: User?
+    var lastMessages: [String: ChatMessage] = [:]
+    var messageListeners: [String: ListenerRegistration] = [:]
     var eventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
+    
     private var db = Firestore.firestore()
+    
+    // MARK: - Empty State View
+    private let emptyStateView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        let imageView = UIImageView(image: UIImage(systemName: "person.2.slash"))
+        imageView.tintColor = .systemGray
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let titleLabel = UILabel()
+        titleLabel.text = "No Chats Yet"
+        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        titleLabel.textColor = .systemGray
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "Add friends or join groups to start chatting"
+        subtitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        subtitleLabel.textColor = .systemGray2
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        let addFriendButton = UIButton(type: .system)
+        addFriendButton.setTitle("Add Friends", for: .normal)
+        addFriendButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        addFriendButton.addTarget(ChatViewController.self, action: #selector(openFriendRequestsViewController), for: .touchUpInside)
+        addFriendButton.tintColor = .systemOrange
+        addFriendButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(imageView)
+        view.addSubview(titleLabel)
+        view.addSubview(subtitleLabel)
+        view.addSubview(addFriendButton)
+        
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            imageView.topAnchor.constraint(equalTo: view.topAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 60),
+            imageView.heightAnchor.constraint(equalToConstant: 60),
+            
+            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 16),
+            
+            subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            
+            addFriendButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            addFriendButton.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 24),
+            addFriendButton.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        
+        return view
+    }()
 
-//    override func viewDidLoad() {
-//        super.viewDidLoad()
-//        view.backgroundColor = .white
-//        setupTitleStackView()
-//        setupSearchBar()
-//        setupTableView()
-//        fetchCurrentUser()
-//        NotificationCenter.default.addObserver(self, selector: #selector(refreshFriendRequestBadge), name: NSNotification.Name("FriendRequestUpdated"), object: nil)
-//        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList), name: NSNotification.Name("ChatListUpdated"), object: nil)
-//
-//        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList), name: NSNotification.Name("FriendAddedToChat"), object: nil) // Added observer here
-//
-//
-//
-//    }
+    // MARK: - View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        setupUI()
+        fetchCurrentUser()
+        setupNotifications()
+        updateFriendRequestBadge()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        refreshChatList()
+    }
+    
+    deinit {
+        messageListeners.values.forEach { $0.remove() }
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - UI Setup
+    private func setupUI() {
         setupTitleStackView()
         setupSearchBar()
         setupTableView()
-        fetchCurrentUser()
         setupCreateGroupButton()
-        fetchGroups() // Fetch groups when the screen loads
-        fetchEventGroups()
-
-
-
-
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshFriendRequestBadge), name: NSNotification.Name("FriendRequestUpdated"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList), name: NSNotification.Name("ChatListUpdated"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList), name: NSNotification.Name("FriendAddedToChat"), object: nil)
-    }
-
-    @objc private func goBack() {
-        navigationController?.popViewController(animated: true)
-    }
-
-    
-    @objc private func refreshChatList() {
-        guard let currentUser = currentUser else { return }
-        fetchFriends(for: currentUser)
-    }
-
-    
-
-
-    deinit {
-        // Remove all listeners
-        messageListeners.values.forEach { $0.remove() }
+        setupEmptyStateView()
     }
     
-
     private func setupTitleStackView() {
-        // Configure titleLabel
         titleLabel.text = "Chat"
         titleLabel.font = UIFont.systemFont(ofSize: 36, weight: .bold)
         titleLabel.textAlignment = .left
-
-        // Configure friendRequestsButton with an SF Symbol icon
-        let friendsIcon = UIImage(systemName: "person.2.fill") // iOS Friends Icon
-        friendRequestsButton.setImage(friendsIcon, for: .normal)
-        friendRequestsButton.tintColor = .systemOrange // Change color to systemOrange
-        friendRequestsButton.addTarget(self, action: #selector(openFriendRequestsViewController), for: .touchUpInside)
-
-        // Shift the icon slightly to the left
-        friendRequestsButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: -10, bottom: 0, right: 0)
-
-        // Add badge view (number of pending requests)
+        
+        let friendsIcon = UIImage(systemName: "person.2.fill")
+          friendRequestsButton.setImage(friendsIcon, for: .normal)
+          friendRequestsButton.tintColor = .systemOrange
+          friendRequestsButton.addTarget(self, action: #selector(openFriendRequestsViewController), for: .touchUpInside)
+          friendRequestsButton.contentEdgeInsets = UIEdgeInsets(top: 0, left: -10, bottom: 0, right: 0)
         friendRequestsButton.addSubview(requestBadgeView)
         NSLayoutConstraint.activate([
-            requestBadgeView.topAnchor.constraint(equalTo: friendRequestsButton.topAnchor, constant: -5),
-            requestBadgeView.trailingAnchor.constraint(equalTo: friendRequestsButton.trailingAnchor, constant: 5),
-            requestBadgeView.widthAnchor.constraint(equalToConstant: 22),
-            requestBadgeView.heightAnchor.constraint(equalToConstant: 22)
-        ])
+             requestBadgeView.topAnchor.constraint(equalTo: friendRequestsButton.topAnchor, constant: -6),
+             requestBadgeView.trailingAnchor.constraint(equalTo: friendRequestsButton.trailingAnchor, constant: 6)
+         ])
+          
         
-
-        // Configure titleStackView
         titleStackView.axis = .horizontal
         titleStackView.alignment = .center
         titleStackView.distribution = .equalSpacing
         titleStackView.spacing = 8
-
-        // Add titleLabel and friendRequestsButton to titleStackView
         titleStackView.addArrangedSubview(titleLabel)
         titleStackView.addArrangedSubview(friendRequestsButton)
-
-        // Add titleStackView to the view
+        
         view.addSubview(titleStackView)
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -144,10 +154,332 @@ class ChatViewController: UIViewController {
             titleStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             titleStackView.heightAnchor.constraint(equalToConstant: 40)
         ])
-
-        // Fetch and update pending requests count
+        
         updateFriendRequestBadge()
     }
+    
+    private func setupSearchBar() {
+        searchBar.delegate = self
+        searchBar.placeholder = "Search"
+        searchBar.barTintColor = .systemGray6
+        searchBar.layer.cornerRadius = 12
+        searchBar.clipsToBounds = true
+
+        if let textField = searchBar.value(forKey: "searchField") as? UITextField {
+            textField.backgroundColor = .systemGray6
+            textField.layer.cornerRadius = 12
+            textField.borderStyle = .none
+        }
+
+        view.addSubview(searchBar)
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: titleStackView.bottomAnchor, constant: 8),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            searchBar.heightAnchor.constraint(equalToConstant: 40)
+        ])
+    }
+    
+    private func setupTableView() {
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(ChatCell.self, forCellReuseIdentifier: ChatCell.identifier)
+        tableView.separatorStyle = .none
+        tableView.rowHeight = 80
+        tableView.backgroundColor = .white
+        view.addSubview(tableView)
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
+    
+    private func setupCreateGroupButton() {
+        let createGroupIcon = UIImage(systemName: "plus.bubble.fill")
+        createGroupButton.setImage(createGroupIcon, for: .normal)
+        createGroupButton.tintColor = .systemOrange
+        createGroupButton.addTarget(self, action: #selector(openCreateGroupView), for: .touchUpInside)
+        titleStackView.addArrangedSubview(createGroupButton)
+    }
+    
+    private func setupEmptyStateView() {
+        view.addSubview(emptyStateView)
+        NSLayoutConstraint.activate([
+            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyStateView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 32),
+            emptyStateView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32)
+        ])
+    }
+    
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(refreshFriendRequestBadge),
+                                               name: NSNotification.Name("FriendRequestUpdated"),
+                                               object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshFriendRequestBadge),
+                                             name: NSNotification.Name("FriendRequestUpdated"),
+                                             object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList),
+                                             name: NSNotification.Name("ChatListUpdated"),
+                                             object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshChatList),
+                                             name: NSNotification.Name("FriendAddedToChat"),
+                                             object: nil)
+        
+    }
+    @objc private func refreshFriendRequestBadge() {
+        updateFriendRequestBadge()
+    }
+    
+    // MARK: - Data Loading
+    private func fetchCurrentUser() {
+        guard let firebaseUser = Auth.auth().currentUser else { return }
+        
+        let currentUserID = firebaseUser.uid
+        chatManager.fetchUsers { [weak self] users in
+            guard let self = self else { return }
+            
+            if let currentUser = users.first(where: { $0.id == currentUserID }) {
+                self.currentUser = currentUser
+                self.fetchFriends(for: currentUser)
+            }
+        }
+    }
+    
+    private func fetchFriends(for user: User) {
+        FriendsService.shared.fetchFriends(forUserID: user.id) { [weak self] friends, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching friends:", error)
+                self.updateEmptyState()
+                return
+            }
+            
+            let friendIDs = friends?.map { $0.friendID } ?? []
+            
+            if friendIDs.isEmpty {
+                self.friends = []
+                self.filteredFriends = []
+                self.fetchGroups() // Still fetch groups even if no friends
+                self.fetchEventGroups()
+                return
+            }
+            
+            self.fetchFriendDetails(for: friendIDs)
+        }
+    }
+    
+    private func fetchFriendDetails(for friendIDs: [String]) {
+        let dispatchGroup = DispatchGroup()
+        var fetchedFriends: [User] = []
+
+        for friendID in friendIDs {
+            dispatchGroup.enter()
+            FriendsService.shared.fetchUserDetails(uid: friendID) { user, _ in
+                if let user = user { fetchedFriends.append(user) }
+                dispatchGroup.leave()
+            }
+        }
+
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.friends = fetchedFriends
+            self.filteredFriends = fetchedFriends
+            self.updateMessageListeners()
+            self.fetchGroups()
+            self.fetchEventGroups()
+        }
+    }
+    
+    private func fetchGroups() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("groups").getDocuments { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching groups:", error)
+                self.updateEmptyState()
+                return
+            }
+            
+            let dispatchGroup = DispatchGroup()
+            var userGroups: [Group] = []
+            
+            for document in snapshot?.documents ?? [] {
+                let groupID = document.documentID
+                dispatchGroup.enter()
+                
+                self.db.collection("groups")
+                    .document(groupID)
+                    .collection("members")
+                    .document(currentUserID)
+                    .getDocument { memberDoc, _ in
+                        if memberDoc?.exists == true {
+                            let data = document.data()
+                            let group = Group(
+                                id: groupID,
+                                name: data["name"] as? String ?? "Unnamed Group",
+                                members: [],
+                                imageURL: data["imageURL"] as? String ?? ""
+                            )
+                            userGroups.append(group)
+                        }
+                        dispatchGroup.leave()
+                    }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                self.groups = userGroups
+                self.updateEmptyState()
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
+    private func fetchEventGroups() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("eventGroups").getDocuments { [weak self] snapshot, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error fetching event groups:", error)
+                self.updateEmptyState()
+                return
+            }
+            
+            let dispatchGroup = DispatchGroup()
+            var tempEventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
+            
+            for document in snapshot?.documents ?? [] {
+                let eventId = document.documentID
+                dispatchGroup.enter()
+                
+                // Check membership
+                self.db.collection("eventGroups").document(eventId)
+                    .collection("members").document(currentUserID)
+                    .getDocument { [weak self] memberDoc, error in
+                        guard let self = self else {
+                            dispatchGroup.leave()
+                            return
+                        }
+                        
+                        if memberDoc?.exists == true {
+                            // Get event details
+                            self.db.collection("events").document(eventId).getDocument { eventDoc, _ in
+                                if let eventData = eventDoc?.data() {
+                                    let eventName = eventData["title"] as? String ?? "Event"
+                                    let imageURL = eventData["imageName"] as? String
+                                    
+                                    // Get last message
+                                    self.db.collection("eventGroups").document(eventId)
+                                        .collection("messages")
+                                        .order(by: "timestamp", descending: true)
+                                        .limit(to: 1)
+                                        .getDocuments { msgSnapshot, _ in
+                                            var lastMessage: String?
+                                            var timestamp: Date?
+                                            
+                                            if let msgDoc = msgSnapshot?.documents.first {
+                                                lastMessage = msgDoc.data()["text"] as? String
+                                                timestamp = (msgDoc.data()["timestamp"] as? Timestamp)?.dateValue()
+                                            }
+                                            
+                                            tempEventGroups.append((
+                                                eventId: eventId,
+                                                name: eventName,
+                                                lastMessage: lastMessage,
+                                                timestamp: timestamp,
+                                                imageURL: imageURL
+                                            ))
+                                            dispatchGroup.leave()
+                                        }
+                                } else {
+                                    dispatchGroup.leave()
+                                }
+                            }
+                        } else {
+                            dispatchGroup.leave()
+                        }
+                    }
+            }
+            
+            dispatchGroup.notify(queue: .main) {
+                self.eventGroups = tempEventGroups.sorted {
+                    ($0.timestamp ?? Date.distantPast) > ($1.timestamp ?? Date.distantPast)
+                }
+                print("Fetched \(self.eventGroups.count) event groups")
+                self.updateEmptyState()
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
+    // MARK: - Empty State
+    private func updateEmptyState() {
+        let isEmpty = friends.isEmpty && groups.isEmpty && eventGroups.isEmpty
+        print("Empty state check - Friends: \(friends.count), Groups: \(groups.count), Events: \(eventGroups.count), Show empty: \(isEmpty)")
+        
+        DispatchQueue.main.async {
+            self.emptyStateView.isHidden = !isEmpty
+            self.tableView.isHidden = isEmpty
+            
+            if isEmpty {
+                for subview in self.emptyStateView.subviews {
+                    if let button = subview as? UIButton {
+                        button.addTarget(self, action: #selector(self.openFriendsViewController), for: .touchUpInside)
+                        break
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Actions
+    @objc private func refreshChatList() {
+        guard let currentUser = currentUser else { return }
+        fetchFriends(for: currentUser)
+    }
+    
+    @objc private func openFriendsViewController() {
+        let friendsVC = FriendsViewController()
+        friendsVC.currentUser = currentUser
+        navigationController?.pushViewController(friendsVC, animated: true)
+    }
+    
+    @objc private func openCreateGroupView() {
+        let createGroupVC = CreateGroupViewController()
+        createGroupVC.currentUser = currentUser
+        createGroupVC.friends = friends
+        let navController = UINavigationController(rootViewController: createGroupVC)
+        
+        if let sheet = navController.presentationController as? UISheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+        }
+        
+        present(navController, animated: true)
+    }
+    
+    @objc private func openFriendRequestsViewController() {
+        let friendRequestsVC = FriendRequestsViewController()
+        friendRequestsVC.currentUser = currentUser
+        let navController = UINavigationController(rootViewController: friendRequestsVC)
+        navController.modalPresentationStyle = .pageSheet
+        if let sheet = navController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+        }
+        present(navController, animated: true)
+    }
+    
+  
+    
     private func updateFriendRequestBadge() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
@@ -174,490 +506,244 @@ class ChatViewController: UIViewController {
             }
     }
     
-    private func fetchGroups() {
-        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+    // MARK: - Chat Functions
+    private func updateMessageListeners() {
+        messageListeners.values.forEach { $0.remove() }
+        messageListeners.removeAll()
         
-        db.collection("groups").whereField("members", arrayContains: currentUserID).getDocuments { [weak self] (snapshot, error) in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("Error fetching groups: \(error.localizedDescription)")
-                return
-            }
-            
-            self.groups = snapshot?.documents.compactMap { doc in
-                let data = doc.data()
-                return Group(
-                    id: doc.documentID,
-                    name: data["name"] as? String ?? "Unnamed Group",
-                    members: data["members"] as? [String] ?? []
-                )
-            } ?? []
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-    }
-
-
-    private func setupSearchBar() {
-        searchBar.delegate = self
-        searchBar.placeholder = "Search"
-        
-        // Reverting to original grey background
-        let greyColor = UIColor.systemGray6
-        searchBar.barTintColor = greyColor
-        searchBar.layer.cornerRadius = 12
-        searchBar.clipsToBounds = true
-
-        if let textField = searchBar.value(forKey: "searchField") as? UITextField {
-            textField.backgroundColor = greyColor // Grey Input Field
-            textField.layer.cornerRadius = 12
-            textField.borderStyle = .none // Remove border for a cleaner look
-        }
-
-        view.addSubview(searchBar)
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            searchBar.heightAnchor.constraint(equalToConstant: 40)
-        ])
-    }
-    private func setupTableView() {
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.register(ChatCell.self, forCellReuseIdentifier: ChatCell.identifier)
-        tableView.separatorStyle = .none // Hide default separators
-        tableView.rowHeight = 80
-        tableView.backgroundColor = .white
-
-        view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 8),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-    }
-    
-    
-    @objc private func refreshFriendRequestBadge() {
-        updateFriendRequestBadge() // Refresh the count when a request is accepted/rejected
-    }
-
-
-    @objc private func openFriendsViewController() {
-        let friendsVC = FriendsViewController()
-        friendsVC.currentUser = currentUser
-        navigationController?.pushViewController(friendsVC, animated: true)
-    }
-    
-    @objc private func openCreateGroupView() {
-        let createGroupVC = CreateGroupViewController()
-        createGroupVC.currentUser = currentUser
-        createGroupVC.friends = friends
-        let navController = UINavigationController(rootViewController: createGroupVC)
-        
-        if let sheet = navController.presentationController as? UISheetPresentationController {
-            sheet.detents = [.medium(), .large()] // Show as a sheet
-        }
-        
-        present(navController, animated: true)
-    }
-
-
-
-    @objc private func openFriendRequestsViewController() {
-        let friendRequestsVC = FriendRequestsViewController()
-        friendRequestsVC.currentUser = currentUser
-        let navController = UINavigationController(rootViewController: friendRequestsVC)
-        navController.modalPresentationStyle = .pageSheet
-        if let sheet = navController.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-        }
-        present(navController, animated: true, completion: nil)
-    }
-
-    private func fetchCurrentUser() {
-        guard let firebaseUser = Auth.auth().currentUser else {
-            print("No user is logged in")
-            return
-        }
-
-        let currentUserID = firebaseUser.uid
-        chatManager.fetchUsers { [weak self] users in
-            guard let self = self else { return }
-
-            if let currentUser = users.first(where: { $0.id == currentUserID }) {
-                self.currentUser = currentUser
-                self.fetchFriends(for: currentUser)
-            } else {
-                print("Current user not found in users collection.")
-            }
-        }
-    }
-
-    
-    private func fetchFriends(for user: User) {
-        FriendsService.shared.fetchFriends(forUserID: user.id) { [weak self] friends, error in
-            if let error = error {
-                print("Error fetching friends: \(error)")
-                return
-            }
-
-            let friendIDs = friends?.map { $0.friendID } ?? []
-            self?.fetchFriendDetails(for: friendIDs)
-        }
-    }
-
-
-    private func fetchFriendDetails(for friendIDs: [String]) {
-        let dispatchGroup = DispatchGroup()
-        var fetchedFriends: [User] = []
-
-        for friendID in friendIDs {
-            dispatchGroup.enter()
-            FriendsService.shared.fetchUserDetails(uid: friendID) { user, error in
-                if let user = user {
-                    fetchedFriends.append(user)
-                }
-                dispatchGroup.leave()
-            }
-        }
-
-        dispatchGroup.notify(queue: .main) { [weak self] in
-            self?.friends = fetchedFriends
-            self?.filteredFriends = fetchedFriends
-            self?.fetchLastMessages()
-            self?.addMessageListeners()
-        }
-    }
-    
-    
-
-    private func fetchLastMessages() {
-        let dispatchGroup = DispatchGroup()
         guard let currentUser = currentUser else { return }
-
-        for friend in friends {
-            dispatchGroup.enter()
-            chatManager.fetchOrCreateChatThread(for: currentUser.id, with: friend.id) { [weak self] thread in
-                guard let self = self, let thread = thread else {
-                    dispatchGroup.leave()
-                    return
-                }
-                self.chatManager.fetchLastMessage(for: thread, currentUserID: currentUser.id) { message in
-                    if let message = message {
-                        self.lastMessages[friend.id] = message
-                    }
-                    dispatchGroup.leave()
-                }
-            }
-        }
-
-        dispatchGroup.notify(queue: .main) { [weak self] in
-            self?.tableView.reloadData()
-        }
-    }
-    
-    
-    // Add this method to fetch event groups where the user is a member
-    private func fetchEventGroups() {
-        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
         
-        // We need to find all event groups where the current user is a member
-        db.collection("eventGroups").getDocuments { [weak self] (snapshot, error) in
-            guard let self = self else { return }
-            
-            if let error = error {
-                print("Error fetching event groups: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let documents = snapshot?.documents, !documents.isEmpty else {
-                return
-            }
-            
-            var pendingGroups = documents.count
-            var newEventGroups: [(eventId: String, name: String, lastMessage: String?, timestamp: Date?, imageURL: String?)] = []
-            
-            for document in documents {
-                let eventId = document.documentID
-                
-                // Check if the user is a member of this event group
-                self.db.collection("eventGroups")
-                    .document(eventId)
-                    .collection("members")
-                    .document(currentUserID)
-                    .getDocument { [weak self] (userDoc, error) in
-                        guard let self = self else { return }
-                        pendingGroups -= 1
-                        
-                        // If the document exists, the user is a member of this event group
-                        if let userDoc = userDoc, userDoc.exists {
-                            // Get event details from events collection
-                            self.db.collection("events").document(eventId).getDocument { (eventDoc, error) in
-                                if let eventData = eventDoc?.data(),
-                                   let eventName = eventData["title"] as? String {
-                                    
-                                    // Get the image URL
-                                    let imageURL = eventData["imageName"] as? String
-                                    
-                                    // Fetch the most recent message if any
-                                    self.db.collection("eventGroups").document(eventId)
-                                        .collection("messages")
-                                        .order(by: "timestamp", descending: true)
-                                        .limit(to: 1)
-                                        .getDocuments { (msgSnapshot, msgError) in
-                                            
-                                            var lastMessage: String? = nil
-                                            var timestamp: Date? = nil
-                                            
-                                            if let msgDoc = msgSnapshot?.documents.first {
-                                                lastMessage = msgDoc.data()["text"] as? String
-                                                timestamp = (msgDoc.data()["timestamp"] as? Timestamp)?.dateValue()
-                                            }
-                                            
-                                            let group = (
-                                                eventId: eventId,
-                                                name: eventName,
-                                                lastMessage: lastMessage,
-                                                timestamp: timestamp,
-                                                imageURL: imageURL
-                                            )
-                                            
-                                            newEventGroups.append(group)
-                                            
-                                            // When all groups are processed, update the UI
-                                            if pendingGroups == 0 {
-                                                self.eventGroups = newEventGroups.sorted(by: {
-                                                    ($0.timestamp ?? Date.distantPast) > ($1.timestamp ?? Date.distantPast)
-                                                })
-                                                
-                                                DispatchQueue.main.async {
-                                                    self.tableView.reloadData()
-                                                }
-                                            }
-                                        }
-                                } else if pendingGroups == 0 && newEventGroups.isEmpty {
-                                    DispatchQueue.main.async {
-                                        self.tableView.reloadData()
-                                    }
-                                }
-                            }
-                        } else if pendingGroups == 0 && newEventGroups.isEmpty {
-                            DispatchQueue.main.async {
-                                self.tableView.reloadData()
-                            }
-                        }
-                    }
-            }
-        }
-    }
-
-    
-    // Add this method to navigate to an event group
-    private func openEventGroupChat(eventId: String) {
-        // Check user role in this event group
-        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("eventGroups").document(eventId)
-            .collection("members").document(currentUserID)
-            .getDocument { [weak self] (document, error) in
-                guard let self = self else { return }
-                
-                let isOrganizer = document?.data()?["role"] as? String == "organizer"
-                
-                DispatchQueue.main.async {
-                    let eventGroupVC = EventGroupViewController(eventId: eventId, isOrganizer: isOrganizer)
-                    self.navigationController?.pushViewController(eventGroupVC, animated: true)
-                }
-            }
-    }
-    
-    
-
-    private func addMessageListeners() {
-        guard let currentUser = currentUser else { return }
-
         for friend in friends {
             chatManager.fetchOrCreateChatThread(for: currentUser.id, with: friend.id) { [weak self] thread in
                 guard let self = self, let thread = thread else { return }
+                
                 let listener = self.db.collection("chats")
                     .document(thread.id)
                     .collection("messages")
                     .order(by: "timestamp", descending: true)
                     .limit(to: 1)
-                    .addSnapshotListener { [weak self] (snapshot: QuerySnapshot?, error: Error?) in
+                    .addSnapshotListener { [weak self] snapshot, error in
                         guard let self = self else { return }
-                        if let error = error {
-                            print("Error listening for messages: \(error)")
-                            return
+                        
+                        if let document = snapshot?.documents.first {
+                            let data = document.data()
+                            let messageContent = data["messageContent"] as? String ?? ""
+                            let senderId = data["senderId"] as? String ?? ""
+                            let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                            
+                            let sender = thread.participants.first { $0.id == senderId } ?? User(id: senderId, name: "Unknown")
+                            let message = ChatMessage(
+                                id: document.documentID,
+                                sender: sender,
+                                messageContent: messageContent,
+                                timestamp: timestamp,
+                                isSender: senderId == currentUser.id
+                            )
+                            
+                            self.lastMessages[friend.id] = message
+                            self.sortAndReloadData()
                         }
-                        guard let document = snapshot?.documents.first else { return }
-                        let data = document.data()
-                        let messageContent = data["messageContent"] as? String ?? ""
-                        let senderId = data["senderId"] as? String ?? ""
-                        let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-
-                        let sender = thread.participants.first { $0.id == senderId } ?? User(id: senderId, name: "Unknown")
-                        let message = ChatMessage(id: document.documentID, sender: sender, messageContent: messageContent, timestamp: timestamp, isSender: senderId == currentUser.id)
-
-                        self.lastMessages[friend.id] = message
-                        self.tableView.reloadData()
                     }
+                
                 self.messageListeners[thread.id] = listener
             }
         }
     }
-
-    public func startChat(with friend: User) {
-        guard let currentUser = currentUser else {
-            print("Current user is nil. Cannot start chat.")
-            return
+    
+    private func sortAndReloadData() {
+        filteredFriends.sort { (friend1, friend2) -> Bool in
+            let time1 = lastMessages[friend1.id]?.timestamp ?? Date.distantPast
+            let time2 = lastMessages[friend2.id]?.timestamp ?? Date.distantPast
+            return time1 > time2
         }
+        
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+    }
+    
+    public func startChat(with friend: User) {
+        guard let currentUser = currentUser else { return }
 
         chatManager.fetchOrCreateChatThread(for: currentUser.id, with: friend.id) { [weak self] thread in
-            guard let self = self, let thread = thread else {
-                print("Error creating or fetching chat thread.")
-                return
-            }
+            guard let self = self, let thread = thread else { return }
 
             DispatchQueue.main.async {
                 let chatDetailVC = ChatDetailViewController()
                 chatDetailVC.chatThread = thread
                 chatDetailVC.delegate = self
-
-                // Present ChatDetailViewController in full-screen mode without the tab bar
+                
                 let navController = UINavigationController(rootViewController: chatDetailVC)
                 navController.modalPresentationStyle = .fullScreen
-                self.present(navController, animated: true, completion: nil)
+                self.present(navController, animated: true)
             }
         }
     }
     
     private func openGroupChat(group: Group) {
-        print("Opening Group Chat for group ID: \(group.id)") // Debugging
-
-        let chatDetailVC = ChatDetailViewController()
-        chatDetailVC.group = group // Pass group data
-        chatDetailVC.isGroupChat = true // Indicate it's a group chat
-
-        let navController = UINavigationController(rootViewController: chatDetailVC)
-        navController.modalPresentationStyle = .fullScreen
-        present(navController, animated: true)
-    }
-
-
-}
-
-// MARK: - UITableViewDataSource and UITableViewDelegate
-
-extension ChatViewController: UITableViewDataSource, UITableViewDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredFriends.count + groups.count + eventGroups.count
+        let currentUserID = Auth.auth().currentUser?.uid ?? ""
+        
+        db.collection("groups")
+            .document(group.id)
+            .collection("members")
+            .document(currentUserID)
+            .getDocument { [weak self] document, _ in
+                guard let self = self else { return }
+                
+                let isAdmin = document?.data()?["role"] as? String == "admin"
+                
+                self.db.collection("groups")
+                    .document(group.id)
+                    .collection("members")
+                    .getDocuments { snapshot, _ in
+                        var members: [UserGroup.Member] = []
+                        
+                        for memberDoc in snapshot?.documents ?? [] {
+                            let userId = memberDoc.documentID
+                            let data = memberDoc.data()
+                            let member = UserGroup.Member(
+                                userId: userId,
+                                name: data["name"] as? String ?? "Unknown",
+                                role: data["role"] as? String ?? "member",
+                                joinedAt: (data["joinedAt"] as? Timestamp)?.dateValue() ?? Date(),
+                                canChat: data["canChat"] as? Bool ?? true,
+                                profileImageURL: data["profileImageURL"] as? String
+                            )
+                            members.append(member)
+                        }
+                        
+                        DispatchQueue.main.async {
+                            let groupVC = GroupViewController(
+                                groupId: group.id,
+                                groupName: group.name,
+                                members: members
+                            )
+                            self.navigationController?.pushViewController(groupVC, animated: true)
+                        }
+                    }
+            }
     }
     
-    //    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    //        guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatCell.identifier, for: indexPath) as? ChatCell else {
-    //            return UITableViewCell()
-    //        }
-    //
-    //        let friend = filteredFriends[indexPath.row]
-    //        let lastMessage = lastMessages[friend.id]
-    //        let messageText = lastMessage?.messageContent ?? "Tap to start a chat"
-    //        let messageTime = lastMessage?.formattedTime() ?? ""
-    //
-    //        cell.configure(
-    //            with: friend.name,
-    //            message: messageText,
-    //            time: messageTime,
-    //            profileImageURL: friend.profileImageURL
-    //        )
-    //        return cell
-    //    }
-    // Update tableView cellForRowAt
+    private func openEventGroupChat(eventId: String) {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("eventGroups")
+            .document(eventId)
+            .collection("members")
+            .document(currentUserID)
+            .getDocument { [weak self] document, _ in
+                guard let self = self else { return }
+                
+                let eventName = self.eventGroups.first(where: { $0.eventId == eventId })?.name ?? "Event Group"
+                
+                self.db.collection("eventGroups")
+                    .document(eventId)
+                    .collection("members")
+                    .getDocuments { snapshot, _ in
+                        var members: [EventGroup.Member] = []
+                        
+                        for memberDoc in snapshot?.documents ?? [] {
+                            let userId = memberDoc.documentID
+                            let data = memberDoc.data()
+                            let member = EventGroup.Member(
+                                userId: userId,
+                                name: data["name"] as? String ?? "Unknown",
+                                role: data["role"] as? String ?? "member",
+                                joinedAt: (data["joinedAt"] as? Timestamp)?.dateValue() ?? Date(),
+                                canChat: data["canChat"] as? Bool ?? true,
+                                profileImageURL: data["profileImageURL"] as? String
+                            )
+                            members.append(member)
+                        }
+                        
+                        DispatchQueue.main.async {
+                            let eventGroupVC = EventGroupViewController(
+                                eventId: eventId,
+                                eventName: eventName,
+                                members: members
+                            )
+                            self.navigationController?.pushViewController(eventGroupVC, animated: true)
+                        }
+                    }
+            }
+    }
+}
+
+// MARK: - UITableViewDataSource & Delegate
+extension ChatViewController: UITableViewDataSource, UITableViewDelegate {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let total = filteredFriends.count + groups.count + eventGroups.count
+        print("Total rows: \(total) (friends: \(filteredFriends.count), groups: \(groups.count), events: \(eventGroups.count))")
+        return total
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatCell.identifier, for: indexPath) as? ChatCell else {
             return UITableViewCell()
         }
-
+        
         if indexPath.row < groups.count {
-            // Display Group Chat
             let group = groups[indexPath.row]
             cell.configure(
                 with: group.name,
                 message: "Group Chat",
                 time: "",
-                profileImageURL: nil
+                profileImageURL: group.imageURL
             )
-        } else if indexPath.row < groups.count + eventGroups.count {
-            // Display Event Group Chat
-            let eventGroupIndex = indexPath.row - groups.count
-            let eventGroup = eventGroups[eventGroupIndex]
+        }
+        else if indexPath.row < groups.count + eventGroups.count {
+            let eventIndex = indexPath.row - groups.count
+            let event = eventGroups[eventIndex]
             
-            let messageText = eventGroup.lastMessage ?? "Event Group Chat"
-            var timeString = ""
-            if let timestamp = eventGroup.timestamp {
-                let formatter = DateFormatter()
-                formatter.timeStyle = .short
-                timeString = formatter.string(from: timestamp)
-            }
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            let timeString = event.timestamp != nil ? formatter.string(from: event.timestamp!) : ""
             
             cell.configure(
-                with: "🎯 \(eventGroup.name)",
-                message: messageText,
+                with: "🎯 \(event.name)",
+                message: event.lastMessage ?? "Event Group Chat",
                 time: timeString,
-                profileImageURL: eventGroup.imageURL // Pass the image URL
+                profileImageURL: event.imageURL
             )
-        } else {
-            // Display Individual Chat
+        }
+        else {
             let friendIndex = indexPath.row - groups.count - eventGroups.count
             let friend = filteredFriends[friendIndex]
             let lastMessage = lastMessages[friend.id]
-            let messageText = lastMessage?.messageContent ?? "Tap to start a chat"
-            let messageTime = lastMessage?.formattedTime() ?? ""
-
+            
+            let formatter = DateFormatter()
+            formatter.timeStyle = .short
+            let timeString = lastMessage?.timestamp != nil ? formatter.string(from: lastMessage!.timestamp) : ""
+            
             cell.configure(
                 with: friend.name,
-                message: messageText,
-                time: messageTime,
+                message: lastMessage?.messageContent ?? "Tap to start a chat",
+                time: timeString,
                 profileImageURL: friend.profileImageURL
             )
         }
-
+        
         return cell
     }
     
-    
-    // Update tableView didSelectRowAt
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
         if indexPath.row < groups.count {
-            // Open Group Chat
-            let selectedGroup = groups[indexPath.row]
-            openGroupChat(group: selectedGroup)
-        } else if indexPath.row < groups.count + eventGroups.count {
-            // Open Event Group Chat
+            openGroupChat(group: groups[indexPath.row])
+        }
+        else if indexPath.row < groups.count + eventGroups.count {
             let eventGroupIndex = indexPath.row - groups.count
-            let selectedEventGroup = eventGroups[eventGroupIndex]
-            openEventGroupChat(eventId: selectedEventGroup.eventId)
-        } else {
-            // Open Individual Chat
+            openEventGroupChat(eventId: eventGroups[eventGroupIndex].eventId)
+        }
+        else {
             let friendIndex = indexPath.row - groups.count - eventGroups.count
-            let selectedFriend = filteredFriends[friendIndex]
-            startChat(with: selectedFriend)
+            startChat(with: filteredFriends[friendIndex])
         }
     }
 }
 
 // MARK: - UISearchBarDelegate
-
 extension ChatViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchText.isEmpty {
@@ -667,14 +753,13 @@ extension ChatViewController: UISearchBarDelegate {
         }
         tableView.reloadData()
     }
-
+    
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
 }
 
 // MARK: - ChatDetailViewControllerDelegate
-
 extension ChatViewController: ChatDetailViewControllerDelegate {
     func didSendMessage(_ message: ChatMessage, to friend: User) {
         lastMessages[friend.id] = message
@@ -682,6 +767,24 @@ extension ChatViewController: ChatDetailViewControllerDelegate {
     }
 }
 
+// MARK: - Preview
+#Preview {
+    ChatViewController()
+}
 #Preview{
     ChatViewController()
+}
+
+extension Date {
+    func formattedTime() -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: self)
+    }
+    
+    func formattedDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: self)
+    }
 }

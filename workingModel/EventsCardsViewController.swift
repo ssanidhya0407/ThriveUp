@@ -54,4 +54,13 @@ class EventsCardsViewController: UIViewController, UICollectionViewDelegate, UIC
         cell.configure(with: event)
         return cell
     }
+    
+    // Add this method to handle cell selection
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let event = category.events[indexPath.item]
+        let eventDetailVC = EventDetailViewController()
+        eventDetailVC.eventId = event.eventId
+        eventDetailVC.openedFromEventVC = false // Set this based on your needs
+        navigationController?.pushViewController(eventDetailVC, animated: true)
+    }
 }

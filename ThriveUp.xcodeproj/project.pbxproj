@@ -9,7 +9,45 @@
 /* Begin PBXBuildFile section */
 		39DF783A2CE9AF5E004B8244 /* SwipeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39DF78392CE9AF5E004B8244 /* SwipeViewController.swift */; };
 		39DF783C2CE9B011004B8244 /* BookmarkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39DF783B2CE9B011004B8244 /* BookmarkViewController.swift */; };
-		572D8A352D0D5D3800DAB286 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 572D8A342D0D5D3800DAB286 /* GoogleService-Info.plist */; };
+		570DD4432D9F004E00901E69 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 570DD4422D9F004E00901E69 /* GoogleSignIn */; };
+		570DD4452D9F004E00901E69 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 570DD4442D9F004E00901E69 /* GoogleSignInSwift */; };
+		570DD4472D9F02A600901E69 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 570DD4462D9F02A600901E69 /* GoogleService-Info.plist */; };
+		570DD44B2DA0968D00901E69 /* CardsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD44A2DA0968D00901E69 /* CardsViewController.swift */; };
+		570DD4582DA2F58700901E69 /* EventGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4572DA2F58700901E69 /* EventGroup.swift */; };
+		570DD45A2DA2F5B000901E69 /* EventGroupDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4592DA2F5B000901E69 /* EventGroupDetailsViewController.swift */; };
+		570DD4672DA2F5BE00901E69 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4662DA2F5BE00901E69 /* MessageCell.swift */; };
+		570DD4682DA2F5BE00901E69 /* EventGroupMesage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD45D2DA2F5BE00901E69 /* EventGroupMesage.swift */; };
+		570DD4692DA2F5BE00901E69 /* EventGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4602DA2F5BE00901E69 /* EventGroupViewController.swift */; };
+		570DD46A2DA2F5BE00901E69 /* EventMessageInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4612DA2F5BE00901E69 /* EventMessageInputView.swift */; };
+		570DD46B2DA2F5BE00901E69 /* GroupMemberVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4642DA2F5BE00901E69 /* GroupMemberVC.swift */; };
+		570DD46C2DA2F5BE00901E69 /* EventGroupMessageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD45E2DA2F5BE00901E69 /* EventGroupMessageManager.swift */; };
+		570DD46D2DA2F5BE00901E69 /* EventStatusListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4622DA2F5BE00901E69 /* EventStatusListener.swift */; };
+		570DD46E2DA2F5BE00901E69 /* MemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4652DA2F5BE00901E69 /* MemberCell.swift */; };
+		570DD46F2DA2F5BE00901E69 /* EventGroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD45C2DA2F5BE00901E69 /* EventGroupMember.swift */; };
+		570DD4702DA2F5BE00901E69 /* EventGroupsListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD45F2DA2F5BE00901E69 /* EventGroupsListViewController.swift */; };
+		570DD4712DA2F5BE00901E69 /* EventGroupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD45B2DA2F5BE00901E69 /* EventGroupManager.swift */; };
+		570DD4722DA2F5BE00901E69 /* FullScreenImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4632DA2F5BE00901E69 /* FullScreenImageViewController.swift */; };
+		570DD47C2DA2F68E00901E69 /* GroupTypeExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4762DA2F68E00901E69 /* GroupTypeExtensions.swift */; };
+		570DD47D2DA2F68E00901E69 /* DateFormatterExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4742DA2F68E00901E69 /* DateFormatterExtensions.swift */; };
+		570DD47E2DA2F68E00901E69 /* MessageCellAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4782DA2F68E00901E69 /* MessageCellAdapter.swift */; };
+		570DD47F2DA2F68E00901E69 /* EventGroupManagerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4752DA2F68E00901E69 /* EventGroupManagerExtensions.swift */; };
+		570DD4802DA2F68E00901E69 /* ViewControllerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD47A2DA2F68E00901E69 /* ViewControllerExtensions.swift */; };
+		570DD4812DA2F68E00901E69 /* MemberProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4772DA2F68E00901E69 /* MemberProtocol.swift */; };
+		570DD48F2DA2F72D00901E69 /* GroupMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4882DA2F72D00901E69 /* GroupMessage.swift */; };
+		570DD4902DA2F72D00901E69 /* GroupMessageInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD48A2DA2F72D00901E69 /* GroupMessageInputView.swift */; };
+		570DD4912DA2F72D00901E69 /* GroupMemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4872DA2F72D00901E69 /* GroupMemberCell.swift */; };
+		570DD4922DA2F72D00901E69 /* GroupDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4842DA2F72D00901E69 /* GroupDetailsViewController.swift */; };
+		570DD4942DA2F72D00901E69 /* UserGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD48D2DA2F72D00901E69 /* UserGroup.swift */; };
+		570DD4952DA2F72D00901E69 /* GroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4862DA2F72D00901E69 /* GroupMember.swift */; };
+		570DD4962DA2F72D00901E69 /* UserGroupMemberVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD48E2DA2F72D00901E69 /* UserGroupMemberVC.swift */; };
+		570DD4972DA2F72D00901E69 /* GroupMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4892DA2F72D00901E69 /* GroupMessageCell.swift */; };
+		570DD4982DA2F72D00901E69 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4832DA2F72D00901E69 /* CreateGroupViewController.swift */; };
+		570DD4992DA2F72D00901E69 /* GroupFullScreenImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4852DA2F72D00901E69 /* GroupFullScreenImageViewController.swift */; };
+		570DD49A2DA2F72D00901E69 /* GroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD48C2DA2F72D00901E69 /* GroupViewController.swift */; };
+		570DD4A02DA2F79600901E69 /* GroupUserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD49F2DA2F79600901E69 /* GroupUserProfileViewController.swift */; };
+		570DD4A22DA2F83300901E69 /* MessageCellExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4A12DA2F83300901E69 /* MessageCellExtensions.swift */; };
+		570DD4A42DA2FF3900901E69 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4A32DA2FF3900901E69 /* ImageCache.swift */; };
+		570DD4A62DA3246E00901E69 /* ChatDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4A52DA3246E00901E69 /* ChatDetailsViewController.swift */; };
 		572D8A382D0D5E4300DAB286 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 572D8A372D0D5E4300DAB286 /* FirebaseAnalytics */; };
 		572D8A3A2D0D5E4300DAB286 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 572D8A392D0D5E4300DAB286 /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		572D8A3C2D0D5E4300DAB286 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 572D8A3B2D0D5E4300DAB286 /* FirebaseAuth */; };
@@ -21,6 +59,7 @@
 		572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A482D0D9E5B00DAB286 /* EventRegistrationViewController.swift */; };
 		572D8A4D2D0DA2FD00DAB286 /* EventListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A4C2D0DA2FD00DAB286 /* EventListViewController.swift */; };
 		572D8A512D0DFBE000DAB286 /* EventPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */; };
+		573197AB2D9EFBBB007F0AE0 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 573197AA2D9EFBBB007F0AE0 /* Kingfisher */; };
 		5756E1092D81C8E0005EF598 /* QuickAddCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E1082D81C8E0005EF598 /* QuickAddCell.swift */; };
 		5756E10B2D81C8E6005EF598 /* FriendsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10A2D81C8E6005EF598 /* FriendsViewController.swift */; };
 		5756E10D2D81C8EF005EF598 /* FriendsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756E10C2D81C8EF005EF598 /* FriendsService.swift */; };
@@ -90,16 +129,7 @@
 		7852F6152D456E500068F229 /* PhotosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6142D456E500068F229 /* PhotosViewController.swift */; };
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
-		78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */; };
-		78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */; };
-		78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */; };
-		78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */; };
-		78B2C6922D8D3FBD0046B030 /* EventStatusListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */; };
-		78B2C6932D8D3FBD0046B030 /* EventGroupViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */; };
-		78B2C6942D8D3FBD0046B030 /* GroupMemberVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */; };
 		78B2C6952D8D3FBD0046B030 /* OrganizerProfileViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */; };
-		78B2C6962D8D3FBD0046B030 /* MemberCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */; };
-		78B2C6972D8D3FBD0046B030 /* EventGroupsListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */; };
 		78B2C6982D8D3FBD0046B030 /* UserProfileViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */; };
 		78B8D2D92D38E7510004AD09 /* Instructions in Frameworks */ = {isa = PBXBuildFile; productRef = 78B8D2D82D38E7510004AD09 /* Instructions */; };
 		78B9A1EF2D7BE9A9004B7B78 /* TechStackViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */; };
@@ -131,7 +161,43 @@
 		39DF78392CE9AF5E004B8244 /* SwipeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeViewController.swift; sourceTree = "<group>"; };
 		39DF783B2CE9B011004B8244 /* BookmarkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkViewController.swift; sourceTree = "<group>"; };
 		4CF53B076F3A5BE3385209B6 /* Pods-ThriveUp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ThriveUp.debug.xcconfig"; path = "Target Support Files/Pods-ThriveUp/Pods-ThriveUp.debug.xcconfig"; sourceTree = "<group>"; };
-		572D8A342D0D5D3800DAB286 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		570DD4462D9F02A600901E69 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		570DD44A2DA0968D00901E69 /* CardsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardsViewController.swift; sourceTree = "<group>"; };
+		570DD4572DA2F58700901E69 /* EventGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroup.swift; sourceTree = "<group>"; };
+		570DD4592DA2F5B000901E69 /* EventGroupDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupDetailsViewController.swift; sourceTree = "<group>"; };
+		570DD45B2DA2F5BE00901E69 /* EventGroupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupManager.swift; sourceTree = "<group>"; };
+		570DD45C2DA2F5BE00901E69 /* EventGroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMember.swift; sourceTree = "<group>"; };
+		570DD45D2DA2F5BE00901E69 /* EventGroupMesage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMesage.swift; sourceTree = "<group>"; };
+		570DD45E2DA2F5BE00901E69 /* EventGroupMessageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMessageManager.swift; sourceTree = "<group>"; };
+		570DD45F2DA2F5BE00901E69 /* EventGroupsListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupsListViewController.swift; sourceTree = "<group>"; };
+		570DD4602DA2F5BE00901E69 /* EventGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupViewController.swift; sourceTree = "<group>"; };
+		570DD4612DA2F5BE00901E69 /* EventMessageInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMessageInputView.swift; sourceTree = "<group>"; };
+		570DD4622DA2F5BE00901E69 /* EventStatusListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatusListener.swift; sourceTree = "<group>"; };
+		570DD4632DA2F5BE00901E69 /* FullScreenImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageViewController.swift; sourceTree = "<group>"; };
+		570DD4642DA2F5BE00901E69 /* GroupMemberVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMemberVC.swift; sourceTree = "<group>"; };
+		570DD4652DA2F5BE00901E69 /* MemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberCell.swift; sourceTree = "<group>"; };
+		570DD4662DA2F5BE00901E69 /* MessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
+		570DD4742DA2F68E00901E69 /* DateFormatterExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatterExtensions.swift; sourceTree = "<group>"; };
+		570DD4752DA2F68E00901E69 /* EventGroupManagerExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupManagerExtensions.swift; sourceTree = "<group>"; };
+		570DD4762DA2F68E00901E69 /* GroupTypeExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupTypeExtensions.swift; sourceTree = "<group>"; };
+		570DD4772DA2F68E00901E69 /* MemberProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberProtocol.swift; sourceTree = "<group>"; };
+		570DD4782DA2F68E00901E69 /* MessageCellAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCellAdapter.swift; sourceTree = "<group>"; };
+		570DD47A2DA2F68E00901E69 /* ViewControllerExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerExtensions.swift; sourceTree = "<group>"; };
+		570DD4832DA2F72D00901E69 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
+		570DD4842DA2F72D00901E69 /* GroupDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupDetailsViewController.swift; sourceTree = "<group>"; };
+		570DD4852DA2F72D00901E69 /* GroupFullScreenImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupFullScreenImageViewController.swift; sourceTree = "<group>"; };
+		570DD4862DA2F72D00901E69 /* GroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMember.swift; sourceTree = "<group>"; };
+		570DD4872DA2F72D00901E69 /* GroupMemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMemberCell.swift; sourceTree = "<group>"; };
+		570DD4882DA2F72D00901E69 /* GroupMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMessage.swift; sourceTree = "<group>"; };
+		570DD4892DA2F72D00901E69 /* GroupMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMessageCell.swift; sourceTree = "<group>"; };
+		570DD48A2DA2F72D00901E69 /* GroupMessageInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMessageInputView.swift; sourceTree = "<group>"; };
+		570DD48C2DA2F72D00901E69 /* GroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupViewController.swift; sourceTree = "<group>"; };
+		570DD48D2DA2F72D00901E69 /* UserGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGroup.swift; sourceTree = "<group>"; };
+		570DD48E2DA2F72D00901E69 /* UserGroupMemberVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGroupMemberVC.swift; sourceTree = "<group>"; };
+		570DD49F2DA2F79600901E69 /* GroupUserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupUserProfileViewController.swift; sourceTree = "<group>"; };
+		570DD4A12DA2F83300901E69 /* MessageCellExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCellExtensions.swift; sourceTree = "<group>"; };
+		570DD4A32DA2FF3900901E69 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		570DD4A52DA3246E00901E69 /* ChatDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatDetailsViewController.swift; sourceTree = "<group>"; };
 		572D8A482D0D9E5B00DAB286 /* EventRegistrationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventRegistrationViewController.swift; sourceTree = "<group>"; };
 		572D8A4C2D0DA2FD00DAB286 /* EventListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventListViewController.swift; sourceTree = "<group>"; };
 		572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPostViewController.swift; sourceTree = "<group>"; };
@@ -202,17 +268,8 @@
 		7852F6142D456E500068F229 /* PhotosViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotosViewController.swift; sourceTree = "<group>"; };
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
-		78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupViewController.swift; sourceTree = "<group>"; };
 		78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerProfileViewerController.swift; sourceTree = "<group>"; };
 		78B2C6842D8D3FBD0046B030 /* UserProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewerController.swift; sourceTree = "<group>"; };
-		78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupMember.swift; sourceTree = "<group>"; };
-		78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupsListViewController.swift; sourceTree = "<group>"; };
-		78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupViewController.swift; sourceTree = "<group>"; };
-		78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatusListener.swift; sourceTree = "<group>"; };
-		78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventStatusObserver.swift; sourceTree = "<group>"; };
-		78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupMemberVC.swift; sourceTree = "<group>"; };
-		78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberCell.swift; sourceTree = "<group>"; };
-		78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
 		78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TechStackViewController.swift; sourceTree = "<group>"; };
 		78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagViewControllerDelegate.swift; sourceTree = "<group>"; };
 		78E2BF1B2D7D710C0071778A /* AcceptRequestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptRequestViewController.swift; sourceTree = "<group>"; };
@@ -238,10 +295,13 @@
 				7852F6062D440F5C0068F229 /* FirebaseMessaging in Frameworks */,
 				572D8A402D0D5E4300DAB286 /* FirebaseDatabase in Frameworks */,
 				7852F60B2D44201A0068F229 /* OneSignalFramework in Frameworks */,
+				573197AB2D9EFBBB007F0AE0 /* Kingfisher in Frameworks */,
 				572D8A382D0D5E4300DAB286 /* FirebaseAnalytics in Frameworks */,
 				572D8A3C2D0D5E4300DAB286 /* FirebaseAuth in Frameworks */,
 				7852F6092D44201A0068F229 /* OneSignalExtension in Frameworks */,
 				572D8A3E2D0D5E4300DAB286 /* FirebaseCore in Frameworks */,
+				570DD4452D9F004E00901E69 /* GoogleSignInSwift in Frameworks */,
+				570DD4432D9F004E00901E69 /* GoogleSignIn in Frameworks */,
 				78ED43032D42C1B900FF3017 /* SDWebImage in Frameworks */,
 				572D8A3A2D0D5E4300DAB286 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				572D8A472D0D78F900DAB286 /* FirebaseStorage in Frameworks */,
@@ -255,11 +315,57 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		570DD4562DA1AA7D00901E69 /* Tabbar */ = {
+			isa = PBXGroup;
+			children = (
+				577DA2EF2CE898F000760BFA /* UserTabBarController.swift */,
+				57D977B02CEC9524004B1314 /* OrganizerTabBar.swift */,
+				577DA2F32CE8A82900760BFA /* GeneralTabbarController.swift */,
+			);
+			path = Tabbar;
+			sourceTree = "<group>";
+		};
+		570DD4732DA2F67500901E69 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				570DD4772DA2F68E00901E69 /* MemberProtocol.swift */,
+				570DD4742DA2F68E00901E69 /* DateFormatterExtensions.swift */,
+				570DD4752DA2F68E00901E69 /* EventGroupManagerExtensions.swift */,
+				570DD4762DA2F68E00901E69 /* GroupTypeExtensions.swift */,
+				570DD4A12DA2F83300901E69 /* MessageCellExtensions.swift */,
+				570DD4782DA2F68E00901E69 /* MessageCellAdapter.swift */,
+				570DD47A2DA2F68E00901E69 /* ViewControllerExtensions.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		570DD4822DA2F71900901E69 /* UserGroup */ = {
+			isa = PBXGroup;
+			children = (
+				570DD4832DA2F72D00901E69 /* CreateGroupViewController.swift */,
+				570DD4842DA2F72D00901E69 /* GroupDetailsViewController.swift */,
+				570DD4852DA2F72D00901E69 /* GroupFullScreenImageViewController.swift */,
+				570DD4862DA2F72D00901E69 /* GroupMember.swift */,
+				570DD4872DA2F72D00901E69 /* GroupMemberCell.swift */,
+				570DD4892DA2F72D00901E69 /* GroupMessageCell.swift */,
+				570DD48A2DA2F72D00901E69 /* GroupMessageInputView.swift */,
+				570DD49F2DA2F79600901E69 /* GroupUserProfileViewController.swift */,
+				570DD48C2DA2F72D00901E69 /* GroupViewController.swift */,
+				570DD48D2DA2F72D00901E69 /* UserGroup.swift */,
+				570DD4882DA2F72D00901E69 /* GroupMessage.swift */,
+				570DD48E2DA2F72D00901E69 /* UserGroupMemberVC.swift */,
+			);
+			path = UserGroup;
+			sourceTree = "<group>";
+		};
 		5756E11F2D81E476005EF598 /* Feeds */ = {
 			isa = PBXGroup;
 			children = (
-				577DA1DB2CE4837700760BFA /* EventDetailViewController.swift */,
+				570DD44A2DA0968D00901E69 /* CardsViewController.swift */,
 				7852F6102D456DE50068F229 /* EventContainerViewController.swift */,
+				78ED42F92D42B24B00FF3017 /* OrganizerEventListViewController.swift */,
+				577DA1DB2CE4837700760BFA /* EventDetailViewController.swift */,
+				7852F6012D43F72C0068F229 /* OrganiserEventDetailViewController.swift */,
 				572D8A4C2D0DA2FD00DAB286 /* EventListViewController.swift */,
 			);
 			path = Feeds;
@@ -286,6 +392,10 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				570DD4822DA2F71900901E69 /* UserGroup */,
+				570DD4732DA2F67500901E69 /* Shared */,
+				78B2C68E2D8D3FBD0046B030 /* EventGroup */,
+				570DD4562DA1AA7D00901E69 /* Tabbar */,
 				78B2C65C2D8A14D50046B030 /* Hackathons */,
 				78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */,
 				78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */,
@@ -293,15 +403,14 @@
 				57F22AEB2D8048EA006DA3B4 /* Community */,
 				57F22AE42D7F7659006DA3B4 /* Flick */,
 				57F22ACD2D7EF7B7006DA3B4 /* Engage */,
-				78E2BF262D7D77B70071778A /* AcceptRequestCardView.swift */,
 				5756E11C2D81CB3E005EF598 /* iOSOnboardingViewController.swift */,
+				78E2BF262D7D77B70071778A /* AcceptRequestCardView.swift */,
 				78E2BF232D7D71D20071778A /* AcceptRequestCell.swift */,
 				78E2BF1B2D7D710C0071778A /* AcceptRequestViewController.swift */,
 				78B9A1EE2D7BE9A9004B7B78 /* TechStackViewController.swift */,
 				781DC1CF2D5B771A00322EF3 /* NotificationViewController.swift */,
 				781DC1CB2D5B76A100322EF3 /* NotificationTableViewCell.swift */,
 				7852F6032D43F7C90068F229 /* OrganiserChatViewController.swift */,
-				7852F6012D43F72C0068F229 /* OrganiserEventDetailViewController.swift */,
 				5756E1212D822D62005EF598 /* KeyWindow.swift */,
 				5756E1202D822D62005EF598 /* SceneDelegate.swift */,
 				5756E1222D822D62005EF598 /* UIApplication+Extension.swift */,
@@ -314,10 +423,9 @@
 				78BE28952D385318002BF1EB /* TagViewControllerDelegate.swift */,
 				57D9779C2CEB085A004B1314 /* File.swift */,
 				577DA1C12CE3999000760BFA /* EventViewController.swift */,
-				572D8A342D0D5D3800DAB286 /* GoogleService-Info.plist */,
 				577DA1C62CE3999100760BFA /* Assets.xcassets */,
 				78ED42FF2D42C14800FF3017 /* FirestoreChatManager.swift */,
-				78ED42F92D42B24B00FF3017 /* OrganizerEventListViewController.swift */,
+				570DD4462D9F02A600901E69 /* GoogleService-Info.plist */,
 				577DA1C82CE3999100760BFA /* LaunchScreen.storyboard */,
 				577DA1CB2CE3999100760BFA /* Info.plist */,
 				577DA1D12CE3BDBB00760BFA /* DataModel.swift */,
@@ -332,9 +440,7 @@
 				577DA2D92CE88F7A00760BFA /* SavedRegistrationViewController.swift */,
 				577DA2DB2CE88FC500760BFA /* SavedRegistrationCell.swift */,
 				577DA2DD2CE88FE700760BFA /* LoginViewController.swift */,
-				577DA2F32CE8A82900760BFA /* GeneralTabbarController.swift */,
 				577DA2ED2CE8922B00760BFA /* NotificationCell.swift */,
-				577DA2EF2CE898F000760BFA /* UserTabBarController.swift */,
 				577DA2F12CE8A4A000760BFA /* UserEventViewController.swift */,
 				57D977922CE8BD54004B1314 /* ProfileViewController.swift */,
 				39DF783B2CE9B011004B8244 /* BookmarkViewController.swift */,
@@ -344,7 +450,6 @@
 				57D977A02CEB145A004B1314 /* UpdateCell.swift */,
 				57D977A82CEB881B004B1314 /* SplashViewController.swift */,
 				57D977AA2CEC89C7004B1314 /* UnauthenViewController.swift */,
-				57D977B02CEC9524004B1314 /* OrganizerTabBar.swift */,
 				57D977BA2CEC9EF3004B1314 /* PostEventViewController.swift */,
 				57D977BC2CEC9FB3004B1314 /* EventPostedViewController.swift */,
 				57D977BE2CECA165004B1314 /* OrganizerProfileViewController.swift */,
@@ -352,7 +457,7 @@
 				572D8A502D0DFBE000DAB286 /* EventPostViewController.swift */,
 				57CDC6772D30451000836984 /* RegistrationsListViewController.swift */,
 				57CDC6792D30475900836984 /* RegistrationTableViewCell.swift */,
-				78B2C68E2D8D3FBD0046B030 /* EventGroup */,
+				570DD4A32DA2FF3900901E69 /* ImageCache.swift */,
 			);
 			name = ThriveUp;
 			path = workingModel;
@@ -361,7 +466,7 @@
 		57F22ACD2D7EF7B7006DA3B4 /* Engage */ = {
 			isa = PBXGroup;
 			children = (
-				78B2C4FE2D842DCB0046B030 /* CreateGroupViewController.swift */,
+				570DD4A52DA3246E00901E69 /* ChatDetailsViewController.swift */,
 				5756E1082D81C8E0005EF598 /* QuickAddCell.swift */,
 				5756E10F2D81C90D005EF598 /* ChatCell.swift */,
 				5756E1132D81C90D005EF598 /* ChatDetailViewController.swift */,
@@ -409,14 +514,20 @@
 			isa = PBXGroup;
 			children = (
 				78B2C6852D8D3FBD0046B030 /* ProfileVC */,
-				78B2C6862D8D3FBD0046B030 /* EventGroupMember.swift */,
-				78B2C6872D8D3FBD0046B030 /* EventGroupsListViewController.swift */,
-				78B2C6882D8D3FBD0046B030 /* EventGroupViewController.swift */,
-				78B2C6892D8D3FBD0046B030 /* EventStatusListener.swift */,
-				78B2C68A2D8D3FBD0046B030 /* EventStatusObserver.swift */,
-				78B2C68B2D8D3FBD0046B030 /* GroupMemberVC.swift */,
-				78B2C68C2D8D3FBD0046B030 /* MemberCell.swift */,
-				78B2C68D2D8D3FBD0046B030 /* MessageCell.swift */,
+				570DD45B2DA2F5BE00901E69 /* EventGroupManager.swift */,
+				570DD45F2DA2F5BE00901E69 /* EventGroupsListViewController.swift */,
+				570DD4612DA2F5BE00901E69 /* EventMessageInputView.swift */,
+				570DD4622DA2F5BE00901E69 /* EventStatusListener.swift */,
+				570DD45C2DA2F5BE00901E69 /* EventGroupMember.swift */,
+				570DD45D2DA2F5BE00901E69 /* EventGroupMesage.swift */,
+				570DD45E2DA2F5BE00901E69 /* EventGroupMessageManager.swift */,
+				570DD4652DA2F5BE00901E69 /* MemberCell.swift */,
+				570DD4602DA2F5BE00901E69 /* EventGroupViewController.swift */,
+				570DD4642DA2F5BE00901E69 /* GroupMemberVC.swift */,
+				570DD4632DA2F5BE00901E69 /* FullScreenImageViewController.swift */,
+				570DD4662DA2F5BE00901E69 /* MessageCell.swift */,
+				570DD4592DA2F5B000901E69 /* EventGroupDetailsViewController.swift */,
+				570DD4572DA2F58700901E69 /* EventGroup.swift */,
 			);
 			path = EventGroup;
 			sourceTree = "<group>";
@@ -475,6 +586,9 @@
 				7852F6082D44201A0068F229 /* OneSignalExtension */,
 				7852F60A2D44201A0068F229 /* OneSignalFramework */,
 				7852F60C2D44201A0068F229 /* OneSignalInAppMessages */,
+				573197AA2D9EFBBB007F0AE0 /* Kingfisher */,
+				570DD4422D9F004E00901E69 /* GoogleSignIn */,
+				570DD4442D9F004E00901E69 /* GoogleSignInSwift */,
 			);
 			productName = workingModel;
 			productReference = 577DA1BA2CE3999000760BFA /* ThriveUp.app */;
@@ -509,6 +623,8 @@
 				78B8D2D72D38E7510004AD09 /* XCRemoteSwiftPackageReference "Instructions" */,
 				78ED43012D42C1B900FF3017 /* XCRemoteSwiftPackageReference "SDWebImage" */,
 				7852F6072D44201A0068F229 /* XCRemoteSwiftPackageReference "OneSignal-iOS-SDK" */,
+				573197A92D9EFBBB007F0AE0 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				570DD4412D9F004E00901E69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			productRefGroup = 577DA1BB2CE3999000760BFA /* Products */;
 			projectDirPath = "";
@@ -526,7 +642,7 @@
 			files = (
 				577DA1C72CE3999100760BFA /* Assets.xcassets in Resources */,
 				577DA1CA2CE3999100760BFA /* Base in Resources */,
-				572D8A352D0D5D3800DAB286 /* GoogleService-Info.plist in Resources */,
+				570DD4472D9F02A600901E69 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -562,7 +678,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				570DD4582DA2F58700901E69 /* EventGroup.swift in Sources */,
 				577DA1D82CE3C6F600760BFA /* CategoryHeader.swift in Sources */,
+				570DD48F2DA2F72D00901E69 /* GroupMessage.swift in Sources */,
+				570DD4902DA2F72D00901E69 /* GroupMessageInputView.swift in Sources */,
+				570DD4912DA2F72D00901E69 /* GroupMemberCell.swift in Sources */,
+				570DD4922DA2F72D00901E69 /* GroupDetailsViewController.swift in Sources */,
+				570DD4942DA2F72D00901E69 /* UserGroup.swift in Sources */,
+				570DD4952DA2F72D00901E69 /* GroupMember.swift in Sources */,
+				570DD4962DA2F72D00901E69 /* UserGroupMemberVC.swift in Sources */,
+				570DD4972DA2F72D00901E69 /* GroupMessageCell.swift in Sources */,
+				570DD4982DA2F72D00901E69 /* CreateGroupViewController.swift in Sources */,
+				570DD4A02DA2F79600901E69 /* GroupUserProfileViewController.swift in Sources */,
+				570DD4992DA2F72D00901E69 /* GroupFullScreenImageViewController.swift in Sources */,
+				570DD49A2DA2F72D00901E69 /* GroupViewController.swift in Sources */,
 				57F22AED2D804992006DA3B4 /* CollegeFeedViewController.swift in Sources */,
 				78ED42FA2D42B24B00FF3017 /* OrganizerEventListViewController.swift in Sources */,
 				577DA2F02CE898F000760BFA /* UserTabBarController.swift in Sources */,
@@ -570,8 +699,15 @@
 				577DA1C22CE3999000760BFA /* EventViewController.swift in Sources */,
 				57D9779B2CE9E13D004B1314 /* RegisteredEventCell.swift in Sources */,
 				39DF783C2CE9B011004B8244 /* BookmarkViewController.swift in Sources */,
-				78B2C4FF2D842DCB0046B030 /* CreateGroupViewController.swift in Sources */,
+				570DD45A2DA2F5B000901E69 /* EventGroupDetailsViewController.swift in Sources */,
 				78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */,
+				570DD47C2DA2F68E00901E69 /* GroupTypeExtensions.swift in Sources */,
+				570DD47D2DA2F68E00901E69 /* DateFormatterExtensions.swift in Sources */,
+				570DD47E2DA2F68E00901E69 /* MessageCellAdapter.swift in Sources */,
+				570DD4A42DA2FF3900901E69 /* ImageCache.swift in Sources */,
+				570DD47F2DA2F68E00901E69 /* EventGroupManagerExtensions.swift in Sources */,
+				570DD4802DA2F68E00901E69 /* ViewControllerExtensions.swift in Sources */,
+				570DD4812DA2F68E00901E69 /* MemberProtocol.swift in Sources */,
 				57D977AB2CEC89C7004B1314 /* UnauthenViewController.swift in Sources */,
 				5756E1092D81C8E0005EF598 /* QuickAddCell.swift in Sources */,
 				57CDC67A2D30475900836984 /* RegistrationTableViewCell.swift in Sources */,
@@ -590,8 +726,21 @@
 				5756E10B2D81C8E6005EF598 /* FriendsViewController.swift in Sources */,
 				577DA2F22CE8A4A000760BFA /* UserEventViewController.swift in Sources */,
 				577DA2002CE5DF6900760BFA /* FormFieldTableViewCell.swift in Sources */,
+				570DD4672DA2F5BE00901E69 /* MessageCell.swift in Sources */,
+				570DD4682DA2F5BE00901E69 /* EventGroupMesage.swift in Sources */,
+				570DD4692DA2F5BE00901E69 /* EventGroupViewController.swift in Sources */,
+				570DD46A2DA2F5BE00901E69 /* EventMessageInputView.swift in Sources */,
+				570DD46B2DA2F5BE00901E69 /* GroupMemberVC.swift in Sources */,
+				570DD46C2DA2F5BE00901E69 /* EventGroupMessageManager.swift in Sources */,
+				570DD46D2DA2F5BE00901E69 /* EventStatusListener.swift in Sources */,
+				570DD46E2DA2F5BE00901E69 /* MemberCell.swift in Sources */,
+				570DD46F2DA2F5BE00901E69 /* EventGroupMember.swift in Sources */,
+				570DD4702DA2F5BE00901E69 /* EventGroupsListViewController.swift in Sources */,
+				570DD4712DA2F5BE00901E69 /* EventGroupManager.swift in Sources */,
+				570DD4722DA2F5BE00901E69 /* FullScreenImageViewController.swift in Sources */,
 				577DA1DC2CE4837700760BFA /* EventDetailViewController.swift in Sources */,
 				781DC1D02D5B771A00322EF3 /* NotificationViewController.swift in Sources */,
+				570DD4A22DA2F83300901E69 /* MessageCellExtensions.swift in Sources */,
 				577DA1D42CE3BE2800760BFA /* EventCell.swift in Sources */,
 				57D977B12CEC9524004B1314 /* OrganizerTabBar.swift in Sources */,
 				57F22AE82D7F8C04006DA3B4 /* HackmateViewController.swift in Sources */,
@@ -610,11 +759,13 @@
 				7852F6152D456E500068F229 /* PhotosViewController.swift in Sources */,
 				7852F5FE2D43C81A0068F229 /* TicketViewController.swift in Sources */,
 				577DA2F42CE8A82900760BFA /* GeneralTabbarController.swift in Sources */,
+				570DD4A62DA3246E00901E69 /* ChatDetailsViewController.swift in Sources */,
 				577DA1DA2CE3DA1800760BFA /* CategoryButtonCell.swift in Sources */,
 				78E2BF242D7D71D80071778A /* AcceptRequestCell.swift in Sources */,
 				57D977932CE8BD54004B1314 /* ProfileViewController.swift in Sources */,
 				5756E1232D822D62005EF598 /* SceneDelegate.swift in Sources */,
 				5756E1172D81C90D005EF598 /* FriendRequestsViewController.swift in Sources */,
+				570DD44B2DA0968D00901E69 /* CardsViewController.swift in Sources */,
 				5756E11A2D81C90D005EF598 /* ChatDetailViewController.swift in Sources */,
 				5756E1242D822D62005EF598 /* KeyWindow.swift in Sources */,
 				57D9779F2CEB1397004B1314 /* PhotoCell.swift in Sources */,
@@ -633,15 +784,7 @@
 				5756E1152D81C90D005EF598 /* FriendCell.swift in Sources */,
 				57D977BF2CECA165004B1314 /* OrganizerProfileViewController.swift in Sources */,
 				572D8A492D0D9E5B00DAB286 /* EventRegistrationViewController.swift in Sources */,
-				78B2C68F2D8D3FBD0046B030 /* EventStatusObserver.swift in Sources */,
-				78B2C6902D8D3FBD0046B030 /* MessageCell.swift in Sources */,
-				78B2C6912D8D3FBD0046B030 /* EventGroupMember.swift in Sources */,
-				78B2C6922D8D3FBD0046B030 /* EventStatusListener.swift in Sources */,
-				78B2C6932D8D3FBD0046B030 /* EventGroupViewController.swift in Sources */,
-				78B2C6942D8D3FBD0046B030 /* GroupMemberVC.swift in Sources */,
 				78B2C6952D8D3FBD0046B030 /* OrganizerProfileViewerController.swift in Sources */,
-				78B2C6962D8D3FBD0046B030 /* MemberCell.swift in Sources */,
-				78B2C6972D8D3FBD0046B030 /* EventGroupsListViewController.swift in Sources */,
 				78B2C6982D8D3FBD0046B030 /* UserProfileViewerController.swift in Sources */,
 				5756E1192D81C90D005EF598 /* ChatMessageCell.swift in Sources */,
 				5756E11B2D81C90D005EF598 /* FriendRequestCell.swift in Sources */,
@@ -793,7 +936,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = K75YG36RDS;
+				DEVELOPMENT_TEAM = 5P9MT7PS5M;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = workingModel/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to scan QR codes.";
@@ -808,7 +951,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.thriveup;
+				PRODUCT_BUNDLE_IDENTIFIER = me.yash.workingModel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -825,7 +968,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = K75YG36RDS;
+				DEVELOPMENT_TEAM = 5P9MT7PS5M;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = workingModel/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the camera to scan QR codes.";
@@ -840,7 +983,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.thriveup;
+				PRODUCT_BUNDLE_IDENTIFIER = me.yash.workingModel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -873,12 +1016,28 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		570DD4412D9F004E00901E69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 		572D8A362D0D5E4300DAB286 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 11.6.0;
+			};
+		};
+		573197A92D9EFBBB007F0AE0 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.3.1;
 			};
 		};
 		7852F6072D44201A0068F229 /* XCRemoteSwiftPackageReference "OneSignal-iOS-SDK" */ = {
@@ -908,6 +1067,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		570DD4422D9F004E00901E69 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 570DD4412D9F004E00901E69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		570DD4442D9F004E00901E69 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 570DD4412D9F004E00901E69 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		572D8A372D0D5E4300DAB286 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 572D8A362D0D5E4300DAB286 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
@@ -947,6 +1116,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 572D8A362D0D5E4300DAB286 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		573197AA2D9EFBBB007F0AE0 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 573197A92D9EFBBB007F0AE0 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		7852F6052D440F5C0068F229 /* FirebaseMessaging */ = {
 			isa = XCSwiftPackageProductDependency;

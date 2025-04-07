@@ -257,7 +257,7 @@ class EventViewController: UIViewController, UICollectionViewDelegate, UICollect
         let section = sender.tag
         let category = filteredCategories[section]
 
-        let eventsListVC = EventsCardsViewController()
+        let eventsListVC = CardsViewController()
         eventsListVC.category = CategoryModel(name: category, events: eventsByCategory[category] ?? [])
         navigationController?.pushViewController(eventsListVC, animated: true)
     }

@@ -3,12 +3,24 @@ import UIKit
 class FriendCell: UITableViewCell {
     static let identifier = "FriendCell"
 
+//    private let profileImageView: UIImageView = {
+//        let imageView = UIImageView()
+//        imageView.contentMode = .scaleAspectFill
+//        imageView.layer.cornerRadius = 25
+//        imageView.clipsToBounds = true
+//        imageView.translatesAutoresizingMaskIntoConstraints = false
+//        return imageView
+//    }()
+    
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
-        imageView.layer.cornerRadius = 25
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.layer.cornerRadius = 25 // Set the radius immediately (half of your 50x50 size)
+        imageView.layer.masksToBounds = true // Ensure this is true
+        imageView.layer.borderWidth = 1 // Optional: add a border
+        imageView.layer.borderColor = UIColor.lightGray.cgColor // Optional: border color
         return imageView
     }()
     
@@ -61,30 +73,68 @@ class FriendCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+//    func configure(with user: User) {
+//        usernameLabel.text = user.name
+//
+//        if let profileImageUrl = user.profileImageURL, !profileImageUrl.isEmpty {
+//            loadImage(from: profileImageUrl)
+//        } else {
+//            profileImageView.image = UIImage(named: "default_profile") // ✅ Placeholder for missing images
+//        }
+//    }
+    
     func configure(with user: User) {
         usernameLabel.text = user.name
 
         if let profileImageUrl = user.profileImageURL, !profileImageUrl.isEmpty {
             loadImage(from: profileImageUrl)
         } else {
-            profileImageView.image = UIImage(named: "default_profile") // ✅ Placeholder for missing images
+            profileImageView.image = UIImage(named: "default_profile")?.withRenderingMode(.alwaysOriginal)
+            // Ensure these properties are set for the default image too
+            profileImageView.layer.cornerRadius = 25
+            profileImageView.layer.borderWidth = 1
+            profileImageView.layer.borderColor = UIColor.lightGray.cgColor
         }
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        profileImageView.layer.cornerRadius = profileImageView.frame.height / 2
-    }
+//    override func layoutSubviews() {
+//        super.layoutSubviews()
+//        profileImageView.layer.cornerRadius = profileImageView.frame.height / 2
+//    }
 
+//    private func loadImage(from url: String) {
+//        guard let imageURL = URL(string: url) else { return }
+//        DispatchQueue.global().async {
+//            if let data = try? Data(contentsOf: imageURL), let image = UIImage(data: data) {
+//                DispatchQueue.main.async {
+//                    self.profileImageView.image = image
+//                }
+//            }
+//        }
+//    }
     private func loadImage(from url: String) {
         guard let imageURL = URL(string: url) else { return }
-        DispatchQueue.global().async {
-            if let data = try? Data(contentsOf: imageURL), let image = UIImage(data: data) {
+        
+        // Better approach using URLSession
+        URLSession.shared.dataTask(with: imageURL) { [weak self] data, _, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("Error loading image: \(error.localizedDescription)")
+                return
+            }
+            
+            if let data = data, let image = UIImage(data: data) {
                 DispatchQueue.main.async {
                     self.profileImageView.image = image
+                    // Ensure these properties are maintained
+                    self.profileImageView.layer.cornerRadius = 25
+                    self.profileImageView.layer.borderWidth = 1
+                    self.profileImageView.layer.borderColor = UIColor.lightGray.cgColor
                 }
             }
-        }
+        }.resume()
     }
 }
+
 
