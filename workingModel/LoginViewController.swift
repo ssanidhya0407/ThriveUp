@@ -1,11 +1,12 @@
-
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 import GoogleSignIn
 import FirebaseCore
+import AuthenticationServices
 
 class LoginViewController: UIViewController {
+    private var currentNonce: String?
     
     // MARK: - UI Elements
     private let profileImageView: UIImageView = {
@@ -66,7 +67,7 @@ class LoginViewController: UIViewController {
         button.backgroundColor = .systemOrange
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold) // Add this line
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -84,8 +85,6 @@ class LoginViewController: UIViewController {
     private let googleLoginButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .systemGray5
-       
-       
         button.layer.cornerRadius = 8
         
         // Create a horizontal stack view
@@ -106,7 +105,7 @@ class LoginViewController: UIViewController {
         
         // Add label
         let label = UILabel()
-        label.text = "Continue with Google"
+        label.text = "Sign In with Google"
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .black
         
@@ -124,6 +123,13 @@ class LoginViewController: UIViewController {
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor, constant: -16)
         ])
         
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let appleLoginButton: ASAuthorizationAppleIDButton = {
+        let button = ASAuthorizationAppleIDButton(type: .signIn, style: .black)
+        button.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -169,6 +175,7 @@ class LoginViewController: UIViewController {
         view.addSubview(loginButton)
         view.addSubview(orLabel)
         view.addSubview(googleLoginButton)
+        view.addSubview(appleLoginButton)
         view.addSubview(cardView)
         cardView.addSubview(activityIndicator)
     }
@@ -207,6 +214,11 @@ class LoginViewController: UIViewController {
             googleLoginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
             googleLoginButton.heightAnchor.constraint(equalToConstant: 50),
             
+            appleLoginButton.topAnchor.constraint(equalTo: googleLoginButton.bottomAnchor, constant: 16),
+            appleLoginButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
+            appleLoginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
+            appleLoginButton.heightAnchor.constraint(equalToConstant: 50),
+            
             cardView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             cardView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             cardView.widthAnchor.constraint(equalToConstant: 200),
@@ -220,6 +232,7 @@ class LoginViewController: UIViewController {
     private func setupActions() {
         loginButton.addTarget(self, action: #selector(handleLogin), for: .touchUpInside)
         googleLoginButton.addTarget(self, action: #selector(handleGoogleLogin), for: .touchUpInside)
+        appleLoginButton.addTarget(self, action: #selector(handleAppleLogin), for: .touchUpInside)
     }
     
     // MARK: - Actions
@@ -289,6 +302,21 @@ class LoginViewController: UIViewController {
         }
     }
     
+    @objc private func handleAppleLogin() {
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        
+        // Generate a nonce and store it
+        currentNonce = randomNonceString()
+        request.nonce = sha256(currentNonce!)
+        
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        authorizationController.delegate = self
+        authorizationController.presentationContextProvider = self
+        authorizationController.performRequests()
+    }
+    
     private func showUserTypeSelectionAlert(email: String, uid: String) {
         let alert = UIAlertController(
             title: "Select Account Type",
@@ -352,6 +380,7 @@ class LoginViewController: UIViewController {
               completion(!(snapshot?.documents.isEmpty ?? true))
           }
     }
+    
     private func navigateBasedOnUserType(uid: String) {
         let db = Firestore.firestore()
         db.collection("users").document(uid).getDocument { [weak self] snapshot, error in
@@ -370,6 +399,7 @@ class LoginViewController: UIViewController {
             }
         }
     }
+    
     private func showLoading(_ show: Bool) {
         cardView.isHidden = !show
         show ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
@@ -433,7 +463,145 @@ class LoginViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
     }
+    
+    // MARK: - Apple Sign In Helper Methods
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset: [Character] =
+            Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remainingLength = length
+        
+        while remainingLength > 0 {
+            let randoms: [UInt8] = (0 ..< 16).map { _ in
+                var random: UInt8 = 0
+                let errorCode = SecRandomCopyBytes(kSecRandomDefault, 1, &random)
+                if errorCode != errSecSuccess {
+                    fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+                }
+                return random
+            }
+            
+            randoms.forEach { random in
+                if remainingLength == 0 {
+                    return
+                }
+                
+                if random < charset.count {
+                    result.append(charset[Int(random)])
+                    remainingLength -= 1
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    // For SHA256 hashing
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap {
+            String(format: "%02x", $0)
+        }.joined()
+        
+        return hashString
+    }
 }
+
+// MARK: - ASAuthorizationControllerDelegate
+extension LoginViewController: ASAuthorizationControllerDelegate {
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        showLoading(true)
+        
+        if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            guard let nonce = currentNonce,
+                  let appleIDToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                showLoading(false)
+                showAlert(title: "Error", message: "Unable to retrieve Apple ID token")
+                return
+            }
+            
+            // Create Apple credential
+            let credential = OAuthProvider.credential(withProviderID: "apple.com",
+                                                      idToken: idTokenString,
+                                                      rawNonce: nonce)
+            
+            // Sign in with Firebase
+            Auth.auth().signIn(with: credential) { [weak self] (authResult, error) in
+                self?.showLoading(false)
+                
+                if let error = error {
+                    self?.showAlert(title: "Error", message: error.localizedDescription)
+                    return
+                }
+                
+                guard let user = authResult?.user else {
+                    self?.showAlert(title: "Error", message: "Failed to get user information")
+                    return
+                }
+                
+                // Get the email - Apple might not provide it on subsequent logins
+                var email = user.email ?? ""
+                
+                // If Apple provided email in this login attempt, use it
+                if let appleEmail = appleIDCredential.email {
+                    email = appleEmail
+                }
+                
+                // Handle full name from Apple (only provided on first login)
+                // Handle full name from Apple (only provided on first login)
+                if let fullName = appleIDCredential.fullName {
+                    let firstName = fullName.givenName ?? ""
+                    let lastName = fullName.familyName ?? ""
+                    
+                    // Combine first and last name into a single name field
+                    let combinedName = [firstName, lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                    
+                    // If we have a name, store it in Firestore
+                    if !combinedName.isEmpty {
+                        let db = Firestore.firestore()
+                        db.collection("users").document(user.uid).updateData([
+                            "name": combinedName
+                        ])
+                    }
+                }
+                
+                // Show user type selection
+                self?.showUserTypeSelectionAlert(email: email, uid: user.uid)
+            }
+        }
+    }
+    
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        showLoading(false)
+        showAlert(title: "Sign In Failed", message: error.localizedDescription)
+    }
+}
+
+// MARK: - ASAuthorizationControllerPresentationContextProviding
+extension LoginViewController: ASAuthorizationControllerPresentationContextProviding {
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        return view.window!
+    }
+}
+
+// MARK: - SHA256 Implementation (since we can't import CryptoKit directly)
+// Simple implementation of SHA256 for nonce verification
+enum SHA256 {
+    static func hash(data: Data) -> Data {
+        var hashData = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
+        _ = hashData.withUnsafeMutableBytes { hashBytes in
+            data.withUnsafeBytes { dataBytes in
+                CC_SHA256(dataBytes.baseAddress, CC_LONG(data.count), hashBytes.bindMemory(to: UInt8.self).baseAddress)
+            }
+        }
+        return hashData
+    }
+}
+
+import CommonCrypto
 
 #Preview {
     LoginViewController()

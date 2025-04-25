@@ -14,6 +14,19 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
     // MARK: - Properties
     private var createdEvents: [EventModel] = []
     private let db = Firestore.firestore()
+    
+    // Delete Account Button
+    private let deleteAccountButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Delete Account", for: .normal)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        button.backgroundColor = .tertiarySystemBackground // Subtle background
+        button.layer.cornerRadius = 8
+        button.contentEdgeInsets = UIEdgeInsets(top: 10, left: 15, bottom: 10, right: 15)
+        button.addTarget(self, action: #selector(handleDeleteAccountTapped), for: .touchUpInside)
+        return button
+    }()
  
 
     // Profile Header
@@ -235,6 +248,198 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
 //    }
     
     
+    @objc private func handleDeleteAccountTapped() {
+        let alert = UIAlertController(
+            title: "Delete Account",
+            message: "Are you absolutely sure you want to delete your organizer account? This action is irreversible and will remove your profile data and all events you have created.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive, handler: { [weak self] _ in
+            self?.proceedWithAccountDeletion()
+        }))
+
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Account Deletion Logic
+
+    private func proceedWithAccountDeletion() {
+        guard let user = Auth.auth().currentUser else {
+            showErrorAlert(message: "Not logged in. Cannot delete account.")
+            return
+        }
+        let userId = user.uid
+
+        // Show loading/activity indicator (optional, implement if needed)
+        print("Starting organizer account deletion process for user: \(userId)")
+
+        let deletionGroup = DispatchGroup() // Main group for the entire deletion process
+
+        // 1. Delete Firestore Data (User Doc and Created Events)
+        deletionGroup.enter()
+        print("Entering Firestore data deletion...")
+        deleteOrganizerFirestoreData(userId: userId) { firestoreError in
+            if let firestoreError = firestoreError {
+                print("Firestore deletion failed with error: \(firestoreError.localizedDescription)")
+            } else {
+                print("Firestore data deletion completed successfully.")
+            }
+            // Leave group whether Firestore succeeded or failed
+            deletionGroup.leave()
+        }
+
+        // 2. Delete Storage Data (Profile Image)
+        deletionGroup.enter()
+        print("Entering Storage data deletion...")
+        deleteOrganizerStorageData(userId: userId) { storageError in
+            if let storageError = storageError {
+                print("Error deleting profile image from storage (or image doesn't exist): \(storageError.localizedDescription)")
+            } else {
+                print("Profile image deleted from storage successfully (or didn't exist).")
+            }
+            deletionGroup.leave() // Leave regardless of success/failure
+        }
+
+        // 3. After Firestore/Storage attempts, delete Auth user
+        deletionGroup.notify(queue: .main) { [weak self] in
+             guard let self = self else { return }
+             print("All deletion pre-tasks finished. Attempting Auth user deletion...")
+
+             user.delete { error in
+                 // Hide loading indicator (optional)
+
+                 if let error = error {
+                     print("Error deleting Firebase Auth user: \(error.localizedDescription)")
+                     if let authError = error as NSError?, authError.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                         self.showErrorAlert(message: "Security check failed. Please log out and log back in again before deleting your account.")
+                     } else {
+                         self.showErrorAlert(message: "Could not complete account deletion. \(error.localizedDescription)")
+                     }
+                 } else {
+                     print("Firebase Auth user deleted successfully.")
+                     // 4. Navigate User Out
+                     self.showSuccessMessage("Account deleted successfully.") {
+                        self.navigateToLoginScreen() // Use existing navigation logic
+                     }
+                 }
+             }
+         }
+    }
+    
+
+    private func deleteOrganizerFirestoreData(userId: String, completion: @escaping (Error?) -> Void) {
+        let db = Firestore.firestore()
+        let batch = db.batch()
+        var encounteredError: Error? = nil
+        let fetchGroup = DispatchGroup() // Group for fetching events before batch commit
+
+        // Mark user document for deletion
+        let userRef = db.collection("users").document(userId)
+        batch.deleteDocument(userRef)
+        print("Marked organizer user document for deletion in batch.")
+
+        // Fetch and mark created events for deletion
+        fetchGroup.enter()
+        db.collection("events").whereField("userId", isEqualTo: userId).getDocuments { snapshot, error in
+            defer { fetchGroup.leave() }
+            if let error = error {
+                print("Error fetching created events for deletion: \(error.localizedDescription)")
+                encounteredError = encounteredError ?? error
+            } else if let documents = snapshot?.documents, !documents.isEmpty {
+                documents.forEach { batch.deleteDocument($0.reference) }
+                print("Marked \(documents.count) created events for deletion in batch.")
+            } else {
+                print("No created events found for organizer.")
+            }
+        }
+
+        // Commit the batch after fetching events
+        fetchGroup.notify(queue: .global()) {
+            if let fetchError = encounteredError {
+                print("Skipping Firestore batch commit due to fetch error: \(fetchError.localizedDescription)")
+                completion(fetchError)
+                return
+            }
+
+            print("Attempting to commit Firestore batch delete for organizer...")
+            batch.commit { commitError in
+                if let commitError = commitError {
+                    print("Error committing Firestore batch delete: \(commitError.localizedDescription)")
+                    completion(commitError)
+                } else {
+                    print("Firestore batch delete committed successfully.")
+                    completion(nil)
+                }
+            }
+        }
+    }
+
+    private func deleteOrganizerStorageData(userId: String, completion: @escaping (Error?) -> Void) {
+        let storageRef = Storage.storage().reference().child("profile_images/\(userId).jpg")
+
+        storageRef.delete { error in
+            if let error = error {
+                 if (error as NSError).code == StorageErrorCode.objectNotFound.rawValue {
+                     print("Profile image not found in storage - considered success.")
+                     completion(nil)
+                 } else {
+                     print("Error deleting profile image from storage: \(error.localizedDescription)")
+                     completion(error)
+                 }
+            } else {
+                print("Profile image deleted from storage successfully.")
+                completion(nil)
+            }
+        }
+    }
+    
+    // MARK: - Helper Alerts & Navigation
+
+    private func showSuccessMessage(_ message: String, completion: (() -> Void)? = nil) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: "Success", message: message, preferredStyle: .alert)
+            self.present(alert, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                alert.dismiss(animated: true) {
+                    completion?()
+                }
+            }
+        }
+    }
+
+    private func showErrorAlert(message: String) {
+         DispatchQueue.main.async {
+              let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+              alert.addAction(UIAlertAction(title: "OK", style: .default))
+              if self.presentedViewController == nil {
+                   self.present(alert, animated: true)
+              } else {
+                   print("Attempted to present error alert while another view controller is already presented. Message: \(message)")
+              }
+         }
+    }
+
+    private func navigateToLoginScreen() {
+        // Re-use the logic from your handleLogout or adapt as needed
+        print("Navigating to login screen...")
+        // Assuming GeneralTabbarController is the entry point after login/signup
+        let initialViewController = GeneralTabbarController() // Or LoginViewController()
+
+        if let sceneDelegate = view.window?.windowScene?.delegate as? SceneDelegate,
+           let window = sceneDelegate.window {
+            UIView.transition(with: window, duration: 0.4, options: .transitionCrossDissolve, animations: {
+                 window.rootViewController = initialViewController
+            }, completion: nil)
+            window.makeKeyAndVisible()
+        } else {
+            print("Could not get SceneDelegate or window to navigate.")
+            // Add fallback if needed (e.g., dismiss modal)
+        }
+    }
+    
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
@@ -274,6 +479,9 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
         pocStack.addArrangedSubview(pocHeader)
         pocStack.addArrangedSubview(pocDetailsLabel)
         detailsStackView.addArrangedSubview(pocStack)
+        
+        // Add Delete Account Button <<< ADD THIS LINE >>>
+        contentView.addSubview(deleteAccountButton)
         
         // Events Table
         contentView.addSubview(eventsTableView)
@@ -334,93 +542,104 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
     private func setupConstraints() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        profileImageView.translatesAutoresizingMaskIntoConstraints = false // Added
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false // Added
+        emailLabel.translatesAutoresizingMaskIntoConstraints = false // Added
         statsContainer.translatesAutoresizingMaskIntoConstraints = false
         statsStack.translatesAutoresizingMaskIntoConstraints = false
-        
+        segmentControl.translatesAutoresizingMaskIntoConstraints = false // Added
+        detailsContainer.translatesAutoresizingMaskIntoConstraints = false // Added
+        detailsStackView.translatesAutoresizingMaskIntoConstraints = false // Added
+        eventsTableView.translatesAutoresizingMaskIntoConstraints = false // Added
+        deleteAccountButton.translatesAutoresizingMaskIntoConstraints = false // <<< ADD THIS LINE >>>
+
         // Scroll View
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), // Use safe area
+
+            // Content View (Pin to scroll view's content layout guide)
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor), // Pin to content guide
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor) // Width matches frame guide
         ])
-        
+
         // Profile Image
-        profileImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             profileImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
             profileImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             profileImageView.widthAnchor.constraint(equalToConstant: 100),
             profileImageView.heightAnchor.constraint(equalToConstant: 100)
         ])
-        
+
         // Name and Email
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 16),
             nameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            
+
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             emailLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor)
         ])
-        
+
         // Stats Container
         NSLayoutConstraint.activate([
-//            statsContainer.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 24),
-//            statsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-//            statsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-//            statsContainer.heightAnchor.constraint(equalToConstant: 80),
-            
             statsContainer.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 24),
-                statsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-                statsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-                statsContainer.heightAnchor.constraint(equalToConstant: 100), // Increased from 80 to 100
-            
-            statsStack.centerYAnchor.constraint(equalTo: statsContainer.centerYAnchor), // Center vertically
-               statsStack.leadingAnchor.constraint(equalTo: statsContainer.leadingAnchor, constant: 16),
-               statsStack.trailingAnchor.constraint(equalTo: statsContainer.trailingAnchor, constant: -16)
+            statsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            statsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            statsContainer.heightAnchor.constraint(equalToConstant: 100),
+
+            // Align statsStack within statsContainer
+            statsStack.centerYAnchor.constraint(equalTo: statsContainer.centerYAnchor),
+            statsStack.leadingAnchor.constraint(equalTo: statsContainer.leadingAnchor, constant: 16),
+            statsStack.trailingAnchor.constraint(equalTo: statsContainer.trailingAnchor, constant: -16)
         ])
-        
+
         // Segment Control
-        segmentControl.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            segmentControl.topAnchor.constraint(equalTo: statsContainer.bottomAnchor, constant: 16),
+            segmentControl.topAnchor.constraint(equalTo: statsContainer.bottomAnchor, constant: 16), // Below Stats
             segmentControl.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             segmentControl.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             segmentControl.heightAnchor.constraint(equalToConstant: 40)
         ])
-        
+
         // Details Container
-        detailsContainer.translatesAutoresizingMaskIntoConstraints = false
-        detailsStackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             detailsContainer.topAnchor.constraint(equalTo: segmentControl.bottomAnchor, constant: 16),
             detailsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             detailsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
+            // detailsContainer bottom is determined by delete button below it
+
             detailsStackView.topAnchor.constraint(equalTo: detailsContainer.topAnchor, constant: 16),
             detailsStackView.leadingAnchor.constraint(equalTo: detailsContainer.leadingAnchor, constant: 16),
             detailsStackView.trailingAnchor.constraint(equalTo: detailsContainer.trailingAnchor, constant: -16),
-            detailsStackView.bottomAnchor.constraint(equalTo: detailsContainer.bottomAnchor, constant: -16)
+            detailsStackView.bottomAnchor.constraint(equalTo: detailsContainer.bottomAnchor, constant: -16) // Pin stack bottom to container bottom
         ])
-        
-        // Events Table
-        eventsTableView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Delete Account Button <<< ADD THESE CONSTRAINTS >>>
+        NSLayoutConstraint.activate([
+            deleteAccountButton.topAnchor.constraint(equalTo: detailsContainer.bottomAnchor, constant: 24), // Below Details Container
+            deleteAccountButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            deleteAccountButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            deleteAccountButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24) // Pin button relative to contentView bottom
+        ])
+
+        // Events Table (Overlaying)
         NSLayoutConstraint.activate([
             eventsTableView.topAnchor.constraint(equalTo: segmentControl.bottomAnchor, constant: 16),
             eventsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             eventsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            eventsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-            eventsTableView.heightAnchor.constraint(equalToConstant: 400)
+            // Make table view bottom match the content view bottom
+            eventsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16) // <<< ADJUSTED >>>
+            // Remove fixed height constraint if it exists
+            // eventsTableView.heightAnchor.constraint(equalToConstant: 400) // <<< REMOVE IF PRESENT >>>
         ])
     }
+    
+    
     private func updateStatsView(eventsCount: Int) {
         // Clear existing views
         statsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -789,12 +1008,19 @@ class OrganizerProfileViewController: UIViewController, UITableViewDelegate, UIT
     @objc private func segmentChanged() {
         let isShowingEvents = segmentControl.selectedSegmentIndex == 1
         detailsContainer.isHidden = isShowingEvents
+        deleteAccountButton.isHidden = isShowingEvents // <<< ADD THIS LINE >>>
         eventsTableView.isHidden = !isShowingEvents
-        
+
         if isShowingEvents {
             fetchCreatedEvents()
+        } else {
+            // Optional: Reload details if needed when switching back
+            // fetchOrganizerData()
         }
+        // Force layout update to ensure correct hiding/showing and content size
+        self.view.layoutIfNeeded() // <<< ADD THIS LINE >>>
     }
+    
    }
 
 
@@ -1106,6 +1332,7 @@ class EditOrganizerViewController: UIViewController, UIImagePickerControllerDele
     
     private var presidentName: String = ""
     private var vicePresidentName: String = ""
+    
 
     // MARK: - UI Elements
     private let scrollView: UIScrollView = {

@@ -9,7 +9,7 @@ class EventListViewController: UIViewController, UICollectionViewDelegate, UICol
     private var eventsByCategory: [String: [EventModel]] = [:]
     private var filteredEventsByCategory: [String: [EventModel]] = [:]
     private let predefinedCategories = [
-        "Trending", "Fun and Entertainment", "Tech and Innovation",
+        "Trending", "Tech and Innovation", "Fun and Entertainment",
         "Club and Societies", "Cultural", "Networking", "Sports","Hackathons",
         "Career Connect", "Wellness", "Other"
     ]

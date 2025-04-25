@@ -11,7 +11,6 @@
 		39DF783C2CE9B011004B8244 /* BookmarkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39DF783B2CE9B011004B8244 /* BookmarkViewController.swift */; };
 		570DD4432D9F004E00901E69 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 570DD4422D9F004E00901E69 /* GoogleSignIn */; };
 		570DD4452D9F004E00901E69 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 570DD4442D9F004E00901E69 /* GoogleSignInSwift */; };
-		570DD4472D9F02A600901E69 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 570DD4462D9F02A600901E69 /* GoogleService-Info.plist */; };
 		570DD44B2DA0968D00901E69 /* CardsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD44A2DA0968D00901E69 /* CardsViewController.swift */; };
 		570DD4582DA2F58700901E69 /* EventGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4572DA2F58700901E69 /* EventGroup.swift */; };
 		570DD45A2DA2F5B000901E69 /* EventGroupDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 570DD4592DA2F5B000901E69 /* EventGroupDetailsViewController.swift */; };
@@ -130,6 +129,7 @@
 		7852F6112D456DE50068F229 /* EventContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6102D456DE50068F229 /* EventContainerViewController.swift */; };
 		7852F6132D456E4A0068F229 /* UpdatesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6122D456E4A0068F229 /* UpdatesViewController.swift */; };
 		7852F6152D456E500068F229 /* PhotosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7852F6142D456E500068F229 /* PhotosViewController.swift */; };
+		7877DD0B2DB99EC3003EA2D5 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7877DD0A2DB99EC3003EA2D5 /* GoogleService-Info.plist */; };
 		78B2C4842D834AB90046B030 /* TermsAndConditionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */; };
 		78B2C4F92D8421FF0046B030 /* MessageNotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */; };
 		78B2C6952D8D3FBD0046B030 /* OrganizerProfileViewerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */; };
@@ -164,7 +164,6 @@
 		39DF78392CE9AF5E004B8244 /* SwipeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeViewController.swift; sourceTree = "<group>"; };
 		39DF783B2CE9B011004B8244 /* BookmarkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkViewController.swift; sourceTree = "<group>"; };
 		4CF53B076F3A5BE3385209B6 /* Pods-ThriveUp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ThriveUp.debug.xcconfig"; path = "Target Support Files/Pods-ThriveUp/Pods-ThriveUp.debug.xcconfig"; sourceTree = "<group>"; };
-		570DD4462D9F02A600901E69 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		570DD44A2DA0968D00901E69 /* CardsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardsViewController.swift; sourceTree = "<group>"; };
 		570DD4572DA2F58700901E69 /* EventGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroup.swift; sourceTree = "<group>"; };
 		570DD4592DA2F5B000901E69 /* EventGroupDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventGroupDetailsViewController.swift; sourceTree = "<group>"; };
@@ -272,6 +271,8 @@
 		7852F6102D456DE50068F229 /* EventContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventContainerViewController.swift; sourceTree = "<group>"; };
 		7852F6122D456E4A0068F229 /* UpdatesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatesViewController.swift; sourceTree = "<group>"; };
 		7852F6142D456E500068F229 /* PhotosViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotosViewController.swift; sourceTree = "<group>"; };
+		7877DD072DB9984B003EA2D5 /* ThriveUp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThriveUp.entitlements; sourceTree = SOURCE_ROOT; };
+		7877DD0A2DB99EC3003EA2D5 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		78B2C4832D834AB90046B030 /* TermsAndConditionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsAndConditionsViewController.swift; sourceTree = "<group>"; };
 		78B2C4F82D8421FF0046B030 /* MessageNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageNotificationService.swift; sourceTree = "<group>"; };
 		78B2C6832D8D3FBD0046B030 /* OrganizerProfileViewerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerProfileViewerController.swift; sourceTree = "<group>"; };
@@ -398,6 +399,7 @@
 		577DA1BC2CE3999000760BFA /* ThriveUp */ = {
 			isa = PBXGroup;
 			children = (
+				7877DD072DB9984B003EA2D5 /* ThriveUp.entitlements */,
 				780D3CE62DA3D65A00EB9EF5 /* EventNotificationService.swift */,
 				780D3CDE2DA392AE00EB9EF5 /* RegistrationDetailViewController.swift */,
 				780D3CDC2DA3929200EB9EF5 /* RegistrationListTabViewController.swift */,
@@ -434,7 +436,6 @@
 				577DA1C12CE3999000760BFA /* EventViewController.swift */,
 				577DA1C62CE3999100760BFA /* Assets.xcassets */,
 				78ED42FF2D42C14800FF3017 /* FirestoreChatManager.swift */,
-				570DD4462D9F02A600901E69 /* GoogleService-Info.plist */,
 				577DA1C82CE3999100760BFA /* LaunchScreen.storyboard */,
 				577DA1CB2CE3999100760BFA /* Info.plist */,
 				577DA1D12CE3BDBB00760BFA /* DataModel.swift */,
@@ -467,6 +468,7 @@
 				57CDC6772D30451000836984 /* RegistrationsListViewController.swift */,
 				57CDC6792D30475900836984 /* RegistrationTableViewCell.swift */,
 				570DD4A32DA2FF3900901E69 /* ImageCache.swift */,
+				7877DD0A2DB99EC3003EA2D5 /* GoogleService-Info.plist */,
 			);
 			name = ThriveUp;
 			path = workingModel;
@@ -651,7 +653,7 @@
 			files = (
 				577DA1C72CE3999100760BFA /* Assets.xcassets in Resources */,
 				577DA1CA2CE3999100760BFA /* Base in Resources */,
-				570DD4472D9F02A600901E69 /* GoogleService-Info.plist in Resources */,
+				7877DD0B2DB99EC3003EA2D5 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -946,6 +948,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ThriveUp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K75YG36RDS;
@@ -958,6 +961,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -977,6 +981,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ThriveUp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -990,6 +995,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
