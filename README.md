@@ -4,7 +4,7 @@
 
 ---
 
-![ThriveUp Banner](appcircle.png) <!-- Replace with your actual banner image if available -->
+![ThriveUp Banner](apppcircle.png) <!-- Replace with your actual banner image if available -->
 
 ## ✨ Overview
 
@@ -112,7 +112,7 @@ See [LICENSE](LICENSE) for more details.
 
 ## 📬 Contact
 
-- [Email ThriveUp](mailto: thriveupapp@gmail.com)
+- [Email ThriveUp](thriveupapp@gmail.com)
 - For collaborations or questions, feel free to reach out!
 
 ---
