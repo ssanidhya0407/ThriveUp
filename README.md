@@ -112,7 +112,7 @@ See [LICENSE](LICENSE) for more details.
 
 ## 📬 Contact
 
-- [Email ThriveUp](thriveupapp@gmail.com)
+- (thriveupapp@gmail.com)
 - For collaborations or questions, feel free to reach out!
 
 ---
